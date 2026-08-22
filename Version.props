@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <AudioPilotVersion>1.0.0</AudioPilotVersion>
+    <AudioPilotAssemblyVersion>1.0.0.0</AudioPilotAssemblyVersion>
+    <AudioPilotReleaseDate>2026-09-02</AudioPilotReleaseDate>
+  </PropertyGroup>
+</Project>

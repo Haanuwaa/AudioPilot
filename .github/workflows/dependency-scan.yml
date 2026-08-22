@@ -1,0 +1,189 @@
+name: Dependency Scan
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-scan-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+  schedule:
+    - cron: "0 8 * * 1"
+
+jobs:
+  nuget-vulnerability-scan:
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore AudioPilot.sln --locked-mode
+
+      - name: Scan NuGet vulnerabilities (direct + transitive)
+        shell: pwsh
+        run: |
+          $projects = @(
+            "AudioPilot/AudioPilot.csproj",
+            "AudioPilot.CliHost/AudioPilot.CliHost.csproj",
+            "AudioPilot.Tests/AudioPilot.Tests.csproj",
+            "AudioPilot.Installer/AudioPilot.Installer.wixproj"
+          )
+
+          $allFindings = @()
+
+          foreach ($projectPath in $projects) {
+            Write-Host "Scanning vulnerable packages for: $projectPath"
+
+            $raw = dotnet list $projectPath package --vulnerable --include-transitive --format json
+            if ($LASTEXITCODE -ne 0) {
+              throw "dotnet list package failed for $projectPath"
+            }
+
+            $report = $raw | ConvertFrom-Json
+            if ($null -eq $report.projects) {
+              continue
+            }
+
+            foreach ($project in $report.projects) {
+              foreach ($framework in $project.frameworks) {
+                $packages = @()
+                if ($framework.PSObject.Properties.Name -contains "topLevelPackages") {
+                  $packages += $framework.topLevelPackages
+                }
+                if ($framework.PSObject.Properties.Name -contains "transitivePackages") {
+                  $packages += $framework.transitivePackages
+                }
+
+                foreach ($package in $packages) {
+                  if ($null -eq $package.vulnerabilities -or $package.vulnerabilities.Count -eq 0) {
+                    continue
+                  }
+
+                  foreach ($vulnerability in $package.vulnerabilities) {
+                    $allFindings += [PSCustomObject]@{
+                      Project = $project.path
+                      Framework = $framework.framework
+                      Package = $package.id
+                      Requested = $package.requestedVersion
+                      Resolved = $package.resolvedVersion
+                      Severity = $vulnerability.severity
+                      Advisory = $vulnerability.advisoryurl
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          if ($allFindings.Count -gt 0) {
+            Write-Host "Detected vulnerable packages:" -ForegroundColor Red
+            $allFindings | Sort-Object Project, Framework, Package, Severity | Format-Table -AutoSize | Out-String | Write-Host
+            throw "Dependency vulnerability scan failed."
+          }
+
+          Write-Host "No vulnerable NuGet packages detected."
+
+  nuget-outdated-scan:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore AudioPilot.sln --locked-mode
+
+      - name: Check NuGet freshness
+        shell: pwsh
+        run: |
+          $rawLines = & dotnet list AudioPilot.sln package --outdated --format json 2>&1
+          $exitCode = $LASTEXITCODE
+          $raw = ($rawLines | Out-String).Trim()
+
+          try {
+            $report = $raw | ConvertFrom-Json
+          }
+          catch {
+            if (-not [string]::IsNullOrWhiteSpace($raw)) {
+              Write-Host $raw
+            }
+
+            throw "dotnet list package --outdated failed and did not return JSON."
+          }
+
+          if ($exitCode -ne 0) {
+            Write-Warning "dotnet list package --outdated exited with code $exitCode but returned a parseable report; continuing freshness reporting."
+          }
+
+          $updates = @()
+
+          foreach ($project in @($report.projects)) {
+            if ($null -eq $project.frameworks) {
+              continue
+            }
+
+            foreach ($framework in @($project.frameworks)) {
+              if ($null -eq $framework.topLevelPackages) {
+                continue
+              }
+
+              foreach ($package in @($framework.topLevelPackages)) {
+                if ($null -eq $package.latestVersion) {
+                  continue
+                }
+
+                $updates += [PSCustomObject]@{
+                  Project = $project.path
+                  Framework = $framework.framework
+                  Package = $package.id
+                  Requested = $package.requestedVersion
+                  Resolved = $package.resolvedVersion
+                  Latest = $package.latestVersion
+                }
+              }
+            }
+          }
+
+          if ($updates.Count -gt 0) {
+            Write-Host "Detected outdated direct NuGet packages:" -ForegroundColor Yellow
+            $updates | Sort-Object Project, Package | Format-Table -AutoSize | Out-String | Write-Host
+
+            $summary = $updates |
+              Sort-Object Project, Package |
+              Select-Object Project, Framework, Package, Requested, Resolved, Latest |
+              ConvertTo-Json -Depth 4
+
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "## Outdated direct NuGet packages"
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "Dependabot should open update PRs for these packages. This freshness report does not fail the workflow; vulnerability findings still do."
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value ""
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value '```json'
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $summary
+            Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value '```'
+
+            Write-Warning "Outdated direct NuGet packages detected. Dependabot should open update PRs; if not, check Dependabot status and package-ecosystem coverage."
+            return
+          }
+
+          Write-Host "No outdated direct NuGet packages detected."

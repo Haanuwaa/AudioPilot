@@ -1,0 +1,170 @@
+<UserControl
+    x:Class="AudioPilot.Views.SettingsGeneralPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:h="clr-namespace:AudioPilot.Helpers"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    AutomationProperties.Name="Overlay and miscellaneous settings panel">
+    <UserControl.Resources>
+        <h:EnumDisplayNameConverter x:Key="EnumDisplayNameConverter" />
+    </UserControl.Resources>
+    <StackPanel>
+        <TextBlock Style="{DynamicResource SettingsSectionHeaderStyle}" Text="Overlay" />
+
+        <StackPanel Margin="0,0,0,10" Orientation="Horizontal">
+            <CheckBox Content="Enable overlays" IsChecked="{Binding SettingsOverlayEnabledDraft, Mode=TwoWay}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="Shows on-screen overlays for media, mute, and device switching actions." />
+                </i:Interaction.Behaviors>
+            </CheckBox>
+        </StackPanel>
+
+        <StackPanel Margin="0,0,0,10" Orientation="Horizontal">
+            <Label
+                Width="150"
+                VerticalAlignment="Center"
+                Content="Overlay Position:" />
+            <ComboBox
+                Width="170"
+                AutomationProperties.Name="Overlay position"
+                IsEnabled="{Binding SettingsOverlayEnabledDraft, Mode=OneWay}"
+                ItemsSource="{Binding AvailableOverlayPositions}"
+                SelectedItem="{Binding SettingsOverlayPositionDraft, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Converter={StaticResource EnumDisplayNameConverter}}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </StackPanel>
+
+        <StackPanel Margin="0,0,0,22" Orientation="Horizontal">
+            <Label
+                Width="150"
+                VerticalAlignment="Center"
+                Content="Overlay Duration (s):" />
+            <TextBox
+                Width="80"
+                AutomationProperties.Name="Overlay duration in seconds"
+                b:TextBoxPlaceholderBehavior.Text="2.5"
+                ContextMenu="{DynamicResource EditableTextContextMenu}"
+                InputScope="Number"
+                IsEnabled="{Binding SettingsOverlayEnabledDraft, Mode=OneWay}"
+                Text="{Binding SettingsOverlayDurationSecondsDraft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="How long the overlay stays visible in seconds (0.5 to 10)." />
+                    <b:NumericOnlyBehavior />
+                </i:Interaction.Behaviors>
+            </TextBox>
+            <TextBlock
+                Margin="8,0,0,0"
+                VerticalAlignment="Center"
+                Foreground="{DynamicResource MutedTextBrush}"
+                Text="(0.5 to 10)" />
+        </StackPanel>
+
+        <TextBlock Style="{DynamicResource SettingsSectionHeaderStyle}" Text="Miscellaneous" />
+
+        <Grid Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="150" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <CheckBox
+                Grid.Row="0"
+                Grid.Column="0"
+                Content="Preserve audio levels"
+                IsChecked="{Binding SettingsPreserveAudioLevelsDraft, Mode=TwoWay}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="Preserves current per-process and mixer volume levels when switching output devices." />
+                </i:Interaction.Behaviors>
+            </CheckBox>
+
+            <CheckBox
+                Grid.Row="0"
+                Grid.Column="1"
+                Content="Auto-scroll to mixer on restore"
+                IsChecked="{Binding SettingsAutoScrollToMixerOnRestoreDraft, Mode=TwoWay}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="Automatically scrolls to the&#10;&quot;Volume Mixer&quot; when the&#10;app window is restored." />
+                </i:Interaction.Behaviors>
+            </CheckBox>
+
+            <CheckBox
+                Grid.Row="1"
+                Grid.Column="0"
+                Margin="0,8,0,0"
+                AutomationProperties.HelpText="Play one Windows sound when an AudioPilot dialog first appears."
+                AutomationProperties.Name="Play dialog sounds"
+                Content="Play dialog sounds"
+                IsChecked="{Binding SettingsPlayDialogSoundsDraft, Mode=TwoWay}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="Plays one sound when an AudioPilot dialog first appears. Sounds follow the Windows sound scheme and volume." />
+                </i:Interaction.Behaviors>
+            </CheckBox>
+
+            <CheckBox
+                Grid.Row="1"
+                Grid.Column="1"
+                Margin="0,8,0,0"
+                Content="Enable auto-save"
+                IsChecked="{Binding SettingsAutoSaveEnabledDraft, Mode=TwoWay}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="Enable to automatically save device, hotkey, routine, and settings changes." />
+                </i:Interaction.Behaviors>
+            </CheckBox>
+        </Grid>
+
+        <StackPanel Margin="0,0,0,10" Orientation="Horizontal">
+            <Label
+                Width="150"
+                VerticalAlignment="Center"
+                Content="Device reference:" />
+            <ComboBox
+                Width="170"
+                AutomationProperties.Name="Device reference file mode"
+                ItemsSource="{Binding AvailableDeviceReferenceFileModes}"
+                SelectedItem="{Binding SettingsDeviceReferenceFileModeDraft, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding Converter={StaticResource EnumDisplayNameConverter}}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="Controls what DEVICES.txt contains: Off disables file generation, Plaintext includes real device IDs and names, and Hashed includes device names with anonymized IDs." />
+                </i:Interaction.Behaviors>
+            </ComboBox>
+        </StackPanel>
+
+        <StackPanel Margin="0,0,0,8" Orientation="Horizontal">
+            <Label
+                Width="150"
+                VerticalAlignment="Center"
+                Content="Log Level:" />
+            <ComboBox
+                Width="170"
+                AutomationProperties.Name="Log level"
+                ItemsSource="{Binding AvailableLogLevels}"
+                SelectedItem="{Binding SettingsLogLevelDraft, Mode=TwoWay}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="Choose how detailed logs are.&#10;None disables logging and removes&#10;existing log files when applied." />
+                </i:Interaction.Behaviors>
+            </ComboBox>
+        </StackPanel>
+
+        <CheckBox
+            Margin="150,0,0,22"
+            Content="Redact sensitive log content"
+            IsChecked="{Binding SettingsRedactLogContentDraft, Mode=TwoWay}">
+            <i:Interaction.Behaviors>
+                <b:HoverInfoPopupBehavior Text="Enabled keeps sensitive values anonymized in app logs.&#10;Disable this only if you explicitly want raw device names, paths, ids, and similar content written to the log file." />
+            </i:Interaction.Behaviors>
+        </CheckBox>
+    </StackPanel>
+</UserControl>

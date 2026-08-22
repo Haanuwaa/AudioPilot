@@ -1,0 +1,243 @@
+<UserControl
+    x:Class="AudioPilot.Views.InputDevicePanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:c="clr-namespace:AudioPilot.Controls"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    AutomationProperties.Name="Input device configuration"
+    Foreground="{DynamicResource TextBrush}">
+    <UserControl.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding StopAudioTestCommand}" />
+    </UserControl.InputBindings>
+    <Grid Margin="10">
+        <StackPanel x:Name="ConfigurationPanel">
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsInputTestPanelVisible}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+            <Label Content="Available Input Devices:" />
+            <StackPanel Orientation="Horizontal">
+                <ComboBox
+                    AutomationProperties.Name="Available input devices"
+                    Width="300"
+                    ItemsSource="{Binding AvailableInputDeviceNames}"
+                    SelectedIndex="{Binding SelectedAvailableInputIndex, Mode=TwoWay}" />
+                <Button
+                    Width="62"
+                    AutomationProperties.Name="Add selected input device"
+                    Margin="8,0,0,0"
+                    Command="{Binding AddInputCycleDeviceCommand}"
+                    Content="Add" />
+            </StackPanel>
+
+            <Label Content="Input Switch Order:" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="72" />
+                </Grid.ColumnDefinitions>
+                <ListBox
+                    x:Name="SwitchOrderListBox"
+                    AutomationProperties.Name="Input switch order"
+                    Grid.Column="0"
+                    Height="104"
+                    DisplayMemberPath="DisplayName"
+                    ItemsSource="{Binding InputCycleDevices}"
+                    SelectedIndex="{Binding SelectedInputCycleIndex, Mode=TwoWay}"
+                    SelectionMode="Extended">
+                    <ListBox.InputBindings>
+                        <KeyBinding Key="W" Command="{Binding RemoveInputCycleDeviceCommand}" Modifiers="Control" />
+                        <KeyBinding Key="Up" Command="{Binding MoveInputCycleDeviceUpCommand}" Modifiers="Alt" />
+                        <KeyBinding Key="Down" Command="{Binding MoveInputCycleDeviceDownCommand}" Modifiers="Alt" />
+                    </ListBox.InputBindings>
+                    <ListBox.ItemContainerStyle>
+                        <Style BasedOn="{StaticResource CycleDeviceListBoxItemStyle}" TargetType="ListBoxItem">
+                            <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ListBox}}" />
+                            <Setter Property="ContextMenu">
+                                <Setter.Value>
+                                    <ContextMenu
+                                        AutomationProperties.Name="Input device actions"
+                                        DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}"
+                                        Style="{DynamicResource AppContextMenuStyle}">
+                                        <MenuItem
+                                            AutomationProperties.Name="Test microphone"
+                                            Command="{Binding Tag.TestInputDeviceCommand}"
+                                            CommandParameter="{Binding DataContext}"
+                                            Header="_Test microphone…"
+                                            Icon="{StaticResource AppMenuInputIcon}"
+                                            Style="{DynamicResource AppContextMenuItemStyle}" />
+                                        <MenuItem
+                                            AutomationProperties.Name="Set as default input"
+                                            Command="{Binding Tag.SetDefaultInputDeviceCommand}"
+                                            CommandParameter="{Binding DataContext}"
+                                            Header="Set as _default input"
+                                            Icon="{StaticResource AppMenuSetDefaultIcon}"
+                                            Style="{DynamicResource AppContextMenuItemStyle}" />
+                                    </ContextMenu>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <i:Interaction.Behaviors>
+                        <b:ListBoxSelectedItemsBehavior SelectedItems="{Binding SelectedInputCycleDevices}" />
+                    </i:Interaction.Behaviors>
+                </ListBox>
+                <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                    <Button Height="30" Margin="0,0,0,4" Command="{Binding MoveInputCycleDeviceUpCommand}" Content="Up" />
+                    <Button Height="30" Margin="0,0,0,4" Command="{Binding MoveInputCycleDeviceDownCommand}" Content="Down" />
+                    <Button Height="30" Command="{Binding RemoveInputCycleDeviceCommand}" Content="Remove" />
+                </StackPanel>
+            </Grid>
+
+            <Label Content="Hotkey:" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox
+                    AutomationProperties.Name="Input switching hotkey"
+                    Grid.Column="0"
+                    ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                    IsEnabled="{Binding InputHotkeysEnabled, Mode=TwoWay}"
+                    Text="{Binding InputHotkey.DisplayText, Mode=OneWay}">
+                    <i:Interaction.Behaviors>
+                        <b:PlaceholderExampleBehavior Identity="input-hotkey" Options="Ctrl+Alt+I|Alt+Comma|Ctrl+Alt+Left" PreferredFamily="letter" />
+                        <b:HoverInfoPopupBehavior Text="{Binding InputHotkey.HoverText}" WarningKind="{Binding InputHotkey.WarningKind}" />
+                        <b:HotkeyCaptureBehavior Target="{Binding InputHotkey}" />
+                        <b:HotkeyWarningBorderBehavior HasWarning="{Binding InputHotkey.HasWarning}" WarningKind="{Binding InputHotkey.WarningKind}" />
+                    </i:Interaction.Behaviors>
+                </TextBox>
+                <CheckBox
+                    Grid.Column="1"
+                    AutomationProperties.Name="Enable input switching hotkey"
+                    Margin="8,0,0,0"
+                    VerticalAlignment="Center"
+                    Content="Enabled"
+                    IsChecked="{Binding InputHotkeysEnabled, Mode=TwoWay}" />
+            </Grid>
+        </StackPanel>
+
+        <Border
+            x:Name="MicrophoneTestPanel"
+            AutomationProperties.LiveSetting="Polite"
+            AutomationProperties.Name="Microphone test panel"
+            Padding="12"
+            Background="{DynamicResource ControlBackgroundBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="5"
+            IsVisibleChanged="MicrophoneTestPanel_IsVisibleChanged"
+            Visibility="{Binding IsInputTestPanelVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+            <StackPanel>
+                <DockPanel Margin="0,0,0,10">
+                    <Button
+                        x:Name="StopMicrophoneTestButton"
+                        AutomationProperties.Name="Stop or dismiss microphone test"
+                        DockPanel.Dock="Right"
+                        MinWidth="70"
+                        Command="{Binding StopAudioTestCommand}"
+                        Content="{Binding AudioTestActionText}" />
+                    <StackPanel>
+                        <TextBlock FontSize="14" FontWeight="SemiBold" Text="Microphone Test" />
+                        <TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="{Binding AudioTestEndpointName}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </DockPanel>
+
+                <TextBlock
+                    AutomationProperties.LiveSetting="Polite"
+                    AutomationProperties.Name="Microphone test status"
+                    Margin="0,0,0,8"
+                    Text="{Binding AudioTestStatus}"
+                    TextWrapping="Wrap" />
+
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <c:AudioLevelMeter
+                        AutomationProperties.Name="Microphone level"
+                        AutomationProperties.HelpText="Current microphone level with a held peak marker, from zero to one hundred percent"
+                        Height="22"
+                        Background="{DynamicResource AudioMeterTrackBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
+                        BorderThickness="1"
+                        HighLevelBrush="{DynamicResource AudioMeterHighBrush}"
+                        InactiveBrush="{DynamicResource AudioMeterInactiveBrush}"
+                        Level="{Binding AudioTestLevelPercent, Mode=OneWay}"
+                        LowLevelBrush="{DynamicResource AudioMeterLowBrush}"
+                        MidLevelBrush="{DynamicResource AudioMeterMidBrush}"
+                        Peak="{Binding AudioTestPeakPercent, Mode=OneWay}"
+                        PeakBrush="{DynamicResource AudioMeterPeakBrush}" />
+                    <TextBlock
+                        Grid.Column="1"
+                        MinWidth="38"
+                        Margin="8,0,0,0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Text="{Binding AudioTestLevelText}" />
+                </Grid>
+
+                <TextBlock Margin="0,0,0,10" Text="{Binding AudioTestElapsed, StringFormat=Elapsed: {0}}" />
+                <CheckBox
+                    AutomationProperties.Name="Hear microphone through output"
+                    Content="Hear myself"
+                    IsEnabled="{Binding IsInputTestRunning}"
+                    IsChecked="{Binding AudioTestHearMyself, Mode=TwoWay}" />
+
+                <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="130" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Label VerticalAlignment="Center" Content="Monitor output:" />
+                    <ComboBox
+                        AutomationProperties.Name="Microphone test monitor output"
+                        Grid.Column="1"
+                        DisplayMemberPath="Name"
+                        IsEnabled="{Binding IsInputTestRunning}"
+                        ItemsSource="{Binding AudioTestMonitorOutputDevices}"
+                        SelectedValue="{Binding AudioTestSelectedMonitorOutputId, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        SelectedValuePath="Id" />
+                </Grid>
+
+                <Grid Margin="0,6,0,0" IsEnabled="{Binding AudioTestHearMyself}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="130" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="42" />
+                    </Grid.ColumnDefinitions>
+                    <Label VerticalAlignment="Center" Content="Monitor volume:" />
+                    <Slider
+                        AutomationProperties.Name="Microphone test monitor volume"
+                        Grid.Column="1"
+                        Maximum="100"
+                        Minimum="0"
+                        SmallChange="1"
+                        Value="{Binding AudioTestMonitorVolume, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Grid.Column="2" VerticalAlignment="Center" Text="{Binding AudioTestMonitorVolumeText}" />
+                </Grid>
+
+                <TextBlock
+                    Margin="0,8,0,0"
+                    Foreground="{DynamicResource MutedTextBrush}"
+                    Text="{Binding AudioTestMonitorFallbackNotice}"
+                    TextWrapping="Wrap"
+                    Visibility="{Binding HasAudioTestMonitorFallbackNotice, Converter={StaticResource BoolToVisibilityConverter}}" />
+                <TextBlock
+                    Margin="0,10,0,0"
+                    Foreground="{DynamicResource MutedTextBrush}"
+                    Text="Captured locally; nothing is saved. Use headphones before enabling Hear myself to avoid feedback. Bluetooth microphones may add delay or switch headset profiles."
+                    TextWrapping="Wrap" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

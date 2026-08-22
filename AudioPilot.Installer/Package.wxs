@@ -1,0 +1,165 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui" xmlns:util="http://wixtoolset.org/schemas/v4/wxs/util">
+    <Package Name="$(var.ProductName)" Manufacturer="$(var.ManufacturerName)" Version="$(var.AppVersion)" UpgradeCode="$(var.UpgradeCode)" Scope="perUser" InstallerVersion="500">
+    <!-- Per-user install: no admin required, independent configs per user. -->
+
+        <SummaryInformation Description="$(var.ProductName)" Manufacturer="$(var.ManufacturerName)" />
+
+        <Property Id="WINDOWSBUILDNUMBER" Secure="yes">
+            <RegistrySearch Id="BuildNumberSearch" Root="HKLM" Key="SOFTWARE\Microsoft\Windows NT\CurrentVersion" Name="CurrentBuildNumber" Type="raw" />
+        </Property>
+        <Launch Condition="Installed OR VersionNT64" Message="$(var.ProductName) requires a compatible 64-bit version of Windows." />
+        <Launch Condition="Installed OR WINDOWSBUILDNUMBER &gt;= 19041" Message="$(var.ProductName) requires Windows 10 version 2004 (build 19041) or later." />
+
+        <Icon Id="AppIcon.ico" SourceFile="..\AudioPilot\Images\sound.ico" />
+        <Property Id="ARPPRODUCTICON" Value="AppIcon.ico" />
+        <Property Id="ARPCONTACT" Value="Haanuwaa" />
+        <Property Id="ARPHELPLINK" Value="https://github.com/Haanuwaa/AudioPilot" />
+        <Property Id="ARPURLINFOABOUT" Value="https://github.com/Haanuwaa/AudioPilot" />
+        <Property Id="ARPNOREPAIR" Value="1" />
+        <Property Id="AUDIOPILOT_CLEAN_UNINSTALL" Value="0" Secure="yes" />
+        <Property Id="AUDIOPILOT_DATA_FOLDER" Secure="yes" />
+        <Property Id="INSTALLDESKTOPSHORTCUT" Value="1" />
+        <Property Id="INSTALLSTARTMENUSHORTCUT" Value="1" />
+        <Property Id="ADD_CLI_TO_PATH" Value="0" />
+        <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Launch AudioPilot" />
+        <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+        <Property Id="WixAppFolder" Value="WixPerUserFolder" />
+        <Property Id="INSTALLFOLDER">
+            <RegistrySearch Id="SearchAudioPilotInstallFolder" Root="HKCU" Key="Software\$(var.ManufacturerName)\$(var.ProductName)" Name="InstallFolder" Type="raw" />
+        </Property>
+        <Property Id="AUDIOPILOT_CLEAN_UNINSTALL_FOLDER">
+            <RegistrySearch Id="SearchAudioPilotCleanUninstallFolder" Root="HKCU" Key="Software\$(var.ManufacturerName)\$(var.ProductName)" Name="DataFolder" Type="raw" />
+        </Property>
+        <Property Id="PREVIOUS_AUDIOPILOT_DATA_FOLDER">
+            <RegistrySearch Id="SearchPreviousAudioPilotDataFolder" Root="HKCU" Key="Software\$(var.ManufacturerName)\$(var.ProductName)" Name="DataFolder" Type="raw" />
+        </Property>
+        <Property Id="PREVIOUS_INSTALLDESKTOPSHORTCUT">
+            <RegistrySearch Id="SearchPreviousDesktopShortcutPreference" Root="HKCU" Key="Software\$(var.ManufacturerName)\$(var.ProductName)" Name="InstallDesktopShortcut" Type="raw" />
+        </Property>
+        <Property Id="PREVIOUS_INSTALLSTARTMENUSHORTCUT">
+            <RegistrySearch Id="SearchPreviousStartMenuShortcutPreference" Root="HKCU" Key="Software\$(var.ManufacturerName)\$(var.ProductName)" Name="InstallStartMenuShortcut" Type="raw" />
+        </Property>
+        <Property Id="PREVIOUS_ADD_CLI_TO_PATH">
+            <RegistrySearch Id="SearchPreviousCliPathPreference" Root="HKCU" Key="Software\$(var.ManufacturerName)\$(var.ProductName)" Name="AddCliToPath" Type="raw" />
+        </Property>
+
+        <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+
+        <UI>
+            <ui:WixUI Id="WixUI_InstallDir" />
+            <Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog" Value="CleanUninstallDlg" Condition="1" Order="12" />
+            <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="CleanUninstallDlg" Condition="WixUI_InstallMode = &quot;Remove&quot;" Order="12" />
+            <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchApplication" Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed" Order="2" />
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="CliOptionsDlg" Condition="NOT Installed" Order="10" />
+            <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Condition="Installed" Order="11" />
+            <Dialog Id="CliOptionsDlg" Width="370" Height="270" Title="[ProductName] Setup">
+                <Control Id="Title" Type="Text" X="15" Y="6" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Title}Optional Features" />
+                <Control Id="Description" Type="Text" X="20" Y="23" Width="330" Height="15" Transparent="yes" NoPrefix="yes" Text="Choose additional options for your installation." />
+                <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+                <Control Id="DesktopShortcutCheckBox" Type="CheckBox" X="20" Y="62" Width="330" Height="18" Property="INSTALLDESKTOPSHORTCUT" CheckBoxValue="1" Text="Create Desktop shortcut" />
+                <Control Id="StartMenuShortcutCheckBox" Type="CheckBox" X="20" Y="84" Width="330" Height="18" Property="INSTALLSTARTMENUSHORTCUT" CheckBoxValue="1" Text="Create Start Menu shortcuts" />
+                <Control Id="AddToPathCheckBox" Type="CheckBox" X="20" Y="106" Width="330" Height="18" Property="ADD_CLI_TO_PATH" CheckBoxValue="1" Text="Add AudioPilot CLI to PATH (recommended for automation)" />
+                <Control Id="Info" Type="Text" X="38" Y="130" Width="312" Height="40" Transparent="yes" NoPrefix="yes" Text="CLI lets you run 'AudioPilot.Cli.exe' from any terminal. Shortcuts can be changed later from Windows settings." />
+                <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+                <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back">
+                    <Publish Event="NewDialog" Value="InstallDirDlg" Condition="1" />
+                </Control>
+                <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="&amp;Next">
+                    <Publish Event="NewDialog" Value="VerifyReadyDlg" Condition="1" />
+                </Control>
+                <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="Cancel">
+                    <Publish Event="SpawnDialog" Value="CancelDlg" Condition="1" />
+                </Control>
+            </Dialog>
+
+            <Dialog Id="CleanUninstallDlg" Width="370" Height="270" Title="[ProductName] Setup">
+                <Control Id="Title" Type="Text" X="15" Y="6" Width="340" Height="15" Transparent="yes" NoPrefix="yes" Text="{\WixUI_Font_Title}Remove [ProductName]" />
+                <Control Id="Description" Type="Text" X="20" Y="23" Width="330" Height="15" Transparent="yes" NoPrefix="yes" Text="Choose whether to remove your saved AudioPilot data." />
+                <Control Id="BannerLine" Type="Line" X="0" Y="44" Width="370" Height="0" />
+                <Control Id="Body" Type="Text" X="20" Y="62" Width="330" Height="32" Transparent="yes" NoPrefix="yes" Text="Normal uninstall keeps settings, logs, backups, and device reference files so a future install can reuse them." />
+                <Control Id="DeleteUserDataCheckBox" Type="CheckBox" X="20" Y="104" Width="330" Height="18" Property="AUDIOPILOT_CLEAN_UNINSTALL" CheckBoxValue="1" Text="Also delete saved AudioPilot data" />
+                <Control Id="Warning" Type="Text" X="38" Y="128" Width="312" Height="44" Transparent="yes" NoPrefix="yes" Text="This removes [AUDIOPILOT_CLEAN_UNINSTALL_FOLDER] for the current Windows user. Leave unchecked if you want to preserve your configuration." />
+                <Control Id="BottomLine" Type="Line" X="0" Y="234" Width="370" Height="0" />
+                <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back">
+                    <Publish Event="NewDialog" Value="MaintenanceTypeDlg" Condition="1" />
+                </Control>
+                <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="&amp;Next">
+                    <Publish Event="NewDialog" Value="VerifyReadyDlg" Condition="1" />
+                </Control>
+                <Control Id="Cancel" Type="PushButton" X="304" Y="243" Width="56" Height="17" Cancel="yes" Text="Cancel">
+                    <Publish Event="SpawnDialog" Value="CancelDlg" Condition="1" />
+                </Control>
+            </Dialog>
+        </UI>
+
+        <SetProperty Id="WixUnelevatedShellExecTarget" Value="[INSTALLFOLDER]AudioPilot.exe" After="ExecuteAction" Sequence="ui" />
+        <CustomAction Id="LaunchApplication" BinaryRef="Wix4UtilCA_$(sys.BUILDARCHSHORT)" DllEntry="WixUnelevatedShellExec" Execute="immediate" Return="ignore" />
+        <CustomAction Id="RestoreAudioPilotDataFolder" Property="AUDIOPILOT_DATA_FOLDER" Value="[PREVIOUS_AUDIOPILOT_DATA_FOLDER]" Execute="firstSequence" />
+        <SetProperty Id="INSTALLDESKTOPSHORTCUT" Value="[PREVIOUS_INSTALLDESKTOPSHORTCUT]" After="AppSearch" Sequence="both" Condition="PREVIOUS_INSTALLDESKTOPSHORTCUT" />
+        <SetProperty Id="INSTALLSTARTMENUSHORTCUT" Value="[PREVIOUS_INSTALLSTARTMENUSHORTCUT]" After="AppSearch" Sequence="both" Condition="PREVIOUS_INSTALLSTARTMENUSHORTCUT" />
+        <SetProperty Id="ADD_CLI_TO_PATH" Value="[PREVIOUS_ADD_CLI_TO_PATH]" After="AppSearch" Sequence="both" Condition="PREVIOUS_ADD_CLI_TO_PATH" />
+        <SetProperty Id="AUDIOPILOT_DATA_FOLDER" Value="[AppDataFolder]$(var.ProductName)" After="CostFinalize" Sequence="execute" Condition="NOT AUDIOPILOT_DATA_FOLDER" />
+        <util:CloseApplication Id="CloseAudioPilotBeforeInstallChanges" Target="AudioPilot.exe" Description="$(var.ProductName) is running. Close it before continuing setup." CloseMessage="yes" ElevatedCloseMessage="yes" RebootPrompt="yes" Timeout="15" Condition="WIX_UPGRADE_DETECTED OR REMOVE=&quot;ALL&quot;" />
+    <!-- Use Windows Installer's native executable action against the explicit user hive. -->
+        <CustomAction Id="CleanupStartupRunValue" Directory="System64Folder" ExeCommand="reg.exe delete &quot;HKU\[UserSID]\Software\Microsoft\Windows\CurrentVersion\Run&quot; /v &quot;$(var.ProductName)&quot; /f /reg:64" Execute="deferred" Impersonate="no" Return="ignore" />
+
+        <MajorUpgrade DowngradeErrorMessage="A newer version of $(var.ProductName) is already installed." />
+        <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+        <InstallExecuteSequence>
+            <Custom Action="RestoreAudioPilotDataFolder" After="AppSearch" Condition="NOT AUDIOPILOT_DATA_FOLDER AND PREVIOUS_AUDIOPILOT_DATA_FOLDER" />
+            <Custom Action="CleanupStartupRunValue" Before="RemoveRegistryValues" Condition="REMOVE=&quot;ALL&quot; AND NOT UPGRADINGPRODUCTCODE" />
+        </InstallExecuteSequence>
+        <InstallUISequence>
+            <Custom Action="RestoreAudioPilotDataFolder" After="AppSearch" Condition="NOT AUDIOPILOT_DATA_FOLDER AND PREVIOUS_AUDIOPILOT_DATA_FOLDER" />
+        </InstallUISequence>
+
+        <StandardDirectory Id="LocalAppDataFolder">
+            <Directory Id="INSTALLFOLDER" Name="AudioPilot" />
+        </StandardDirectory>
+        <StandardDirectory Id="ProgramMenuFolder">
+            <Directory Id="ApplicationProgramsFolder" Name="$(var.ProductName)" />
+        </StandardDirectory>
+        <StandardDirectory Id="DesktopFolder">
+            <Component Id="DesktopShortcutComponent" Guid="*" Condition="INSTALLDESKTOPSHORTCUT = 1">
+                <Shortcut Id="DesktopShortcut" Name="$(var.ProductName)" Description="$(var.ProductName)" Target="[INSTALLFOLDER]AudioPilot.exe" WorkingDirectory="INSTALLFOLDER" Icon="AppIcon.ico" Advertise="no" />
+                <RegistryValue Root="HKCU" Key="Software\$(var.ManufacturerName)\$(var.ProductName)" Name="DesktopShortcut" Type="integer" Value="1" KeyPath="yes" />
+            </Component>
+        </StandardDirectory>
+
+        <DirectoryRef Id="ApplicationProgramsFolder">
+            <Component Id="StartMenuShortcutComponent" Guid="*" Condition="INSTALLSTARTMENUSHORTCUT = 1">
+                <Shortcut Id="StartMenuShortcut" Name="$(var.ProductName)" Description="$(var.ProductName)" Target="[INSTALLFOLDER]AudioPilot.exe" WorkingDirectory="INSTALLFOLDER" Icon="AppIcon.ico" Advertise="no" />
+                <Shortcut Id="UninstallShortcut" Name="Change or uninstall $(var.ProductName)" Description="Change or uninstall $(var.ProductName)" Target="[SystemFolder]msiexec.exe" Arguments="/i [ProductCode]" Icon="AppIcon.ico" Advertise="no" />
+                <Shortcut Id="CleanUninstallShortcut" Name="Uninstall $(var.ProductName) and delete settings" Description="Uninstall $(var.ProductName) and delete settings, logs, and backups" Target="[SystemFolder]msiexec.exe" Arguments="/x [ProductCode] AUDIOPILOT_CLEAN_UNINSTALL=1" Icon="AppIcon.ico" Advertise="no" />
+                <RemoveFolder Id="RemoveApplicationProgramsFolder" On="uninstall" />
+                <RegistryValue Root="HKCU" Key="Software\$(var.ManufacturerName)\$(var.ProductName)" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
+            </Component>
+        </DirectoryRef>
+        <DirectoryRef Id="INSTALLFOLDER">
+            <Component Id="CliPathComponent" Guid="*" Condition="ADD_CLI_TO_PATH = 1">
+                <Environment Id="AddAudioPilotCliToPath" Name="PATH" Value="[INSTALLFOLDER]" Permanent="no" Part="last" Action="set" System="no" />
+                <RegistryValue Root="HKCU" Key="Software\$(var.ManufacturerName)\$(var.ProductName)\Path" Name="AddedToPath" Type="integer" Value="1" KeyPath="yes" />
+            </Component>
+            <Component Id="InstallerRegistryComponent" Guid="*">
+                <RegistryValue Root="HKCU" Key="Software\$(var.ManufacturerName)\$(var.ProductName)" Name="InstallFolder" Type="string" Value="[INSTALLFOLDER]" KeyPath="yes" />
+                <RegistryValue Root="HKCU" Key="Software\$(var.ManufacturerName)\$(var.ProductName)" Name="DataFolder" Type="string" Value="[AUDIOPILOT_DATA_FOLDER]" />
+                <RegistryValue Root="HKCU" Key="Software\$(var.ManufacturerName)\$(var.ProductName)" Name="InstallDesktopShortcut" Type="string" Value="[INSTALLDESKTOPSHORTCUT]" />
+                <RegistryValue Root="HKCU" Key="Software\$(var.ManufacturerName)\$(var.ProductName)" Name="InstallStartMenuShortcut" Type="string" Value="[INSTALLSTARTMENUSHORTCUT]" />
+                <RegistryValue Root="HKCU" Key="Software\$(var.ManufacturerName)\$(var.ProductName)" Name="AddCliToPath" Type="string" Value="[ADD_CLI_TO_PATH]" />
+                <RemoveRegistryKey Id="RemoveAudioPilotInstallerRegistryKey" Root="HKCU" Key="Software\$(var.ManufacturerName)\$(var.ProductName)" Action="removeOnUninstall" />
+                <util:RemoveFolderEx Id="RemoveUserDataOnCleanUninstall" Property="AUDIOPILOT_CLEAN_UNINSTALL_FOLDER" On="uninstall" Condition="AUDIOPILOT_CLEAN_UNINSTALL=&quot;1&quot; AND NOT UPGRADINGPRODUCTCODE" />
+            </Component>
+        </DirectoryRef>
+
+        <Feature Id="MainFeature" Title="$(var.ProductName)" Level="1">
+            <ComponentGroupRef Id="GeneratedPublishFiles" />
+            <ComponentRef Id="InstallerRegistryComponent" />
+            <ComponentRef Id="StartMenuShortcutComponent" />
+            <ComponentRef Id="DesktopShortcutComponent" />
+        </Feature>
+        <Feature Id="CliPathFeature" Title="Add CLI to PATH" Description="Add AudioPilot CLI to your user PATH environment variable" Level="1">
+            <ComponentRef Id="CliPathComponent" />
+        </Feature>
+    </Package>
+</Wix>

@@ -1,0 +1,197 @@
+<Window
+    x:Class="AudioPilot.PackagedAppPickerWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Select Packaged App"
+    Width="620"
+    Height="520"
+    MinWidth="620"
+    MinHeight="520"
+    Background="{DynamicResource WindowBackgroundBrush}"
+    Foreground="{DynamicResource TextBrush}"
+    PreviewMouseLeftButtonDown="Window_PreviewMouseLeftButtonDown"
+    WindowStartupLocation="Manual">
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Find" Executed="FocusSearch_Executed" />
+        <CommandBinding Command="ApplicationCommands.Help" Executed="OpenHelp_Executed" />
+    </Window.CommandBindings>
+    <Window.InputBindings>
+        <KeyBinding Key="F" Command="ApplicationCommands.Find" Modifiers="Control" />
+        <KeyBinding Key="F1" Command="ApplicationCommands.Help" />
+    </Window.InputBindings>
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TextBlock
+            Grid.Row="0"
+            Foreground="{DynamicResource MutedTextBrush}"
+            Text="Choose an installed Microsoft Store or UWP app. The picker inserts the app's AUMID into the routine trigger automatically."
+            TextWrapping="Wrap" />
+
+        <StackPanel Grid.Row="1" Margin="0,12,0,12">
+            <Grid Margin="0,0,0,4">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="Search" />
+                <TextBlock
+                    Grid.Column="1"
+                    HorizontalAlignment="Right"
+                    Foreground="{DynamicResource MutedTextBrush}"
+                    Text="{Binding FilteredAppCountText}" />
+            </Grid>
+            <TextBox
+                x:Name="SearchTextBox"
+                AutomationProperties.Name="Search installed packaged apps"
+                Height="32"
+                Text="{Binding SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+        </StackPanel>
+
+        <Border
+            x:Name="AppsFrame"
+            Grid.Row="2"
+            Background="{DynamicResource ControlBackgroundBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="6"
+            Focusable="False">
+            <Grid>
+                <ListBox
+                    x:Name="AppsList"
+                    AutomationProperties.Name="Installed packaged apps"
+                    Margin="0"
+                    Padding="0"
+                    AlternationCount="4096"
+                    ItemsSource="{Binding FilteredApps}"
+                    MouseDoubleClick="AppsList_MouseDoubleClick"
+                    ScrollViewer.CanContentScroll="True"
+                    SelectedItem="{Binding SelectedApp, Mode=TwoWay}"
+                    VirtualizingPanel.IsVirtualizing="True"
+                    VirtualizingPanel.ScrollUnit="Pixel"
+                    VirtualizingPanel.VirtualizationMode="Recycling">
+                    <ListBox.ItemContainerStyle>
+                        <Style BasedOn="{StaticResource {x:Type ListBoxItem}}" TargetType="ListBoxItem">
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Border
+                                x:Name="ItemSeparatorBorder"
+                                Padding="10,8"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,1,0,0">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="36" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border
+                                        Grid.Column="0"
+                                        Width="32"
+                                        Height="32"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Center"
+                                        Background="{DynamicResource PanelBackgroundBrush}"
+                                        CornerRadius="5">
+                                        <Grid>
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
+                                                VerticalAlignment="Center"
+                                                FontFamily="Segoe Fluent Icons"
+                                                FontSize="16"
+                                                Foreground="{DynamicResource MutedTextBrush}"
+                                                Text="&#xECAA;">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Visibility" Value="Collapsed" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IconSource}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Visible" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                             <Image
+                                                 Width="28"
+                                                 Height="28"
+                                                 RenderOptions.BitmapScalingMode="HighQuality"
+                                                 Source="{Binding IconSource}"
+                                                 Stretch="Uniform" />
+                                        </Grid>
+                                    </Border>
+
+                                    <StackPanel Grid.Column="1" Margin="8,0,0,0">
+                                        <TextBlock
+                                            FontWeight="SemiBold"
+                                            Text="{Binding DisplayName}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Margin="0,4,0,0"
+                                            Foreground="{DynamicResource MutedTextBrush}"
+                                            Text="{Binding AppUserModelId}"
+                                            TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListBoxItem}, Path=(ItemsControl.AlternationIndex)}" Value="0">
+                                    <Setter TargetName="ItemSeparatorBorder" Property="Border.BorderThickness" Value="0" />
+                                </DataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <TextBlock
+                    Margin="24"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource MutedTextBrush}"
+                    Text="No packaged apps were detected. If this looks wrong, reopen the picker after Store updates finish or paste the AUMID manually."
+                    TextAlignment="Center"
+                    TextWrapping="Wrap"
+                    Visibility="{Binding HasNoFilteredApps, Converter={StaticResource BoolToVisibilityConverter}}" />
+            </Grid>
+        </Border>
+
+        <StackPanel
+            Grid.Row="3"
+            Margin="0,14,0,0"
+            HorizontalAlignment="Center"
+            Orientation="Horizontal">
+            <Button
+                x:Name="RefreshButton"
+                AutomationProperties.Name="Refresh installed packaged apps"
+                Width="96"
+                Margin="0,0,12,0"
+                Click="Refresh_Click"
+                Content="Refresh" />
+            <Button
+                x:Name="CancelButton"
+                AutomationProperties.Name="Cancel packaged app selection"
+                Width="96"
+                Margin="0,0,12,0"
+                Content="Cancel"
+                IsCancel="True" />
+            <Button
+                x:Name="SelectButton"
+                AutomationProperties.Name="Select packaged app"
+                Width="96"
+                Click="Select_Click"
+                Content="Select"
+                IsDefault="True"
+                IsEnabled="{Binding CanConfirmSelection}" />
+        </StackPanel>
+    </Grid>
+</Window>
