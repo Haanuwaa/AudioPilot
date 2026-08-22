@@ -1,0 +1,29 @@
+<Project>
+  <Import Project="Version.props" Condition="Exists('Version.props')" />
+
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <Company Condition="'$(Company)' == ''">Haanuwaa</Company>
+    <Authors Condition="'$(Authors)' == ''">Haanuwaa</Authors>
+    <Product Condition="'$(Product)' == ''">AudioPilot</Product>
+    <Copyright Condition="'$(Copyright)' == ''">Copyright (c) 2026 Haanuwaa</Copyright>
+    <RepositoryUrl Condition="'$(RepositoryUrl)' == ''">https://github.com/Haanuwaa/AudioPilot</RepositoryUrl>
+    <PackageProjectUrl Condition="'$(PackageProjectUrl)' == ''">$(RepositoryUrl)</PackageProjectUrl>
+    <Version Condition="'$(Version)' == '' and '$(AudioPilotVersion)' != ''">$(AudioPilotVersion)</Version>
+    <AssemblyVersion Condition="'$(AssemblyVersion)' == '' and '$(AudioPilotAssemblyVersion)' != ''">$(AudioPilotAssemblyVersion)</AssemblyVersion>
+    <FileVersion Condition="'$(FileVersion)' == '' and '$(AudioPilotAssemblyVersion)' != ''">$(AudioPilotAssemblyVersion)</FileVersion>
+    <InformationalVersion Condition="'$(InformationalVersion)' == '' and '$(AudioPilotVersion)' != ''">$(AudioPilotVersion)</InformationalVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(BuildIsolationKey)' != ''">
+    <BaseIntermediateOutputPath>$(MSBuildProjectDirectory)\obj\isolated\$(BuildIsolationKey)\</BaseIntermediateOutputPath>
+    <MSBuildProjectExtensionsPath>$(BaseIntermediateOutputPath)</MSBuildProjectExtensionsPath>
+    <BaseOutputPath>$(MSBuildProjectDirectory)\bin\isolated\$(BuildIsolationKey)\</BaseOutputPath>
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(MSBuildProjectDirectory)\obj\**;$(MSBuildProjectDirectory)\bin\**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>
