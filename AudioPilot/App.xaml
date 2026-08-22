@@ -1,0 +1,111 @@
+﻿<Application
+    x:Class="AudioPilot.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:AudioPilot.Controls"
+    xmlns:h="clr-namespace:AudioPilot.Helpers"
+    xmlns:local="clr-namespace:AudioPilot">
+    <Application.Resources>
+        <ResourceDictionary>
+            <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+            <h:InverseBooleanToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+            <Style x:Key="AppMenuGlyphStyle" TargetType="Path">
+                <Setter Property="Width" Value="14" />
+                <Setter Property="Height" Value="14" />
+                <Setter Property="Fill" Value="Transparent" />
+                <Setter Property="Focusable" Value="False" />
+                <Setter Property="IsHitTestVisible" Value="False" />
+                <Setter Property="SnapsToDevicePixels" Value="True" />
+                <Setter Property="Stretch" Value="Uniform" />
+                <Setter Property="Stroke" Value="{Binding (TextElement.Foreground), RelativeSource={RelativeSource Self}}" />
+                <Setter Property="StrokeThickness" Value="1.25" />
+            </Style>
+            <Path
+                x:Key="AppMenuOutputIcon"
+                x:Shared="False"
+                Data="{x:Static controls:AppMenuGlyphs.Output}"
+                Style="{StaticResource AppMenuGlyphStyle}" />
+            <Path
+                x:Key="AppMenuInputIcon"
+                x:Shared="False"
+                Data="{x:Static controls:AppMenuGlyphs.Input}"
+                Style="{StaticResource AppMenuGlyphStyle}" />
+            <Path
+                x:Key="AppMenuStopIcon"
+                x:Shared="False"
+                Data="{x:Static controls:AppMenuGlyphs.Stop}"
+                Style="{StaticResource AppMenuGlyphStyle}" />
+            <Path
+                x:Key="AppMenuSetDefaultIcon"
+                x:Shared="False"
+                Data="{x:Static controls:AppMenuGlyphs.SetDefault}"
+                Style="{StaticResource AppMenuGlyphStyle}" />
+            <Path
+                x:Key="AppMenuUndoIcon"
+                x:Shared="False"
+                Data="{x:Static controls:AppMenuGlyphs.Undo}"
+                Style="{StaticResource AppMenuGlyphStyle}" />
+            <Path
+                x:Key="AppMenuRedoIcon"
+                x:Shared="False"
+                Data="{x:Static controls:AppMenuGlyphs.Redo}"
+                Style="{StaticResource AppMenuGlyphStyle}" />
+            <Path
+                x:Key="AppMenuCutIcon"
+                x:Shared="False"
+                Data="{x:Static controls:AppMenuGlyphs.Cut}"
+                Style="{StaticResource AppMenuGlyphStyle}" />
+            <Path
+                x:Key="AppMenuCopyIcon"
+                x:Shared="False"
+                Data="{x:Static controls:AppMenuGlyphs.Copy}"
+                Style="{StaticResource AppMenuGlyphStyle}" />
+            <Path
+                x:Key="AppMenuPasteIcon"
+                x:Shared="False"
+                Data="{x:Static controls:AppMenuGlyphs.Paste}"
+                Style="{StaticResource AppMenuGlyphStyle}" />
+            <Path
+                x:Key="AppMenuDeleteIcon"
+                x:Shared="False"
+                Data="{x:Static controls:AppMenuGlyphs.Delete}"
+                Style="{StaticResource AppMenuGlyphStyle}" />
+            <Path
+                x:Key="AppMenuSelectAllIcon"
+                x:Shared="False"
+                Data="{x:Static controls:AppMenuGlyphs.SelectAll}"
+                Style="{StaticResource AppMenuGlyphStyle}" />
+            <Path
+                x:Key="AppMenuDuplicateIcon"
+                x:Shared="False"
+                Data="{x:Static controls:AppMenuGlyphs.Duplicate}"
+                Style="{StaticResource AppMenuGlyphStyle}" />
+            <Style x:Key="CycleDeviceListBoxItemStyle" TargetType="ListBoxItem">
+                <Setter Property="Padding" Value="6,4" />
+                <Setter Property="FocusVisualStyle" Value="{DynamicResource AppFocusVisualStyle}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListBoxItem">
+                            <Border
+                                x:Name="Bd"
+                                Padding="{TemplateBinding Padding}"
+                                Background="Transparent"
+                                CornerRadius="2">
+                                <ContentPresenter />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlHoverBrush}" />
+                                </Trigger>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentBrush}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

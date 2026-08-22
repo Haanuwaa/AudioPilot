@@ -1,0 +1,146 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net10.0-windows10.0.19041": {
+      "H.GeneratedIcons.System.Drawing": {
+        "type": "Transitive",
+        "resolved": "2.4.1",
+        "contentHash": "gjYhuwHQzISqKhcNYaRdDhzKCoqLZii+6TTHP0MQf4Q9+H6z4f4A5Xu/j8B8XpFPQ1grCMlQYREvNyNJT9Q/Bg==",
+        "dependencies": {
+          "System.Drawing.Common": "10.0.0"
+        }
+      },
+      "H.NotifyIcon": {
+        "type": "Transitive",
+        "resolved": "2.4.1",
+        "contentHash": "nNPgNzo5UHcWYpVLO3AsRlH8fKE9shBA7/WLpZrFZUFbzpKGcLnz15Kmg0pQ851aboAfm3YuHjYFsYQges/pyw==",
+        "dependencies": {
+          "H.GeneratedIcons.System.Drawing": "2.4.1"
+        }
+      },
+      "Microsoft.Win32.SystemEvents": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "rtd1rRf5uiusn/r+hNsODiCjvA+nErw+1EQb2uCv0EedLi2GEYWgLK0V31SXzcZ2b0D7VeoOrHJ0WCQqfbO67Q=="
+      },
+      "NAudio.Core": {
+        "type": "Transitive",
+        "resolved": "3.2.0",
+        "contentHash": "XmKfK+iJ9nGwQyMB412+d0CghABNwshFdO3ZRowQ7fDTOXggN9S7J69Dw70/z6DuyfhVdSgnS0FoBtUnwZRCEQ==",
+        "dependencies": {
+          "System.Numerics.Tensors": "9.0.0"
+        }
+      },
+      "System.CodeDom": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "rTW3WGWYugm9qMihqSXXHxAIVP9Ay4ASkYc8CJLDbuscbc88lpO8U/asZpeYb9GiXbD8wNDhRoV5b2JEbHmtow=="
+      },
+      "audiopilot": {
+        "type": "Project",
+        "dependencies": {
+          "H.NotifyIcon.Wpf": "[2.4.1, )",
+          "Microsoft.Xaml.Behaviors.Wpf": "[1.1.161, )",
+          "NAudio.Wasapi": "[3.2.0, )",
+          "System.Management": "[10.0.13, )"
+        }
+      },
+      "H.NotifyIcon.Wpf": {
+        "type": "CentralTransitive",
+        "requested": "[2.4.1, )",
+        "resolved": "2.4.1",
+        "contentHash": "aDfDSHCCOWgQoIvAApiog/MhriXibacqANQm+b5GaRCgRg92u5J2QcoW2C+wIblgxhtGx3o32/DCKWRR5C/KLw==",
+        "dependencies": {
+          "H.NotifyIcon": "2.4.1"
+        }
+      },
+      "Microsoft.Xaml.Behaviors.Wpf": {
+        "type": "CentralTransitive",
+        "requested": "[1.1.161, )",
+        "resolved": "1.1.161",
+        "contentHash": "V20pH5zYDm6RPjqASdDiidUckWreGntPwDx1YUEMXiRqMVSHvypAiwSeET3ZwoJbFLMTsXXxqsoyhkNOB3Vp4Q=="
+      },
+      "NAudio.Wasapi": {
+        "type": "CentralTransitive",
+        "requested": "[3.2.0, )",
+        "resolved": "3.2.0",
+        "contentHash": "jkT7CTrkpea+2EPvmnKrFaiKibqR0PMsbqaMoe7IeX7Okr9WYF88p41RWRwxI1hg1b8FBPBjiOj7UL9H9S5DwQ==",
+        "dependencies": {
+          "NAudio.Core": "3.2.0"
+        }
+      },
+      "System.Drawing.Common": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.13, )",
+        "resolved": "10.0.13",
+        "contentHash": "s8JRuC+ec1djwT471SbZRXWCBFXCKkNNGILWD/OCmIcdL0KP0w4arMjyEZzNUuKxolperKtlxHhS+34rA4N3XA==",
+        "dependencies": {
+          "Microsoft.Win32.SystemEvents": "10.0.13"
+        }
+      },
+      "System.Management": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.13, )",
+        "resolved": "10.0.13",
+        "contentHash": "cL8qiJmJtlSIcAoZH4s07VTxTdddvEP12MFeM+KBZagn4CuD/0SFQsmKn5g9MLfiSrYjdAxIwOTO0kATY9A0UA==",
+        "dependencies": {
+          "System.CodeDom": "10.0.13"
+        }
+      },
+      "System.Numerics.Tensors": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.13, )",
+        "resolved": "10.0.13",
+        "contentHash": "E4JC7KcY4j1yx9uy8tVsHlGThnwLdUWtUz6aLHCqbN/jbtwbwbZgnVEF9atUr/7ynFCbo8Rbij056Y9bWM9ALg=="
+      }
+    },
+    "net10.0-windows10.0.19041/win-arm64": {
+      "Microsoft.Win32.SystemEvents": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "rtd1rRf5uiusn/r+hNsODiCjvA+nErw+1EQb2uCv0EedLi2GEYWgLK0V31SXzcZ2b0D7VeoOrHJ0WCQqfbO67Q=="
+      },
+      "System.Management": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.13, )",
+        "resolved": "10.0.13",
+        "contentHash": "cL8qiJmJtlSIcAoZH4s07VTxTdddvEP12MFeM+KBZagn4CuD/0SFQsmKn5g9MLfiSrYjdAxIwOTO0kATY9A0UA==",
+        "dependencies": {
+          "System.CodeDom": "10.0.13"
+        }
+      }
+    },
+    "net10.0-windows10.0.19041/win-x64": {
+      "Microsoft.Win32.SystemEvents": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "rtd1rRf5uiusn/r+hNsODiCjvA+nErw+1EQb2uCv0EedLi2GEYWgLK0V31SXzcZ2b0D7VeoOrHJ0WCQqfbO67Q=="
+      },
+      "System.Management": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.13, )",
+        "resolved": "10.0.13",
+        "contentHash": "cL8qiJmJtlSIcAoZH4s07VTxTdddvEP12MFeM+KBZagn4CuD/0SFQsmKn5g9MLfiSrYjdAxIwOTO0kATY9A0UA==",
+        "dependencies": {
+          "System.CodeDom": "10.0.13"
+        }
+      }
+    },
+    "net10.0-windows10.0.19041/win-x86": {
+      "Microsoft.Win32.SystemEvents": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "rtd1rRf5uiusn/r+hNsODiCjvA+nErw+1EQb2uCv0EedLi2GEYWgLK0V31SXzcZ2b0D7VeoOrHJ0WCQqfbO67Q=="
+      },
+      "System.Management": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.13, )",
+        "resolved": "10.0.13",
+        "contentHash": "cL8qiJmJtlSIcAoZH4s07VTxTdddvEP12MFeM+KBZagn4CuD/0SFQsmKn5g9MLfiSrYjdAxIwOTO0kATY9A0UA==",
+        "dependencies": {
+          "System.CodeDom": "10.0.13"
+        }
+      }
+    }
+  }
+}
