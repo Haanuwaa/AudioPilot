@@ -1,0 +1,203 @@
+name: Bug report
+description: Report a reproducible AudioPilot problem with the diagnostics needed to triage it
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve AudioPilot.
+
+        AudioPilot issues are much easier to diagnose when they include the right context.
+
+        Please include:
+
+        - exact repro steps,
+        - the feature area affected,
+        - relevant hotkeys, routines, or device setup,
+        - redacted CLI diagnostics and log snippets when possible.
+
+        Share-safe diagnostics are usually a good default:
+
+        ```powershell
+        AudioPilot.Cli.exe status --json --redact
+        AudioPilot.Cli.exe diagnostics status --json --redact
+        ```
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submit checklist
+      options:
+        - label: I verified this issue still occurs on the latest version.
+          required: true
+        - label: I searched existing issues to avoid duplicates.
+          required: true
+        - label: I included reproduction steps, expected behavior, and diagnostics where practical.
+          required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      description: Pick the closest feature area.
+      options:
+        - Output switching
+        - Input switching
+        - Hotkeys
+        - Routines
+        - Mixer or session volume
+        - Listen to input
+        - Tray, startup, or window behavior
+        - CLI or automation
+        - Logging or diagnostics
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe what happened and what you expected to happen.
+      placeholder: e.g. Output switch hotkey stops working after resume until the app is restored from tray.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide the exact sequence so we can reproduce reliably.
+      placeholder: |
+        1. Launch AudioPilot
+        2. Configure output cycle with ...
+        3. Minimize to tray
+        4. Disconnect or reconnect ...
+        5. Press ...
+        6. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: What should have happened?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      placeholder: What happened instead?
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      placeholder: e.g. 1.0.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Windows version
+      options:
+        - Windows 10
+        - Windows 11
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: run_mode
+    attributes:
+      label: Where does the issue happen?
+      options:
+        - Main UI or tray workflow
+        - CLI only
+        - Both UI and CLI
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: install_type
+    attributes:
+      label: Installation type
+      description: How are you running AudioPilot?
+      placeholder: e.g. Built from source / MSI installer / Portable ZIP / winget
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Device and environment details
+      description: Include only the details that matter for this issue.
+      placeholder: |
+        - Playback devices involved: speakers, USB headset, Bluetooth headset, dock audio, etc.
+        - Recording devices involved: ...
+        - Wired or Bluetooth: ...
+        - Does this happen after sleep, hotplug, reboot, app startup, or only during long sessions?
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant configuration
+      description: Include only the app settings relevant to the bug.
+      placeholder: |
+        - Output switch hotkey: ...
+        - Input switch hotkey: ...
+        - Routine trigger or name: ...
+        - Preserve audio levels: true/false
+        - Bluetooth reconnect enabled: true/false
+        - Run at startup: true/false
+        - Overlay enabled: true/false
+
+  - type: textarea
+    id: frequency
+    attributes:
+      label: Repro frequency
+      description: How often does it happen?
+      placeholder: e.g. Always, 3/5 times, only after reboot
+
+  - type: textarea
+    id: cli_diagnostics
+    attributes:
+      label: CLI diagnostics
+      description: Paste redacted command output when available. This is often the fastest way to triage switching, routine, startup, and diagnostics issues.
+      render: powershell
+      placeholder: |
+        AudioPilot.Cli.exe status --json --redact
+        AudioPilot.Cli.exe diagnostics status --json --redact
+
+        Optional, depending on the issue:
+        AudioPilot.Cli.exe cycle validate output --json --redact
+        AudioPilot.Cli.exe cycle validate input --json --redact
+        AudioPilot.Cli.exe config validate --json --redact
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs, screenshots, or recordings
+      description: Include relevant snippets from `AudioPilot.log` and screenshots or GIFs if available. Logs are redacted by default where practical, so redacted snippets are usually the right default to share.
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you already tried?
+      description: Mention any checks or workarounds you already attempted.
+      placeholder: |
+        - Restarted AudioPilot
+        - Re-saved settings
+        - Retried after refresh
+        - Tested with Bluetooth reconnect enabled or disabled
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Anything else that could help triage this issue.
