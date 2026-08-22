@@ -1,0 +1,225 @@
+name: CI
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+      docs: ${{ steps.filter.outputs.docs }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
+        with:
+          filters: |
+            code:
+              - 'AudioPilot/**'
+              - 'AudioPilot.CliHost/**'
+              - 'AudioPilot.Installer/**'
+              - 'AudioPilot.Tests/**'
+              - 'packaging/**'
+              - 'scripts/**'
+              - '.github/quality/**'
+              - '.github/actions/**'
+              - '.github/workflows/**'
+              - '.github/release-body-template.md'
+              - 'README.md'
+              - 'docs/CLI.md'
+              - 'LICENSE'
+              - '.editorconfig'
+              - '.gitattributes'
+              - 'Directory.Build.props'
+              - 'Directory.Packages.props'
+              - 'Version.props'
+              - 'global.json'
+              - 'nuget.config'
+              - 'AudioPilot.sln'
+              - 'AudioPilot.Format.slnf'
+            docs:
+              - 'README.md'
+              - 'docs/**'
+              - 'CODE_OF_CONDUCT.md'
+              - '.github/ISSUE_TEMPLATE/**'
+              - '.github/pull_request_template.md'
+
+  build:
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup .NET Solution
+        uses: ./.github/actions/setup-dotnet-solution
+        with:
+          configuration: Release
+          build: true
+
+      - name: Validate release gate policy
+        shell: pwsh
+        run: ./scripts/validate-release-gate-policy.ps1
+
+  test:
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup .NET Solution
+        uses: ./.github/actions/setup-dotnet-solution
+        with:
+          configuration: Release
+
+      - name: Audit static test-hook isolation
+        shell: pwsh
+        run: ./scripts/validate-test-isolation.ps1 -Strict
+
+      - name: Validate test runner scripts
+        shell: pwsh
+        run: ./scripts/tests/test-runner.ps1
+
+      - name: Validate MSI inspection helpers
+        shell: pwsh
+        run: ./scripts/tests/test-msi-helpers.ps1
+
+      - name: Validate local validation scripts
+        shell: pwsh
+        run: ./scripts/tests/test-validation.ps1
+
+      - name: Test
+        if: github.event_name != 'push'
+        shell: pwsh
+        run: ./scripts/run-tests.ps1 -Category unit -Configuration Release -NoRestore
+
+      - name: Upload unit test results
+        if: always() && github.event_name != 'push'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ci-testresults-unit-${{ github.run_id }}
+          path: artifacts/testresults/unit
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Test (with coverage)
+        if: github.event_name == 'push'
+        shell: pwsh
+        run: ./scripts/run-tests.ps1 -Category unit -Configuration Release -NoRestore -Coverage
+
+      - name: Enforce coverage baseline
+        if: github.event_name == 'push'
+        shell: pwsh
+        run: ./scripts/validate-coverage.ps1
+
+      - name: Upload test and coverage artifacts
+        if: always() && github.event_name == 'push'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ci-testresults-coverage-${{ github.run_id }}
+          path: artifacts/testresults/coverage
+          if-no-files-found: error
+          retention-days: 14
+
+  benchmark-readytorun:
+    needs: changes
+    if: needs.changes.outputs.code == 'true' && github.event_name == 'push'
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup .NET Solution
+        uses: ./.github/actions/setup-dotnet-solution
+        with:
+          configuration: Release
+
+      - name: Benchmark ReadyToRun publish
+        shell: pwsh
+        run: ./scripts/benchmark-readytorun.ps1 -Configuration Release
+
+      - name: Upload ReadyToRun benchmark artifact
+        if: always() && hashFiles('artifacts/benchmarks/readytorun/summary.*') != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: ci-readytorun-benchmark-${{ github.run_id }}
+          path: |
+            artifacts/benchmarks/readytorun/summary.json
+            artifacts/benchmarks/readytorun/summary.md
+          if-no-files-found: error
+          retention-days: 14
+
+  format:
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.code == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET Solution
+        uses: ./.github/actions/setup-dotnet-solution
+        with:
+          configuration: Release
+
+      - name: Validate line endings
+        shell: pwsh
+        run: ./scripts/validate-line-endings.ps1
+
+      - name: Scoped style check (changed files)
+        if: github.event_name == 'pull_request'
+        shell: pwsh
+        run: ./scripts/validate-format.ps1 -ChangedOnly
+
+      - name: Format check
+        if: github.event_name != 'pull_request'
+        shell: pwsh
+        run: ./scripts/validate-format.ps1 -Action check
+
+  docs-links:
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.docs == 'true' || needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Validate docs links
+        shell: pwsh
+        run: ./scripts/validate-doc-links.ps1
+
+      - name: Validate line endings
+        shell: pwsh
+        run: ./scripts/validate-line-endings.ps1

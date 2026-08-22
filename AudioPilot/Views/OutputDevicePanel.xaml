@@ -1,0 +1,147 @@
+<UserControl
+    x:Class="AudioPilot.Views.OutputDevicePanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    AutomationProperties.Name="Output device configuration"
+    Foreground="{DynamicResource TextBrush}">
+    <StackPanel Margin="10">
+        <Label Content="Available Output Devices:" />
+        <StackPanel Orientation="Horizontal">
+            <ComboBox
+                AutomationProperties.Name="Available output devices"
+                Width="300"
+                ItemsSource="{Binding AvailableOutputDeviceNames}"
+                SelectedIndex="{Binding SelectedAvailableOutputIndex, Mode=TwoWay}" />
+            <Button
+                Width="62"
+                AutomationProperties.Name="Add selected output device"
+                Margin="8,0,0,0"
+                Command="{Binding AddOutputCycleDeviceCommand}"
+                Content="Add" />
+        </StackPanel>
+
+        <Label Content="Output Switch Order:" />
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300" />
+                <ColumnDefinition Width="72" />
+            </Grid.ColumnDefinitions>
+
+            <ListBox
+                x:Name="SwitchOrderListBox"
+                AutomationProperties.Name="Output switch order"
+                Grid.Column="0"
+                Height="104"
+                DisplayMemberPath="DisplayName"
+                ItemsSource="{Binding OutputCycleDevices}"
+                SelectedIndex="{Binding SelectedOutputCycleIndex, Mode=TwoWay}"
+                SelectionMode="Extended">
+                <ListBox.InputBindings>
+                    <KeyBinding Key="W" Command="{Binding RemoveOutputCycleDeviceCommand}" Modifiers="Control" />
+                    <KeyBinding Key="Up" Command="{Binding MoveOutputCycleDeviceUpCommand}" Modifiers="Alt" />
+                    <KeyBinding Key="Down" Command="{Binding MoveOutputCycleDeviceDownCommand}" Modifiers="Alt" />
+                </ListBox.InputBindings>
+                <ListBox.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource CycleDeviceListBoxItemStyle}" TargetType="ListBoxItem">
+                        <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ListBox}}" />
+                        <Setter Property="ContextMenu">
+                            <Setter.Value>
+                                <ContextMenu
+                                    AutomationProperties.Name="Output device actions"
+                                    DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}"
+                                    Style="{DynamicResource AppContextMenuStyle}">
+                                    <MenuItem
+                                        AutomationProperties.Name="Test output"
+                                        Command="{Binding Tag.TestOutputDeviceCommand}"
+                                        CommandParameter="{Binding DataContext}"
+                                        Header="_Test output"
+                                        Icon="{StaticResource AppMenuOutputIcon}"
+                                        Style="{DynamicResource AppContextMenuItemStyle}"
+                                        Visibility="{Binding Tag.IsOutputTestRunning, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                                    <MenuItem
+                                        AutomationProperties.Name="Stop output test"
+                                        Command="{Binding Tag.StopAudioTestCommand}"
+                                        Header="_Stop test"
+                                        Icon="{StaticResource AppMenuStopIcon}"
+                                        Style="{DynamicResource AppContextMenuItemStyle}"
+                                        Visibility="{Binding Tag.IsOutputTestRunning, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                    <MenuItem
+                                        AutomationProperties.Name="Set as default output"
+                                        Command="{Binding Tag.SetDefaultOutputDeviceCommand}"
+                                        CommandParameter="{Binding DataContext}"
+                                        Header="Set as _default output"
+                                        Icon="{StaticResource AppMenuSetDefaultIcon}"
+                                        Style="{DynamicResource AppContextMenuItemStyle}" />
+                                </ContextMenu>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <i:Interaction.Behaviors>
+                    <b:ListBoxSelectedItemsBehavior SelectedItems="{Binding SelectedOutputCycleDevices}" />
+                </i:Interaction.Behaviors>
+            </ListBox>
+
+            <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                <Button Height="30" Margin="0,0,0,4" Command="{Binding MoveOutputCycleDeviceUpCommand}" Content="Up" />
+                <Button Height="30" Margin="0,0,0,4" Command="{Binding MoveOutputCycleDeviceDownCommand}" Content="Down" />
+                <Button Height="30" Command="{Binding RemoveOutputCycleDeviceCommand}" Content="Remove" />
+            </StackPanel>
+        </Grid>
+
+        <Border
+            AutomationProperties.LiveSetting="Polite"
+            AutomationProperties.Name="Output test status"
+            Margin="0,8,0,0"
+            Padding="8"
+            Background="{DynamicResource ControlBackgroundBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="4"
+            Visibility="{Binding IsOutputTestStatusVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+            <DockPanel LastChildFill="True">
+                <Button
+                    AutomationProperties.Name="Stop or dismiss output test"
+                    DockPanel.Dock="Right"
+                    MinWidth="62"
+                    Margin="8,0,0,0"
+                    Command="{Binding StopAudioTestCommand}"
+                    Content="{Binding AudioTestActionText}" />
+                <StackPanel>
+                    <TextBlock FontWeight="SemiBold" Text="{Binding AudioTestEndpointName}" />
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="{Binding AudioTestStatus}" TextWrapping="Wrap" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <Label Content="Hotkey:" />
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="300" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox
+                AutomationProperties.Name="Output switching hotkey"
+                Grid.Column="0"
+                ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                IsEnabled="{Binding OutputHotkeysEnabled, Mode=TwoWay}"
+                Text="{Binding Hotkey.DisplayText, Mode=OneWay}">
+                <i:Interaction.Behaviors>
+                    <b:PlaceholderExampleBehavior Identity="output-hotkey" Options="Ctrl+Alt+O|Alt+Period|Ctrl+Alt+Right" PreferredFamily="letter" />
+                    <b:HoverInfoPopupBehavior Text="{Binding Hotkey.HoverText}" WarningKind="{Binding Hotkey.WarningKind}" />
+                    <b:HotkeyCaptureBehavior Target="{Binding Hotkey}" />
+                    <b:HotkeyWarningBorderBehavior HasWarning="{Binding Hotkey.HasWarning}" WarningKind="{Binding Hotkey.WarningKind}" />
+                </i:Interaction.Behaviors>
+            </TextBox>
+            <CheckBox
+                Grid.Column="1"
+                AutomationProperties.Name="Enable output switching hotkey"
+                Margin="8,0,0,0"
+                VerticalAlignment="Center"
+                Content="Enabled"
+                IsChecked="{Binding OutputHotkeysEnabled, Mode=TwoWay}" />
+        </Grid>
+    </StackPanel>
+</UserControl>

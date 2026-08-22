@@ -1,0 +1,1386 @@
+<Window
+    x:Class="AudioPilot.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:h="clr-namespace:AudioPilot.Helpers"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:vm="clr-namespace:AudioPilot.ViewModels"
+    xmlns:views="clr-namespace:AudioPilot.Views"
+    Title="AudioPilot"
+    Width="462"
+    Height="378"
+    MinWidth="430"
+    MinHeight="320"
+    Background="{DynamicResource WindowBackgroundBrush}"
+    Foreground="{DynamicResource TextBrush}"
+    Icon="pack://application:,,,/Images/sound.ico"
+    Opacity="0"
+    ResizeMode="CanResizeWithGrip"
+    ShowActivated="False"
+    ShowInTaskbar="False"
+    WindowState="Normal">
+
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Help" Executed="OpenHelp_Executed" />
+    </Window.CommandBindings>
+
+    <Window.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding MinimizeCommand}" />
+        <KeyBinding Key="F1" Command="ApplicationCommands.Help" />
+        <KeyBinding Key="D1" Command="{Binding SelectSettingsTabCommand}" CommandParameter="0" Modifiers="Control" />
+        <KeyBinding Key="D2" Command="{Binding SelectSettingsTabCommand}" CommandParameter="1" Modifiers="Control" />
+        <KeyBinding Key="D3" Command="{Binding SelectSettingsTabCommand}" CommandParameter="2" Modifiers="Control" />
+        <KeyBinding Key="D4" Command="{Binding SelectSettingsTabCommand}" CommandParameter="3" Modifiers="Control" />
+        <KeyBinding Key="N" Command="{Binding AddRoutineCommand}" Modifiers="Control" />
+        <KeyBinding
+            Key="Tab"
+            Command="{Binding NextSettingsTabCommand}"
+            Modifiers="Control" />
+        <KeyBinding
+            Key="S"
+            Command="{Binding SaveCurrentContextCommand}"
+            Modifiers="Control" />
+        <KeyBinding Key="F5" Command="{Binding RefreshDevicesCommand}" />
+    </Window.InputBindings>
+
+    <Window.Resources>
+        <h:EnumDisplayNameConverter x:Key="EnumDisplayNameConverter" />
+        <Style x:Key="SettingsRepoLinkStyle" TargetType="{x:Type Hyperlink}">
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HotTrackBrushKey}}" />
+            <Setter Property="TextDecorations" Value="Underline" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="SettingsSectionHeaderStyle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Margin" Value="-2,0,0,6" />
+        </Style>
+        <Style x:Key="SettingsRolePillStyle" TargetType="ToggleButton">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="10,4" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="FocusVisualStyle" Value="{DynamicResource AppFocusVisualStyle}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border
+                            x:Name="Bd"
+                            Padding="{TemplateBinding Padding}"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="12">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ControlHoverBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentBrush}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
+                            </Trigger>
+                            <MultiTrigger>
+                                <MultiTrigger.Conditions>
+                                    <Condition Property="IsChecked" Value="True" />
+                                    <Condition Property="IsMouseOver" Value="True" />
+                                </MultiTrigger.Conditions>
+                                <Setter TargetName="Bd" Property="Background" Value="{DynamicResource AccentSelectionHoverBrush}" />
+                                <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource AccentSelectionHoverBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
+                            </MultiTrigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.6" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="SettingsVolumeExpanderStyle" TargetType="Expander">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource ControlBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Expander">
+                        <Border
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6">
+                            <DockPanel>
+                                <ToggleButton
+                                    x:Name="HeaderToggle"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Content="{TemplateBinding Header}"
+                                    DockPanel.Dock="Top"
+                                    FocusVisualStyle="{DynamicResource AppFocusVisualStyle}"
+                                    Focusable="True"
+                                    IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                                    OverridesDefaultStyle="True">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Padding="10,8" Background="Transparent">
+                                                <Grid>
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Path
+                                                        x:Name="ArrowGlyph"
+                                                        Grid.Column="0"
+                                                        Width="10"
+                                                        Height="10"
+                                                        Margin="0,0,8,0"
+                                                        VerticalAlignment="Center"
+                                                        Data="M 0 0 L 10 0 L 5 6 Z"
+                                                        Fill="{DynamicResource TextBrush}" />
+                                                    <ContentPresenter
+                                                        Grid.Column="1"
+                                                        VerticalAlignment="Center"
+                                                        ContentSource="Content"
+                                                        RecognizesAccessKey="True" />
+                                                </Grid>
+                                            </Border>
+
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsChecked" Value="True">
+                                                    <Setter TargetName="ArrowGlyph" Property="Data" Value="M 0 6 L 10 6 L 5 0 Z" />
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="ArrowGlyph" Property="Fill" Value="{DynamicResource AccentBrush}" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+
+                                <ContentPresenter
+                                    x:Name="ExpandSite"
+                                    Margin="10,0,10,10"
+                                    Focusable="False"
+                                    Visibility="Collapsed" />
+                            </DockPanel>
+                        </Border>
+
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsExpanded" Value="True">
+                                <Setter TargetName="ExpandSite" Property="Visibility" Value="Visible" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ResetButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource ResetButtonBackgroundBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border
+                            Padding="{TemplateBinding Padding}"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource ResetButtonHoverBrush}" />
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource ResetButtonPressedBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+
+        <Style x:Key="RoutineHotkeyWarningTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource HotkeyConflictBrush}" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="{x:Static vm:HotkeyWarningKind.Reserved}">
+                    <Setter Property="Foreground" Value="{DynamicResource HotkeyReservedBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="{x:Static vm:HotkeyWarningKind.Fallback}">
+                    <Setter Property="Foreground" Value="{DynamicResource HotkeyFallbackBrush}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <ContextMenu x:Key="HotkeyDeleteContextMenu" Style="{DynamicResource AppContextMenuStyle}">
+            <MenuItem
+                Click="ClearHotkeyText_Click"
+                Header="Delete"
+                Icon="{StaticResource AppMenuDeleteIcon}"
+                InputGestureText="Del"
+                Style="{DynamicResource AppContextMenuItemStyle}" />
+        </ContextMenu>
+
+        <ContextMenu x:Key="EditableTextContextMenu" Style="{DynamicResource AppContextMenuStyle}">
+            <MenuItem
+                Command="ApplicationCommands.Undo"
+                CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                Header="Undo"
+                Icon="{StaticResource AppMenuUndoIcon}"
+                Style="{DynamicResource AppContextMenuItemStyle}" />
+            <MenuItem
+                Command="ApplicationCommands.Redo"
+                CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                Header="Redo"
+                Icon="{StaticResource AppMenuRedoIcon}"
+                Style="{DynamicResource AppContextMenuItemStyle}" />
+            <Separator Style="{DynamicResource AppContextMenuSeparatorStyle}" />
+            <MenuItem
+                Command="ApplicationCommands.Cut"
+                CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                Header="Cut"
+                Icon="{StaticResource AppMenuCutIcon}"
+                Style="{DynamicResource AppContextMenuItemStyle}" />
+            <MenuItem
+                Command="ApplicationCommands.Copy"
+                CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                Header="Copy"
+                Icon="{StaticResource AppMenuCopyIcon}"
+                Style="{DynamicResource AppContextMenuItemStyle}" />
+            <MenuItem
+                Command="ApplicationCommands.Paste"
+                CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                Header="Paste"
+                Icon="{StaticResource AppMenuPasteIcon}"
+                Style="{DynamicResource AppContextMenuItemStyle}" />
+            <MenuItem
+                Click="ClearEditableText_Click"
+                Header="Delete"
+                Icon="{StaticResource AppMenuDeleteIcon}"
+                InputGestureText="Del"
+                Style="{DynamicResource AppContextMenuItemStyle}" />
+            <Separator Style="{DynamicResource AppContextMenuSeparatorStyle}" />
+            <MenuItem
+                Command="ApplicationCommands.SelectAll"
+                CommandTarget="{Binding PlacementTarget, RelativeSource={RelativeSource AncestorType=ContextMenu}}"
+                Header="Select All"
+                Icon="{StaticResource AppMenuSelectAllIcon}"
+                Style="{DynamicResource AppContextMenuItemStyle}" />
+        </ContextMenu>
+    </Window.Resources>
+
+    <Grid Background="Transparent" PreviewMouseDown="RootGrid_PreviewMouseDown">
+        <ScrollViewer x:Name="MainContentScrollViewer" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="0">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <Label
+                        HorizontalAlignment="Center"
+                        Content="Audio Switcher"
+                        FontSize="18"
+                        FontWeight="Bold"
+                        Visibility="{Binding IsEditorTabsActive, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <Label
+                        HorizontalAlignment="Center"
+                        Content="Routines"
+                        FontSize="18"
+                        FontWeight="Bold"
+                        Visibility="{Binding IsRoutinesTabActive, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <Label
+                        HorizontalAlignment="Center"
+                        Content="App Settings"
+                        FontSize="18"
+                        FontWeight="Bold"
+                        Visibility="{Binding IsSettingsTabActive, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                    <TabControl
+                        x:Name="DeviceTabControl"
+                        Width="400"
+                        Margin="0,6,0,0"
+                        HorizontalAlignment="Center"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        SelectedIndex="{Binding SelectedSettingsTabIndex, Mode=TwoWay}"
+                        SelectionChanged="DeviceTabControl_SelectionChanged">
+                        <TabControl.Resources>
+                            <Style TargetType="TabPanel">
+                                <Setter Property="HorizontalAlignment" Value="Center" />
+                            </Style>
+                        </TabControl.Resources>
+                        <TabItem Header="Output">
+                            <views:OutputDevicePanel x:Name="OutputDevicePanel" />
+                        </TabItem>
+
+                        <TabItem Header="Input">
+                            <b:DeferredTabContentBehavior.Template>
+                                <DataTemplate>
+                                    <views:InputDevicePanel Loaded="InputDevicePanel_Loaded" />
+                                </DataTemplate>
+                            </b:DeferredTabContentBehavior.Template>
+                        </TabItem>
+
+                        <TabItem Header="Routines">
+                            <b:DeferredTabContentBehavior.Template>
+                                <DataTemplate>
+                                    <StackPanel Margin="10">
+                                <TextBlock
+                                    Margin="0,0,0,8"
+                                    Foreground="{DynamicResource MutedTextBrush}"
+                                    Text="Routines help automatically switch the devices you want when the conditions you choose are met."
+                                    TextWrapping="Wrap" />
+
+                                <StackPanel>
+                                    <TextBlock
+                                        Margin="0,0,0,4"
+                                        FontWeight="SemiBold"
+                                        Text="Saved routines" />
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="300" />
+                                            <ColumnDefinition Width="72" />
+                                        </Grid.ColumnDefinitions>
+
+                                        <ListBox
+                                            x:Name="SavedRoutinesListBox"
+                                            AutomationProperties.Name="Saved routines"
+                                            Grid.Column="0"
+                                            Height="111"
+                                            ItemsSource="{Binding Routines}"
+                                            Loaded="SavedRoutinesListBox_Loaded"
+                                            PreviewMouseRightButtonDown="SavedRoutinesListBox_PreviewMouseRightButtonDown"
+                                            ScrollViewer.CanContentScroll="True"
+                                            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                            ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                            SelectedIndex="{Binding SelectedRoutineIndex, Mode=TwoWay}"
+                                            SelectionMode="Extended"
+                                            VirtualizingPanel.IsVirtualizing="True"
+                                            VirtualizingPanel.ScrollUnit="Pixel"
+                                            VirtualizingPanel.VirtualizationMode="Recycling">
+                                            <i:Interaction.Behaviors>
+                                                <b:ListBoxSelectedItemsBehavior SelectedItems="{Binding SelectedRoutines}" />
+                                            </i:Interaction.Behaviors>
+                                            <ListBox.ContextMenu>
+                                                <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}" Style="{DynamicResource AppContextMenuStyle}">
+                                                    <MenuItem
+                                                        Command="{Binding DuplicateRoutineCommand}"
+                                                        Header="Duplicate"
+                                                        Icon="{StaticResource AppMenuDuplicateIcon}"
+                                                        Style="{DynamicResource AppContextMenuItemStyle}" />
+                                                    <MenuItem
+                                                        Command="{Binding CopyRoutineCommand}"
+                                                        Header="Copy"
+                                                        Icon="{StaticResource AppMenuCopyIcon}"
+                                                        Style="{DynamicResource AppContextMenuItemStyle}" />
+                                                </ContextMenu>
+                                            </ListBox.ContextMenu>
+                                            <ListBox.InputBindings>
+                                                <KeyBinding Key="Enter" Command="{Binding EditRoutineCommand}" />
+                                                <KeyBinding
+                                                    Key="W"
+                                                    Command="{Binding RemoveRoutineCommand}"
+                                                    Modifiers="Control" />
+                                                <KeyBinding
+                                                    Key="Up"
+                                                    Command="{Binding MoveRoutineUpCommand}"
+                                                    Modifiers="Alt" />
+                                                <KeyBinding
+                                                    Key="Down"
+                                                    Command="{Binding MoveRoutineDownCommand}"
+                                                    Modifiers="Alt" />
+                                            </ListBox.InputBindings>
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel Margin="0,0,0,1">
+                                                        <StackPanel.Style>
+                                                            <Style TargetType="StackPanel">
+                                                                <Setter Property="Opacity" Value="1" />
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Enabled}" Value="False">
+                                                                        <Setter Property="Opacity" Value="0.58" />
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </StackPanel.Style>
+
+                                                        <Grid>
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+
+                                                            <TextBlock
+                                                                Grid.Column="0"
+                                                                Margin="0,0,6,0"
+                                                                FontSize="12"
+                                                                FontWeight="SemiBold"
+                                                                Text="{Binding DisplayName}"
+                                                                TextTrimming="CharacterEllipsis" />
+
+                                                            <StackPanel
+                                                                Grid.Column="1"
+                                                                VerticalAlignment="Center"
+                                                                Orientation="Horizontal">
+                                                                <Border
+                                                                    Margin="0,0,4,0"
+                                                                    Padding="6,1"
+                                                                    Background="{DynamicResource ControlHoverBrush}"
+                                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                                    BorderThickness="1"
+                                                                    CornerRadius="9">
+                                                                    <TextBlock
+                                                                        FontSize="10"
+                                                                        FontWeight="SemiBold"
+                                                                        Foreground="{DynamicResource MutedTextBrush}"
+                                                                        Text="{Binding TargetKindBadgeText}" />
+                                                                </Border>
+
+                                                                <Border
+                                                                    Padding="6,1"
+                                                                    Background="{DynamicResource ResetButtonBackgroundBrush}"
+                                                                    BorderBrush="Transparent"
+                                                                    BorderThickness="0"
+                                                                    CornerRadius="9">
+                                                                    <Border.Style>
+                                                                        <Style TargetType="Border">
+                                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding Enabled}" Value="False">
+                                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Border.Style>
+                                                                    <TextBlock
+                                                                        FontSize="10"
+                                                                        FontWeight="SemiBold"
+                                                                        Foreground="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"
+                                                                        Text="Disabled" />
+                                                                </Border>
+
+                                                                <Border
+                                                                    Margin="4,0,0,0"
+                                                                    Padding="6,1"
+                                                                    BorderBrush="Transparent"
+                                                                    BorderThickness="0"
+                                                                    CornerRadius="9">
+                                                                    <Border.Style>
+                                                                        <Style TargetType="Border">
+                                                                            <Setter Property="Visibility" Value="Collapsed" />
+                                                                            <Setter Property="Background" Value="{DynamicResource RoutineSucceededBrush}" />
+                                                                            <Style.Triggers>
+                                                                                <DataTrigger Binding="{Binding HasLastRunBadge}" Value="True">
+                                                                                    <Setter Property="Visibility" Value="Visible" />
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding LastRunState}" Value="WaitingForApp">
+                                                                                    <Setter Property="Background" Value="{DynamicResource RoutineWaitingBrush}" />
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding LastRunState}" Value="Failed">
+                                                                                    <Setter Property="Background" Value="{DynamicResource RoutineFailedBrush}" />
+                                                                                </DataTrigger>
+                                                                                <DataTrigger Binding="{Binding LastRunState}" Value="Skipped">
+                                                                                    <Setter Property="Background" Value="{DynamicResource RoutineSkippedBrush}" />
+                                                                                </DataTrigger>
+                                                                            </Style.Triggers>
+                                                                        </Style>
+                                                                    </Border.Style>
+                                                                    <TextBlock
+                                                                        FontSize="10"
+                                                                        FontWeight="SemiBold"
+                                                                            Foreground="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}"
+                                                                        Text="{Binding LastRunBadgeText}" />
+                                                                </Border>
+                                                            </StackPanel>
+                                                        </Grid>
+
+                                                        <TextBlock
+                                                            FontSize="11"
+                                                            Foreground="{DynamicResource MutedTextBrush}"
+                                                            Text="{Binding TriggerSummary}"
+                                                            TextTrimming="CharacterEllipsis" />
+
+                                                        <TextBlock
+                                                            FontSize="10"
+                                                            Foreground="{DynamicResource MutedTextBrush}"
+                                                            Text="{Binding LastRunStatusText}"
+                                                            TextTrimming="CharacterEllipsis" />
+
+                                                        <TextBlock
+                                                            FontSize="10"
+                                                            Foreground="{DynamicResource HotkeyConflictBrush}"
+                                                            Text="{Binding ConflictSummary}"
+                                                            TextWrapping="Wrap">
+                                                            <TextBlock.Style>
+                                                                <Style TargetType="TextBlock">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding HasConflict}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+
+                                                        <TextBlock
+                                                            FontSize="10"
+                                                            Tag="{Binding HotkeyWarningKind}"
+                                                            Text="{Binding HotkeyWarningSummary}"
+                                                            TextWrapping="Wrap">
+                                                            <TextBlock.Style>
+                                                                <Style BasedOn="{StaticResource RoutineHotkeyWarningTextStyle}" TargetType="TextBlock">
+                                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding HasHotkeyWarning}" Value="True">
+                                                                            <Setter Property="Visibility" Value="Visible" />
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </TextBlock.Style>
+                                                        </TextBlock>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+
+                                        <StackPanel
+                                            Grid.Column="1"
+                                            Margin="8,0,0,0"
+                                            VerticalAlignment="Center">
+                                            <Button
+                                                Height="30"
+                                                Margin="0,0,0,4"
+                                                Command="{Binding MoveRoutineUpCommand}"
+                                                Content="Up" />
+                                            <Button
+                                                Height="30"
+                                                Margin="0,0,0,4"
+                                                Command="{Binding MoveRoutineDownCommand}"
+                                                Content="Down" />
+                                            <Button
+                                                Height="30"
+                                                Command="{Binding RemoveRoutineCommand}"
+                                                Content="Remove" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <StackPanel
+                                        Margin="0,6,0,10"
+                                        HorizontalAlignment="Center"
+                                        Orientation="Horizontal">
+                                        <Button
+                                            Width="50"
+                                            Margin="0,0,6,0"
+                                            Command="{Binding AddRoutineCommand}"
+                                            Content="Add" />
+                                        <Button
+                                            Width="50"
+                                            Margin="0,0,6,0"
+                                            Command="{Binding EditRoutineCommand}"
+                                            Content="Edit" />
+                                        <Button
+                                            Width="60"
+                                            Margin="0,0,6,0"
+                                            Command="{Binding EnableSelectedRoutinesCommand}"
+                                            Content="Enable" />
+                                        <Button
+                                            Width="60"
+                                            Margin="0,0,6,0"
+                                            Command="{Binding DisableSelectedRoutinesCommand}"
+                                            Content="Disable" />
+                                        <Button
+                                            Width="112"
+                                            Command="{Binding SaveRoutinesCommand}"
+                                            Content="Save Routines" />
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <Border
+                                    Padding="10"
+                                    Background="{DynamicResource ControlBackgroundBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Visibility="{Binding HasNoRoutines, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <TextBlock
+                                        Foreground="{DynamicResource MutedTextBrush}"
+                                        Text="No routines yet. Click Add to create one."
+                                        TextAlignment="Center"
+                                        TextWrapping="Wrap" />
+                                </Border>
+
+                                <Border
+                                    Margin="0,0,0,8"
+                                    Padding="10"
+                                    Background="{DynamicResource ControlBackgroundBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Visibility="{Binding HasNoSelectedRoutine, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <TextBlock
+                                        Foreground="{DynamicResource MutedTextBrush}"
+                                        Text="No routine selected. Click a saved routine to view its details."
+                                        TextAlignment="Center"
+                                        TextWrapping="Wrap" />
+                                </Border>
+
+                                <TextBlock
+                                    Margin="0,0,0,4"
+                                    FontWeight="SemiBold"
+                                    Text="Routine details"
+                                    Visibility="{Binding HasSelectedRoutine, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                <Border
+                                    Padding="8"
+                                    Background="{DynamicResource ControlBackgroundBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Visibility="{Binding HasSelectedRoutine, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <StackPanel>
+                                        <TextBlock
+                                            FontSize="14"
+                                            FontWeight="Bold"
+                                            Text="{Binding SelectedRoutine.Name}"
+                                            TextWrapping="Wrap" />
+                                        <TextBlock
+                                            Margin="0,2,0,6"
+                                            Foreground="{DynamicResource MutedTextBrush}"
+                                            Text="{Binding SelectedRoutine.StatusLabel}" />
+
+                                        <TextBlock
+                                            FontWeight="SemiBold"
+                                            Text="Output"
+                                            Visibility="{Binding SelectedRoutine.HasOutputTarget, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                        <TextBlock
+                                            Margin="0,2,0,6"
+                                            Text="{Binding SelectedRoutine.OutputDeviceName}"
+                                            TextWrapping="Wrap"
+                                            Visibility="{Binding SelectedRoutine.HasOutputTarget, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                        <TextBlock
+                                            FontWeight="SemiBold"
+                                            Text="Input"
+                                            Visibility="{Binding SelectedRoutine.HasInputTarget, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                        <TextBlock
+                                            Margin="0,2,0,6"
+                                            Text="{Binding SelectedRoutine.InputDeviceName}"
+                                            TextWrapping="Wrap"
+                                            Visibility="{Binding SelectedRoutine.HasInputTarget, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                        <TextBlock
+                                            FontWeight="SemiBold"
+                                            Text="Master volume"
+                                            Visibility="{Binding SelectedRoutine.HasMasterVolumeTarget, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                        <TextBlock
+                                            Margin="0,2,0,6"
+                                            Text="{Binding SelectedRoutine.MasterVolumePercent, StringFormat={}{0}%}"
+                                            TextWrapping="Wrap"
+                                            Visibility="{Binding SelectedRoutine.HasMasterVolumeTarget, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                        <TextBlock
+                                            FontWeight="SemiBold"
+                                            Text="Microphone volume"
+                                            Visibility="{Binding SelectedRoutine.HasMicVolumeTarget, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                        <TextBlock
+                                            Margin="0,2,0,6"
+                                            Text="{Binding SelectedRoutine.MicVolumePercent, StringFormat={}{0}%}"
+                                            TextWrapping="Wrap"
+                                            Visibility="{Binding SelectedRoutine.HasMicVolumeTarget, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                        <TextBlock FontWeight="SemiBold" Text="Triggers" />
+                                        <TextBlock
+                                            Margin="0,2,0,0"
+                                            Text="{Binding SelectedRoutine.RoutineDetailsTriggerSummary}"
+                                            TextWrapping="Wrap" />
+                                        <TextBlock
+                                            Margin="0,2,0,0"
+                                            AutomationProperties.HelpText="{Binding SelectedRoutine.ScheduleTimeZoneDetails}"
+                                            Text="{Binding SelectedRoutine.ScheduleTimeZoneDisplay, StringFormat='Time zone: {0}'}"
+                                            TextWrapping="Wrap"
+                                            Visibility="{Binding SelectedRoutine.HasScheduledTrigger, Converter={StaticResource BoolToVisibilityConverter}}">
+                                            <i:Interaction.Behaviors>
+                                                <b:HoverInfoPopupBehavior Text="{Binding SelectedRoutine.ScheduleTimeZoneDetails}" />
+                                            </i:Interaction.Behaviors>
+                                        </TextBlock>
+
+                                        <TextBlock
+                                            Margin="0,6,0,0"
+                                            FontWeight="SemiBold"
+                                            Text="Options"
+                                            Visibility="{Binding SelectedRoutine.HasRoutineDetailsOptions, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                        <TextBlock
+                                            Margin="0,2,0,0"
+                                            Text="{Binding SelectedRoutine.RoutineDetailsOptionsSummary}"
+                                            TextWrapping="Wrap"
+                                            Visibility="{Binding SelectedRoutine.HasRoutineDetailsOptions, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                        <TextBlock
+                                            Margin="0,6,0,0"
+                                            FontWeight="SemiBold"
+                                            Foreground="{DynamicResource HotkeyConflictBrush}"
+                                            Text="Conflict warning"
+                                            Visibility="{Binding SelectedRoutine.HasConflict, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                        <TextBlock
+                                            Margin="0,2,0,0"
+                                            Foreground="{DynamicResource HotkeyConflictBrush}"
+                                            Text="{Binding SelectedRoutine.ConflictSummary}"
+                                            TextWrapping="Wrap"
+                                            Visibility="{Binding SelectedRoutine.HasConflict, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                        <TextBlock
+                                            Margin="0,6,0,0"
+                                            FontWeight="SemiBold"
+                                            Style="{StaticResource RoutineHotkeyWarningTextStyle}"
+                                            Tag="{Binding SelectedRoutine.HotkeyWarningKind}"
+                                            Text="Hotkey warning"
+                                            Visibility="{Binding SelectedRoutine.HasHotkeyWarning, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                        <TextBlock
+                                            Margin="0,2,0,0"
+                                            Style="{StaticResource RoutineHotkeyWarningTextStyle}"
+                                            Tag="{Binding SelectedRoutine.HotkeyWarningKind}"
+                                            Text="{Binding SelectedRoutine.HotkeyWarningSummary}"
+                                            TextWrapping="Wrap"
+                                            Visibility="{Binding SelectedRoutine.HasHotkeyWarning, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                                        <TextBlock
+                                            Margin="0,6,0,0"
+                                            FontWeight="SemiBold"
+                                            Text="Application target"
+                                            Visibility="{Binding SelectedRoutine.HasApplicationTrigger, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                        <TextBlock
+                                            Margin="0,2,0,0"
+                                            Text="{Binding SelectedRoutine.TriggerAppPath}"
+                                            TextWrapping="Wrap"
+                                            Visibility="{Binding SelectedRoutine.HasApplicationTrigger, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                    </StackPanel>
+                                </Border>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </b:DeferredTabContentBehavior.Template>
+                        </TabItem>
+
+                        <TabItem Header="Settings">
+                            <b:DeferredTabContentBehavior.Template>
+                                <DataTemplate>
+                                    <StackPanel Margin="20,10,20,10">
+                                <Border
+                                    Margin="0,0,0,10"
+                                    HorizontalAlignment="Center"
+                                    FocusVisualStyle="{DynamicResource AppFocusVisualStyle}"
+                                    Focusable="True"
+                                    KeyDown="RepoLinkBorder_KeyDown">
+                                    <TextBlock>
+                                        <Hyperlink
+                                            x:Name="RepoLink"
+                                            Focusable="False"
+                                            NavigateUri="https://github.com/Haanuwaa/AudioPilot"
+                                            RequestNavigate="RepoLink_RequestNavigate"
+                                            Style="{StaticResource SettingsRepoLinkStyle}">
+                                            Project repository
+                                        </Hyperlink>
+                                    </TextBlock>
+                                </Border>
+
+                                <TextBlock
+                                    Margin="0,0,0,14"
+                                    Foreground="{DynamicResource MutedTextBrush}"
+                                    Text="Changes here are applied only when you click the &quot;Apply Settings&quot; button"
+                                    TextAlignment="Center"
+                                    TextWrapping="Wrap">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsAutoSaveActive}" Value="True">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+
+                                <Border
+                                    Margin="0,0,0,14"
+                                    Padding="8,2"
+                                    HorizontalAlignment="Center"
+                                    Background="{DynamicResource ControlHoverBrush}"
+                                    BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="10"
+                                    Visibility="{Binding IsAutoSaveActive, Converter={StaticResource BoolToVisibilityConverter}}">
+                                    <TextBlock
+                                        FontSize="11"
+                                        Foreground="{DynamicResource MutedTextBrush}"
+                                        Text="Auto-save is on" />
+                                </Border>
+
+                                <views:SettingsDeviceSwitchingPanel />
+                                <TextBlock Style="{StaticResource SettingsSectionHeaderStyle}" Text="Global Hotkeys" />
+
+                                <TextBlock
+                                    Margin="0,0,0,10"
+                                    Foreground="{DynamicResource MutedTextBrush}"
+                                    Text="Leave blank to disable a hotkey" />
+
+                                <TextBlock
+                                    Margin="0,0,0,6"
+                                    FontWeight="SemiBold"
+                                    Text="App" />
+
+                                <StackPanel Margin="0,0,0,10" Orientation="Horizontal">
+                                    <Label
+                                        Width="150"
+                                        VerticalAlignment="Center"
+                                        Content="Show / Hide App:" />
+                                    <TextBox
+                                        Width="170"
+                                        AutomationProperties.Name="Show or hide app hotkey"
+                                        ContextMenu="{StaticResource HotkeyDeleteContextMenu}"
+                                        Text="{Binding SettingsToggleAppVisibilityHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                                        <i:Interaction.Behaviors>
+                                            <b:PlaceholderExampleBehavior
+                                                Identity="toggle-app-visibility-hotkey"
+                                                Options="Ctrl+Alt+H|Ctrl+Shift+A|Alt+MouseMiddle"
+                                                PreferredFamily="letter" />
+                                            <b:HoverInfoPopupBehavior Text="{Binding SettingsToggleAppVisibilityHotkeyDraftCapture.HoverText}" WarningKind="{Binding SettingsToggleAppVisibilityHotkeyDraftCapture.WarningKind}" />
+                                            <b:HotkeyCaptureBehavior Target="{Binding SettingsToggleAppVisibilityHotkeyDraftCapture}" />
+                                            <b:HotkeyWarningBorderBehavior HasWarning="{Binding SettingsToggleAppVisibilityHotkeyDraftCapture.HasWarning}" WarningKind="{Binding SettingsToggleAppVisibilityHotkeyDraftCapture.WarningKind}" />
+                                        </i:Interaction.Behaviors>
+                                    </TextBox>
+                                </StackPanel>
+
+                                <TextBlock
+                                    Margin="0,0,0,6"
+                                    FontWeight="SemiBold"
+                                    Text="Media" />
+
+                                <StackPanel Margin="0,0,0,8" Orientation="Horizontal">
+                                    <Label
+                                        Width="150"
+                                        VerticalAlignment="Center"
+                                        Content="Show Current Track:" />
+                                    <TextBox
+                                        Width="170"
+                                        AutomationProperties.Name="Show current track hotkey"
+                                        ContextMenu="{StaticResource HotkeyDeleteContextMenu}"
+                                        Text="{Binding SettingsShowCurrentTrackHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                                        <i:Interaction.Behaviors>
+                                            <b:PlaceholderExampleBehavior
+                                                Identity="show-current-track-hotkey"
+                                                Options="Ctrl+Alt+T|Ctrl+Shift+I|Alt+MouseMiddle"
+                                                PreferredFamily="letter" />
+                                            <b:HoverInfoPopupBehavior Text="{Binding SettingsShowCurrentTrackHotkeyDraftCapture.HoverText}" WarningKind="{Binding SettingsShowCurrentTrackHotkeyDraftCapture.WarningKind}" />
+                                            <b:HotkeyCaptureBehavior Target="{Binding SettingsShowCurrentTrackHotkeyDraftCapture}" />
+                                            <b:HotkeyWarningBorderBehavior HasWarning="{Binding SettingsShowCurrentTrackHotkeyDraftCapture.HasWarning}" WarningKind="{Binding SettingsShowCurrentTrackHotkeyDraftCapture.WarningKind}" />
+                                        </i:Interaction.Behaviors>
+                                    </TextBox>
+                                </StackPanel>
+
+                                <StackPanel Margin="0,0,0,8" Orientation="Horizontal">
+                                    <Label
+                                        Width="150"
+                                        VerticalAlignment="Center"
+                                        Content="Play/Pause:" />
+                                    <TextBox
+                                        Width="170"
+                                        AutomationProperties.Name="Play or pause hotkey"
+                                        ContextMenu="{StaticResource HotkeyDeleteContextMenu}"
+                                        Text="{Binding SettingsPlayPauseHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                                        <i:Interaction.Behaviors>
+                                            <b:PlaceholderExampleBehavior
+                                                Identity="play-pause-hotkey"
+                                                Options="Ctrl+Alt+P|Ctrl+Shift+P|Alt+MouseMiddle"
+                                                PreferredFamily="mouse-middle" />
+                                            <b:HoverInfoPopupBehavior Text="{Binding SettingsPlayPauseHotkeyDraftCapture.HoverText}" WarningKind="{Binding SettingsPlayPauseHotkeyDraftCapture.WarningKind}" />
+                                            <b:HotkeyCaptureBehavior Target="{Binding SettingsPlayPauseHotkeyDraftCapture}" />
+                                            <b:HotkeyWarningBorderBehavior HasWarning="{Binding SettingsPlayPauseHotkeyDraftCapture.HasWarning}" WarningKind="{Binding SettingsPlayPauseHotkeyDraftCapture.WarningKind}" />
+                                        </i:Interaction.Behaviors>
+                                    </TextBox>
+                                </StackPanel>
+
+                                <StackPanel Margin="0,0,0,8" Orientation="Horizontal">
+                                    <Label
+                                        Width="150"
+                                        VerticalAlignment="Center"
+                                        Content="Next Track:" />
+                                    <TextBox
+                                        Width="170"
+                                        AutomationProperties.Name="Next track hotkey"
+                                        ContextMenu="{StaticResource HotkeyDeleteContextMenu}"
+                                        Text="{Binding SettingsNextTrackHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                                        <i:Interaction.Behaviors>
+                                            <b:PlaceholderExampleBehavior
+                                                Identity="next-track-hotkey"
+                                                Options="Ctrl+Alt+Right|Ctrl+Shift+N|Alt+MouseX2"
+                                                PreferredFamily="mouse-x2" />
+                                            <b:HoverInfoPopupBehavior Text="{Binding SettingsNextTrackHotkeyDraftCapture.HoverText}" WarningKind="{Binding SettingsNextTrackHotkeyDraftCapture.WarningKind}" />
+                                            <b:HotkeyCaptureBehavior Target="{Binding SettingsNextTrackHotkeyDraftCapture}" />
+                                            <b:HotkeyWarningBorderBehavior HasWarning="{Binding SettingsNextTrackHotkeyDraftCapture.HasWarning}" WarningKind="{Binding SettingsNextTrackHotkeyDraftCapture.WarningKind}" />
+                                        </i:Interaction.Behaviors>
+                                    </TextBox>
+                                </StackPanel>
+
+                                <StackPanel Margin="0,0,0,8" Orientation="Horizontal">
+                                    <Label
+                                        Width="150"
+                                        VerticalAlignment="Center"
+                                        Content="Previous Track:" />
+                                    <TextBox
+                                        Width="170"
+                                        AutomationProperties.Name="Previous track hotkey"
+                                        ContextMenu="{StaticResource HotkeyDeleteContextMenu}"
+                                        Text="{Binding SettingsPreviousTrackHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                                        <i:Interaction.Behaviors>
+                                            <b:PlaceholderExampleBehavior
+                                                Identity="previous-track-hotkey"
+                                                Options="Ctrl+Alt+Left|Ctrl+Shift+Left|Alt+MouseX1"
+                                                PreferredFamily="mouse-x1" />
+                                            <b:HoverInfoPopupBehavior Text="{Binding SettingsPreviousTrackHotkeyDraftCapture.HoverText}" WarningKind="{Binding SettingsPreviousTrackHotkeyDraftCapture.WarningKind}" />
+                                            <b:HotkeyCaptureBehavior Target="{Binding SettingsPreviousTrackHotkeyDraftCapture}" />
+                                            <b:HotkeyWarningBorderBehavior HasWarning="{Binding SettingsPreviousTrackHotkeyDraftCapture.HasWarning}" WarningKind="{Binding SettingsPreviousTrackHotkeyDraftCapture.WarningKind}" />
+                                        </i:Interaction.Behaviors>
+                                    </TextBox>
+                                </StackPanel>
+
+                                <TextBlock
+                                    Margin="0,0,0,6"
+                                    FontWeight="SemiBold"
+                                    Text="Mute Controls" />
+
+                                <StackPanel Margin="0,0,0,8" Orientation="Horizontal">
+                                    <Label
+                                        Width="150"
+                                        VerticalAlignment="Center"
+                                        Content="Toggle Mic:" />
+                                    <TextBox
+                                        Width="170"
+                                        AutomationProperties.Name="Toggle microphone mute hotkey"
+                                        ContextMenu="{StaticResource HotkeyDeleteContextMenu}"
+                                        Text="{Binding SettingsMuteMicHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                                        <i:Interaction.Behaviors>
+                                            <b:PlaceholderExampleBehavior
+                                                Identity="mute-mic-hotkey"
+                                                Options="Ctrl+Alt+M|Ctrl+Shift+M|Alt+MouseX1"
+                                                PreferredFamily="letter" />
+                                            <b:HoverInfoPopupBehavior Text="{Binding SettingsMuteMicHotkeyDraftCapture.HoverText}" WarningKind="{Binding SettingsMuteMicHotkeyDraftCapture.WarningKind}" />
+                                            <b:HotkeyCaptureBehavior Target="{Binding SettingsMuteMicHotkeyDraftCapture}" />
+                                            <b:HotkeyWarningBorderBehavior HasWarning="{Binding SettingsMuteMicHotkeyDraftCapture.HasWarning}" WarningKind="{Binding SettingsMuteMicHotkeyDraftCapture.WarningKind}" />
+                                        </i:Interaction.Behaviors>
+                                    </TextBox>
+                                </StackPanel>
+
+                                <StackPanel Margin="0,0,0,8" Orientation="Horizontal">
+                                    <Label
+                                        Width="150"
+                                        VerticalAlignment="Center"
+                                        Content="Toggle Sound:" />
+                                    <TextBox
+                                        Width="170"
+                                        AutomationProperties.Name="Toggle sound mute hotkey"
+                                        ContextMenu="{StaticResource HotkeyDeleteContextMenu}"
+                                        Text="{Binding SettingsMuteSoundHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                                        <i:Interaction.Behaviors>
+                                            <b:PlaceholderExampleBehavior
+                                                Identity="mute-sound-hotkey"
+                                                Options="Ctrl+Alt+S|Ctrl+Shift+S|Alt+MouseX2"
+                                                PreferredFamily="letter" />
+                                            <b:HoverInfoPopupBehavior Text="{Binding SettingsMuteSoundHotkeyDraftCapture.HoverText}" WarningKind="{Binding SettingsMuteSoundHotkeyDraftCapture.WarningKind}" />
+                                            <b:HotkeyCaptureBehavior Target="{Binding SettingsMuteSoundHotkeyDraftCapture}" />
+                                            <b:HotkeyWarningBorderBehavior HasWarning="{Binding SettingsMuteSoundHotkeyDraftCapture.HasWarning}" WarningKind="{Binding SettingsMuteSoundHotkeyDraftCapture.WarningKind}" />
+                                        </i:Interaction.Behaviors>
+                                    </TextBox>
+                                </StackPanel>
+
+                                <StackPanel Margin="0,0,0,14" Orientation="Horizontal">
+                                    <Label
+                                        Width="150"
+                                        VerticalAlignment="Center"
+                                        Content="Toggle Deafen:" />
+                                    <TextBox
+                                        Width="170"
+                                        AutomationProperties.Name="Toggle deafen hotkey"
+                                        ContextMenu="{StaticResource HotkeyDeleteContextMenu}"
+                                        Text="{Binding SettingsDeafenHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                                        <i:Interaction.Behaviors>
+                                            <b:PlaceholderExampleBehavior
+                                                Identity="deafen-hotkey"
+                                                Options="Ctrl+Alt+D|Ctrl+Shift+D|Alt+MouseMiddle"
+                                                PreferredFamily="letter" />
+                                            <b:HoverInfoPopupBehavior Text="{Binding SettingsDeafenHotkeyDraftCapture.HoverText}" WarningKind="{Binding SettingsDeafenHotkeyDraftCapture.WarningKind}" />
+                                            <b:HotkeyCaptureBehavior Target="{Binding SettingsDeafenHotkeyDraftCapture}" />
+                                            <b:HotkeyWarningBorderBehavior HasWarning="{Binding SettingsDeafenHotkeyDraftCapture.HasWarning}" WarningKind="{Binding SettingsDeafenHotkeyDraftCapture.WarningKind}" />
+                                        </i:Interaction.Behaviors>
+                                    </TextBox>
+                                </StackPanel>
+
+                                <TextBlock
+                                    Margin="0,0,0,6"
+                                    FontWeight="SemiBold"
+                                    Text="Volume Controls" />
+
+                                <StackPanel Margin="0,0,0,18">
+                                    <Expander
+                                        Margin="0,0,0,8"
+                                        IsExpanded="{Binding SettingsMasterVolumeControlsExpanded, Mode=TwoWay}"
+                                        Style="{StaticResource SettingsVolumeExpanderStyle}">
+                                        <Expander.Header>
+                                            <TextBlock FontWeight="SemiBold" Text="Master Volume" />
+                                        </Expander.Header>
+                                        <StackPanel>
+                                            <StackPanel Margin="0,0,0,8" Orientation="Horizontal">
+                                                <Label
+                                                    Width="150"
+                                                    VerticalAlignment="Center"
+                                                    Content="Master Volume Up:" />
+                                                <TextBox
+                                                    Width="170"
+                                                    AutomationProperties.Name="Master volume up hotkey"
+                                                    ContextMenu="{StaticResource HotkeyDeleteContextMenu}"
+                                                    Text="{Binding SettingsMasterVolumeUpHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                                                    <i:Interaction.Behaviors>
+                                                        <b:PlaceholderExampleBehavior
+                                                            Identity="master-volume-up-hotkey"
+                                                            Options="Ctrl+PageUp|Ctrl+Alt+Up|Alt+WheelUp"
+                                                            PreferredFamily="wheel-up" />
+                                                        <b:HoverInfoPopupBehavior Text="{Binding SettingsMasterVolumeUpHotkeyDraftCapture.HoverText}" WarningKind="{Binding SettingsMasterVolumeUpHotkeyDraftCapture.WarningKind}" />
+                                                        <b:HotkeyCaptureBehavior Target="{Binding SettingsMasterVolumeUpHotkeyDraftCapture}" />
+                                                        <b:HotkeyWarningBorderBehavior HasWarning="{Binding SettingsMasterVolumeUpHotkeyDraftCapture.HasWarning}" WarningKind="{Binding SettingsMasterVolumeUpHotkeyDraftCapture.WarningKind}" />
+                                                    </i:Interaction.Behaviors>
+                                                </TextBox>
+                                            </StackPanel>
+
+                                            <StackPanel Margin="0,0,0,8" Orientation="Horizontal">
+                                                <Label
+                                                    Width="150"
+                                                    VerticalAlignment="Center"
+                                                    Content="Master Volume Down:" />
+                                                <TextBox
+                                                    Width="170"
+                                                    AutomationProperties.Name="Master volume down hotkey"
+                                                    ContextMenu="{StaticResource HotkeyDeleteContextMenu}"
+                                                    Text="{Binding SettingsMasterVolumeDownHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                                                    <i:Interaction.Behaviors>
+                                                        <b:PlaceholderExampleBehavior
+                                                            Identity="master-volume-down-hotkey"
+                                                            Options="Ctrl+PageDown|Ctrl+Alt+Down|Alt+WheelDown"
+                                                            PreferredFamily="wheel-down" />
+                                                        <b:HoverInfoPopupBehavior Text="{Binding SettingsMasterVolumeDownHotkeyDraftCapture.HoverText}" WarningKind="{Binding SettingsMasterVolumeDownHotkeyDraftCapture.WarningKind}" />
+                                                        <b:HotkeyCaptureBehavior Target="{Binding SettingsMasterVolumeDownHotkeyDraftCapture}" />
+                                                        <b:HotkeyWarningBorderBehavior HasWarning="{Binding SettingsMasterVolumeDownHotkeyDraftCapture.HasWarning}" WarningKind="{Binding SettingsMasterVolumeDownHotkeyDraftCapture.WarningKind}" />
+                                                    </i:Interaction.Behaviors>
+                                                </TextBox>
+                                            </StackPanel>
+
+                                            <StackPanel Orientation="Horizontal">
+                                                <Label
+                                                    Width="150"
+                                                    VerticalAlignment="Center"
+                                                    Content="Master Step (%):" />
+                                                <TextBox
+                                                    Width="80"
+                                                    AutomationProperties.Name="Master volume step percent"
+                                                    b:TextBoxPlaceholderBehavior.Text="5"
+                                                    ContextMenu="{StaticResource EditableTextContextMenu}"
+                                                    InputScope="Number"
+                                                    Text="{Binding SettingsMasterVolumeStepPercentDraft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                                    <i:Interaction.Behaviors>
+                                                        <b:HoverInfoPopupBehavior Text="Sets how much each master volume hotkey press changes the default output volume. Use 1 to 100." />
+                                                        <b:IntegerOnlyBehavior />
+                                                    </i:Interaction.Behaviors>
+                                                </TextBox>
+                                                <TextBlock
+                                                    Margin="8,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{DynamicResource MutedTextBrush}"
+                                                    Text="(1 to 100)" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Expander>
+
+                                    <Expander IsExpanded="{Binding SettingsMicVolumeControlsExpanded, Mode=TwoWay}" Style="{StaticResource SettingsVolumeExpanderStyle}">
+                                        <Expander.Header>
+                                            <TextBlock FontWeight="SemiBold" Text="Microphone Volume" />
+                                        </Expander.Header>
+                                        <StackPanel>
+                                            <StackPanel Margin="0,0,0,8" Orientation="Horizontal">
+                                                <Label
+                                                    Width="150"
+                                                    VerticalAlignment="Center"
+                                                    Content="Mic Volume Up:" />
+                                                <TextBox
+                                                    Width="170"
+                                                    AutomationProperties.Name="Microphone volume up hotkey"
+                                                    ContextMenu="{StaticResource HotkeyDeleteContextMenu}"
+                                                    Text="{Binding SettingsMicVolumeUpHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                                                    <i:Interaction.Behaviors>
+                                                        <b:PlaceholderExampleBehavior
+                                                            Identity="mic-volume-up-hotkey"
+                                                            Options="Ctrl+Home|Ctrl+Shift+Up|Alt+WheelUp"
+                                                            PreferredFamily="wheel-up" />
+                                                        <b:HoverInfoPopupBehavior Text="{Binding SettingsMicVolumeUpHotkeyDraftCapture.HoverText}" WarningKind="{Binding SettingsMicVolumeUpHotkeyDraftCapture.WarningKind}" />
+                                                        <b:HotkeyCaptureBehavior Target="{Binding SettingsMicVolumeUpHotkeyDraftCapture}" />
+                                                        <b:HotkeyWarningBorderBehavior HasWarning="{Binding SettingsMicVolumeUpHotkeyDraftCapture.HasWarning}" WarningKind="{Binding SettingsMicVolumeUpHotkeyDraftCapture.WarningKind}" />
+                                                    </i:Interaction.Behaviors>
+                                                </TextBox>
+                                            </StackPanel>
+
+                                            <StackPanel Margin="0,0,0,8" Orientation="Horizontal">
+                                                <Label
+                                                    Width="150"
+                                                    VerticalAlignment="Center"
+                                                    Content="Mic Volume Down:" />
+                                                <TextBox
+                                                    Width="170"
+                                                    AutomationProperties.Name="Microphone volume down hotkey"
+                                                    ContextMenu="{StaticResource HotkeyDeleteContextMenu}"
+                                                    Text="{Binding SettingsMicVolumeDownHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                                                    <i:Interaction.Behaviors>
+                                                        <b:PlaceholderExampleBehavior
+                                                            Identity="mic-volume-down-hotkey"
+                                                            Options="Ctrl+End|Ctrl+Shift+Down|Alt+WheelDown"
+                                                            PreferredFamily="wheel-down" />
+                                                        <b:HoverInfoPopupBehavior Text="{Binding SettingsMicVolumeDownHotkeyDraftCapture.HoverText}" WarningKind="{Binding SettingsMicVolumeDownHotkeyDraftCapture.WarningKind}" />
+                                                        <b:HotkeyCaptureBehavior Target="{Binding SettingsMicVolumeDownHotkeyDraftCapture}" />
+                                                        <b:HotkeyWarningBorderBehavior HasWarning="{Binding SettingsMicVolumeDownHotkeyDraftCapture.HasWarning}" WarningKind="{Binding SettingsMicVolumeDownHotkeyDraftCapture.WarningKind}" />
+                                                    </i:Interaction.Behaviors>
+                                                </TextBox>
+                                            </StackPanel>
+
+                                            <StackPanel Orientation="Horizontal">
+                                                <Label
+                                                    Width="150"
+                                                    VerticalAlignment="Center"
+                                                    Content="Mic Step (%):" />
+                                                <TextBox
+                                                    Width="80"
+                                                    AutomationProperties.Name="Microphone volume step percent"
+                                                    b:TextBoxPlaceholderBehavior.Text="5"
+                                                    ContextMenu="{StaticResource EditableTextContextMenu}"
+                                                    InputScope="Number"
+                                                    Text="{Binding SettingsMicVolumeStepPercentDraft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                                    <i:Interaction.Behaviors>
+                                                        <b:HoverInfoPopupBehavior Text="Sets how much each mic volume hotkey press changes the default microphone volume. Use 1 to 100." />
+                                                        <b:IntegerOnlyBehavior />
+                                                    </i:Interaction.Behaviors>
+                                                </TextBox>
+                                                <TextBlock
+                                                    Margin="8,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    Foreground="{DynamicResource MutedTextBrush}"
+                                                    Text="(1 to 100)" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </Expander>
+                                </StackPanel>
+
+                                <views:SettingsGeneralPanel />
+                                <StackPanel HorizontalAlignment="Center" Orientation="Horizontal">
+                                    <Button
+                                        Width="105"
+                                        Margin="0,0,8,0"
+                                        Command="{Binding ImportSettingsCommand}"
+                                        Content="Import Settings" />
+                                    <Button
+                                        Width="130"
+                                        Margin="0,0,8,0"
+                                        Command="{Binding ApplySettingsCommand}"
+                                        Content="Apply Settings" />
+                                    <Button
+                                        Width="105"
+                                        Command="{Binding ExportSettingsCommand}"
+                                        Content="Export Settings" />
+                                </StackPanel>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </b:DeferredTabContentBehavior.Template>
+                        </TabItem>
+                    </TabControl>
+
+                    <StackPanel
+                        Margin="10"
+                        HorizontalAlignment="Center"
+                        Orientation="Horizontal"
+                        Visibility="{Binding IsEditorTabsActive, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Button
+                            Margin="5"
+                            Command="{Binding RefreshDevicesCommand}"
+                            Content="Refresh" />
+                        <Button
+                            Margin="5"
+                            Command="{Binding SaveSettingsCommand}"
+                            Content="Save Settings" />
+                        <CheckBox
+                            Margin="5,5,0,5"
+                            Content="Run at Startup"
+                            IsChecked="{Binding RunAtStartup, Mode=TwoWay}" />
+                        <ComboBox
+                            Width="70"
+                            Margin="9,5,0,5"
+                            AutomationProperties.Name="Application theme"
+                            ItemsSource="{Binding AvailableThemes}"
+                            SelectedItem="{Binding Theme, Mode=TwoWay}" />
+                    </StackPanel>
+
+                </StackPanel>
+
+                <Label
+                    x:Name="VolumeMixerHeader"
+                    HorizontalAlignment="Center"
+                    Content="{Binding ActiveMixerHeader}"
+                    FontSize="18"
+                    FontWeight="Bold"
+                    Visibility="{Binding IsEditorTabsActive, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    Orientation="Horizontal"
+                    Visibility="{Binding IsEditorTabsActive, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <CheckBox
+                        Margin="5"
+                        Content="Mute Mic"
+                        IsChecked="{Binding MuteMic, Mode=TwoWay}" />
+                    <CheckBox
+                        Margin="5"
+                        Content="Deafen"
+                        IsChecked="{Binding Deafen, Mode=TwoWay}" />
+                    <CheckBox
+                        Margin="5"
+                        Content="Mute Sound"
+                        IsChecked="{Binding MuteSound, Mode=TwoWay}" />
+                </StackPanel>
+
+                <ListBox
+                    Name="VolumeMixer"
+                    AutomationProperties.Name="Volume mixer sessions"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Focusable="False"
+                    IsTabStop="False"
+                    ItemsSource="{Binding ActiveMixerSessions}"
+                    KeyboardNavigation.TabNavigation="Continue"
+                    PreviewMouseWheel="VolumeMixer_PreviewMouseWheel"
+                    ScrollViewer.CanContentScroll="True"
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                    ScrollViewer.VerticalScrollBarVisibility="Auto"
+                    SelectionChanged="VolumeMixer_SelectionChanged"
+                    VirtualizingPanel.IsVirtualizing="True"
+                    VirtualizingPanel.ScrollUnit="Pixel"
+                    VirtualizingPanel.VirtualizationMode="Recycling"
+                    Visibility="{Binding IsEditorTabsActive, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Focusable" Value="False" />
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="BorderThickness" Value="0" />
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="Margin" Value="0" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="VerticalContentAlignment" Value="Center" />
+                            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <ContentPresenter />
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid HorizontalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="190" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Label
+                                    Grid.Column="0"
+                                    Width="175"
+                                    Margin="0,0,20,0"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center">
+                                    <i:Interaction.Behaviors>
+                                        <b:TrimmedTextPopupBehavior />
+                                    </i:Interaction.Behaviors>
+                                    <TextBlock
+                                        Text="{Binding DisplayName}"
+                                        TextTrimming="CharacterEllipsis"
+                                        TextWrapping="NoWrap" />
+                                    <Label.Style>
+                                        <Style BasedOn="{StaticResource {x:Type Label}}" TargetType="{x:Type Label}">
+                                            <Setter Property="FontWeight" Value="Normal" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsMaster}" Value="True">
+                                                    <Setter Property="FontWeight" Value="Bold" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsMic}" Value="True">
+                                                    <Setter Property="FontWeight" Value="Bold" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsSystemSounds}" Value="True">
+                                                    <Setter Property="FontWeight" Value="Bold" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Label.Style>
+                                </Label>
+
+                                <Slider
+                                    Grid.Column="1"
+                                    Width="130"
+                                    AutomationProperties.Name="{Binding DisplayName}"
+                                    VerticalAlignment="Center"
+                                    IsMoveToPointEnabled="True"
+                                    LargeChange="5"
+                                    Maximum="100"
+                                    SmallChange="1"
+                                    Tag="{Binding IsMuted}"
+                                    Value="{Binding Volume, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                    <i:Interaction.Behaviors>
+                                        <b:SliderValuePopupBehavior HorizontalOffset="0" VerticalOffset="-28" />
+                                        <b:SliderThumbRightClickBehavior Command="{Binding DataContext.ActiveMixer.ToggleMuteCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" />
+                                        <b:SliderKeyboardAccelerationBehavior MuteCommand="{Binding DataContext.ActiveMixer.ToggleMuteCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" MuteCommandParameter="{Binding}" />
+                                    </i:Interaction.Behaviors>
+                                </Slider>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <StackPanel
+                    Margin="8,1,0,10"
+                    HorizontalAlignment="Center"
+                    Orientation="Horizontal"
+                    Visibility="{Binding IsEditorTabsActive, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Button
+                        Margin="2"
+                        Command="{Binding ResetToDefaultsCommand}"
+                        Content="Reset to Defaults"
+                        Style="{StaticResource ResetButtonStyle}" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+    </Grid>
+</Window>

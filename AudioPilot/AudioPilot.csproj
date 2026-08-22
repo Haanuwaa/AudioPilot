@@ -1,0 +1,143 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<UseWPF>true</UseWPF>
+		<RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+		<ApplicationIcon>Images\sound.ico</ApplicationIcon>
+		<AppManifestTemplate>app.manifest</AppManifestTemplate>
+		<GeneratedApplicationManifestRoot Condition="'$(BaseIntermediateOutputPath)' != '' and $([System.IO.Path]::IsPathRooted('$(BaseIntermediateOutputPath)'))">$(BaseIntermediateOutputPath)</GeneratedApplicationManifestRoot>
+		<GeneratedApplicationManifestRoot Condition="'$(GeneratedApplicationManifestRoot)' == '' and '$(BaseIntermediateOutputPath)' != ''">$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)</GeneratedApplicationManifestRoot>
+		<GeneratedApplicationManifestRoot Condition="'$(GeneratedApplicationManifestRoot)' == ''">$(MSBuildProjectDirectory)\obj\</GeneratedApplicationManifestRoot>
+		<GeneratedApplicationManifest>$(GeneratedApplicationManifestRoot)AudioPilot.generated.manifest</GeneratedApplicationManifest>
+		<ApplicationManifest>$(GeneratedApplicationManifest)</ApplicationManifest>
+		<Description>AudioPilot</Description>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="Images\sound.ico" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)' == 'Release'">
+		<Content Include="..\LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+		<Content Include="$(IntermediateOutputPath)ABOUT.txt" Link="ABOUT.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Hardcodet.NotifyIcon.Wpf" />
+		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" />
+		<PackageReference Include="NAudio.Wasapi" />
+		<PackageReference Include="Newtonsoft.Json" />
+		<PackageReference Include="System.Management" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Resource Include="Images\sound.ico" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<PublishCliHostNoRestore Condition="'$(PublishCliHostNoRestore)' == ''">false</PublishCliHostNoRestore>
+		<PublishCliHostNoRestoreArgument Condition="'$(PublishCliHostNoRestore)' == 'true'">--no-restore</PublishCliHostNoRestoreArgument>
+		<CliHostBuildIsolationKey Condition="'$(CliHostBuildIsolationKey)' == '' and '$(BuildIsolationKey)' != ''">$(BuildIsolationKey)</CliHostBuildIsolationKey>
+		<CliHostBuildIsolationArgument Condition="'$(CliHostBuildIsolationKey)' != ''">-p:BuildIsolationKey=$(CliHostBuildIsolationKey)</CliHostBuildIsolationArgument>
+		<CliHostRestoreLockedModeArgument Condition="'$(RestoreLockedMode)' != ''">-p:RestoreLockedMode=$(RestoreLockedMode)</CliHostRestoreLockedModeArgument>
+	</PropertyGroup>
+
+	<Target Name="PublishCliHostAlongsideApp" AfterTargets="Publish">
+		<Exec
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+			Command="dotnet publish ..\AudioPilot.CliHost\AudioPilot.CliHost.csproj -c $(Configuration) -r $(RuntimeIdentifier) --self-contained $(SelfContained) $(PublishCliHostNoRestoreArgument) $(CliHostRestoreLockedModeArgument) -p:PublishSingleFile=false -p:PublishReadyToRun=$(PublishReadyToRun) $(CliHostBuildIsolationArgument) -p:Version=$(Version) -p:AssemblyVersion=$(AssemblyVersion) -p:FileVersion=$(FileVersion) -p:InformationalVersion=$(InformationalVersion) -p:DebugSymbols=$(DebugSymbols) -p:DebugType=$(DebugType) -p:PublishDir=&quot;$(PublishDir)&quot;" />
+	</Target>
+
+	<Target Name="PrepareVersionedAppManifest" BeforeTargets="BeforeBuild">
+		<MakeDir Directories="$(GeneratedApplicationManifestRoot)" />
+		<Copy SourceFiles="$(AppManifestTemplate)" DestinationFiles="$(GeneratedApplicationManifest)" />
+		<XmlPoke
+			XmlInputPath="$(GeneratedApplicationManifest)"
+			Query="/asmv1:assembly/asmv1:assemblyIdentity/@version"
+			Namespaces="&lt;Namespace Prefix='asmv1' Uri='urn:schemas-microsoft-com:asm.v1' /&gt;"
+			Value="$(AssemblyVersion)" />
+	</Target>
+
+	<Target Name="GenerateAboutText" BeforeTargets="PrepareForBuild" Condition="'$(Configuration)' == 'Release'">
+		<PropertyGroup>
+			<_AudioPilotAboutRuntimeIdentifier Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)</_AudioPilotAboutRuntimeIdentifier>
+			<_AudioPilotAboutRuntimeIdentifier Condition="'$(_AudioPilotAboutRuntimeIdentifier)' == ''">Not specified</_AudioPilotAboutRuntimeIdentifier>
+			<_AudioPilotAboutDeployment Condition="'$(SelfContained)' == 'true'">Self-contained</_AudioPilotAboutDeployment>
+			<_AudioPilotAboutDeployment Condition="'$(_AudioPilotAboutDeployment)' == ''">Framework-dependent</_AudioPilotAboutDeployment>
+		</PropertyGroup>
+		<ItemGroup>
+			<_AudioPilotAboutLine Include="AudioPilot" />
+			<_AudioPilotAboutLine Include="==========%0A" />
+			<_AudioPilotAboutLine Include="Build information" />
+			<_AudioPilotAboutLine Include="-----------------" />
+			<_AudioPilotAboutLine Include="Version: $(Version)" />
+			<_AudioPilotAboutLine Include="Release date: $(AudioPilotReleaseDate)" />
+			<_AudioPilotAboutLine Include="Build configuration: $(Configuration)" />
+			<_AudioPilotAboutLine Include="Target framework: $(TargetFramework)" />
+			<_AudioPilotAboutLine Include="Runtime identifier: $(_AudioPilotAboutRuntimeIdentifier)" />
+			<_AudioPilotAboutLine Include="Deployment: $(_AudioPilotAboutDeployment)" />
+			<_AudioPilotAboutLine Include="Supported OS: Windows 10 version 2004 or later, including Windows 11" />
+			<_AudioPilotAboutLine Include="Repository: $(RepositoryUrl)" />
+			<_AudioPilotAboutLine Include="License: MIT (see LICENSE)%0A" />
+			<_AudioPilotAboutLine Include="Configurable global hotkeys" />
+			<_AudioPilotAboutLine Include="---------------------------" />
+			<_AudioPilotAboutLine Include="These work while AudioPilot is in the tray. Change them in AudioPilot Settings." />
+			<_AudioPilotAboutLine Include="Unassigned actions are available but do not have a default key combination.%0A" />
+			<_AudioPilotAboutLine Include="- Show or hide AudioPilot: Ctrl+Alt+H" />
+			<_AudioPilotAboutLine Include="- Switch to next output device: Unassigned" />
+			<_AudioPilotAboutLine Include="- Switch to previous output device: Unassigned" />
+			<_AudioPilotAboutLine Include="- Switch to next input device: Unassigned" />
+			<_AudioPilotAboutLine Include="- Switch to previous input device: Unassigned" />
+			<_AudioPilotAboutLine Include="- Show current track: Unassigned" />
+			<_AudioPilotAboutLine Include="- Play or pause media: Ctrl+Alt+P" />
+			<_AudioPilotAboutLine Include="- Next track: Ctrl+Alt+." />
+			<_AudioPilotAboutLine Include="- Previous track: Ctrl+Alt+," />
+			<_AudioPilotAboutLine Include="- Mute or unmute microphone: Unassigned" />
+			<_AudioPilotAboutLine Include="- Mute or unmute output: Unassigned" />
+			<_AudioPilotAboutLine Include="- Deafen or undeafen: Unassigned" />
+			<_AudioPilotAboutLine Include="- Toggle Listen to this device: Unassigned" />
+			<_AudioPilotAboutLine Include="- Raise master output volume: Unassigned" />
+			<_AudioPilotAboutLine Include="- Lower master output volume: Unassigned" />
+			<_AudioPilotAboutLine Include="- Raise microphone volume: Unassigned" />
+			<_AudioPilotAboutLine Include="- Lower microphone volume: Unassigned" />
+			<_AudioPilotAboutLine Include="- Run a routine: Assigned separately for each hotkey-triggered routine" />
+			<_AudioPilotAboutLine Include="%0AIn-window keyboard shortcuts" />
+			<_AudioPilotAboutLine Include="----------------------------" />
+			<_AudioPilotAboutLine Include="- F1: Open the local ABOUT.txt file, or the online user guide when the local file is unavailable." />
+			<_AudioPilotAboutLine Include="- Ctrl+1, Ctrl+2, Ctrl+3, or Ctrl+4: Open the Output, Input, Routines, or Settings tab." />
+			<_AudioPilotAboutLine Include="- Esc: Hide the main window to the tray. During a microphone test, stop the test instead." />
+			<_AudioPilotAboutLine Include="- Ctrl+Tab: Move to the next main tab." />
+			<_AudioPilotAboutLine Include="- Ctrl+S: Save or apply the current tab." />
+			<_AudioPilotAboutLine Include="- Ctrl+N: Create a routine." />
+			<_AudioPilotAboutLine Include="- Enter on the focused routine list: Edit the single selected routine." />
+			<_AudioPilotAboutLine Include="- Ctrl+F in a searchable picker: Focus its search box and select the current query." />
+			<_AudioPilotAboutLine Include="- F5: Refresh audio devices." />
+			<_AudioPilotAboutLine Include="- Ctrl+A: Select all rows in a focused output, input, or routine list." />
+			<_AudioPilotAboutLine Include="- Ctrl+W: Remove the selected rows from a focused output, input, or routine list." />
+			<_AudioPilotAboutLine Include="- Alt+Up or Alt+Down: Move the selected device or routine in its ordered list." />
+			<_AudioPilotAboutLine Include="- Left or Right: Adjust a focused mixer volume slider." />
+			<_AudioPilotAboutLine Include="- Space: Mute or unmute the session for a focused mixer volume slider." />
+			<_AudioPilotAboutLine Include="- Delete: Clear a focused hotkey field." />
+			<_AudioPilotAboutLine Include="- Shift+F10 or the Menu key: Open the focused item's context menu." />
+			<_AudioPilotAboutLine Include="- Enter or Esc in an editor or picker: Confirm or cancel when the dialog permits it." />
+			<_AudioPilotAboutLine Include="%0AHotkey notes" />
+			<_AudioPilotAboutLine Include="------------" />
+			<_AudioPilotAboutLine Include="Keyboard, supported mouse-button, mouse-wheel, media-key, and per-routine hotkeys are configurable." />
+			<_AudioPilotAboutLine Include="Display labels use familiar key names such as Num %2A, Num +, Enter, Page Up, Backspace, Print Screen, and Next Track. Runtime punctuation, number-row, international-key, and numpad-decimal labels follow the active Windows keyboard layout; saved and CLI values remain canonical." />
+			<_AudioPilotAboutLine Include="Bindings shown here are release defaults. Your saved settings may differ.%0A" />
+			<_AudioPilotAboutLine Include="Help and support" />
+			<_AudioPilotAboutLine Include="----------------" />
+			<_AudioPilotAboutLine Include="- CLI help: AudioPilot.Cli.exe --help" />
+			<_AudioPilotAboutLine Include="- List configurable keys: AudioPilot.Cli.exe config list" />
+			<_AudioPilotAboutLine Include="- Create a redacted support bundle: AudioPilot.Cli.exe diagnostics export-bundle support-bundle.zip --json" />
+			<_AudioPilotAboutLine Include="- User guide: $(RepositoryUrl)/blob/main/docs/USER_GUIDE.md" />
+			<_AudioPilotAboutLine Include="- ABOUT.txt contains build and reference information only. It does not include user, device, application, or settings data." />
+		</ItemGroup>
+		<MakeDir Directories="$(IntermediateOutputPath)" />
+		<WriteLinesToFile File="$(IntermediateOutputPath)ABOUT.txt" Lines="@(_AudioPilotAboutLine)" Overwrite="true" Encoding="UTF-8" />
+	</Target>
+</Project>
