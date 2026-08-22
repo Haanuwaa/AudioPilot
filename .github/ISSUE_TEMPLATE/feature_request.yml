@@ -1,0 +1,107 @@
+name: Feature request
+description: Suggest an AudioPilot improvement with a clear workflow problem and expected payoff
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion.
+
+        The strongest AudioPilot feature requests explain the real workflow problem first.
+
+        Useful requests usually answer:
+
+        - what daily workflow is blocked or too manual,
+        - why existing hotkeys, routines, tray actions, mixer controls, or CLI commands are not enough,
+        - what tradeoff or complexity the change is worth.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-submit checklist
+      options:
+        - label: I searched existing issues to avoid duplicates.
+          required: true
+        - label: I described the problem and expected outcome.
+          required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What user problem does this solve?
+      placeholder: e.g. I can automate output switching from CLI, but I cannot safely validate the resulting input state in the same workflow.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Output or input switching
+        - Hotkeys
+        - Routines
+        - Mixer or session volume
+        - Listen to input
+        - Tray, startup, or window behavior
+        - CLI or automation
+        - Logging or diagnostics
+        - Packaging or release workflow
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the preferred behavior and user flow.
+      placeholder: |
+        - Add ...
+        - User triggers it from ...
+        - It should behave like ...
+        - It should not break ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Current workaround or alternatives
+      description: Any workarounds, scripts, routine setups, or other tools you use today?
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and impact
+      description: Mention affected areas and likely tradeoffs such as UI complexity, extra settings, automation compatibility, or edge cases.
+
+  - type: textarea
+    id: examples
+    attributes:
+      label: Concrete example workflow
+      description: Describe a real before and after flow.
+      placeholder: |
+        Before:
+        1. ...
+        2. ...
+
+        After:
+        1. ...
+        2. ...
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority (your perspective)
+      options:
+        - Nice to have
+        - Important
+        - High impact
+
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups, command examples, or examples from similar tools
+      description: Optional screenshots, sketches, CLI examples, or examples from similar tools.

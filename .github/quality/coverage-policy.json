@@ -1,0 +1,8 @@
+{
+  "minimumCoveragePercent": 65,
+  "ratchetStepPercent": 5,
+  "nextTargetPercent": 70,
+  "ratchetCadence": "per release milestone",
+  "lastUpdated": "2026-09-06",
+  "baselineRationale": "Portable unit-test baseline; explicitly attributed hardware-only Core Audio enumeration is certified by opt-in integration and soak tests instead."
+}

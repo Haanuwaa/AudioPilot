@@ -1,0 +1,10 @@
+<Project>
+  <Target Name="LimitReadyToRunToApplicationAssemblies"
+          BeforeTargets="_PrepareForReadyToRunCompilation"
+          Condition="'$(PublishReadyToRun)' == 'true' and ('$(MSBuildProjectName)' == 'AudioPilot' or '$(MSBuildProjectName)' == 'AudioPilot.CliHost')">
+    <ItemGroup>
+      <PublishReadyToRunExclude Include="@(ResolvedFileToPublish->'%(Filename)%(Extension)')"
+                                Exclude="AudioPilot.dll;AudioPilot.Cli.dll" />
+    </ItemGroup>
+  </Target>
+</Project>
