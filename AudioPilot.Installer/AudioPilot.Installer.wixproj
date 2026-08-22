@@ -1,0 +1,69 @@
+<Project Sdk="WixToolset.Sdk/7.0.0">
+  <PropertyGroup>
+    <OutputType>Package</OutputType>
+    <AcceptEula>wix7</AcceptEula>
+    <AppVersion Condition="'$(AppVersion)' == '' and '$(Version)' != ''">$(Version)</AppVersion>
+    <AppVersion Condition="'$(AppVersion)' == '' and '$(AudioPilotVersion)' != ''">$(AudioPilotVersion)</AppVersion>
+    <AppVersion Condition="'$(AppVersion)' == ''">1.0.0</AppVersion>
+    <ProductName>AudioPilot</ProductName>
+    <ManufacturerName>Haanuwaa</ManufacturerName>
+    <UpgradeCode>8D18A00C-7CC8-487B-A462-7D3252139D72</UpgradeCode>
+    <InstallerPlatform Condition="'$(Platform)' == 'x64'">x64</InstallerPlatform>
+    <InstallerPlatform Condition="'$(Platform)' == 'arm64'">arm64</InstallerPlatform>
+    <InstallerPlatform Condition="'$(InstallerPlatform)' == ''">x64</InstallerPlatform>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(InstallerPlatform)' == 'arm64'">win-arm64</RuntimeIdentifier>
+    <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' and '$(InstallerPlatform)' != 'arm64'">win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishReadyToRun Condition="'$(PublishReadyToRun)' == '' and '$(RuntimeIdentifier)' == 'win-x64' and '$(Configuration)' == 'Release'">true</PublishReadyToRun>
+    <PublishReadyToRun Condition="'$(PublishReadyToRun)' == ''">false</PublishReadyToRun>
+    <PublishSingleFile>false</PublishSingleFile>
+    <DefaultCompressionLevel Condition="'$(DefaultCompressionLevel)' == ''">mszip</DefaultCompressionLevel>
+    <UsePrebuiltPublish Condition="'$(UsePrebuiltPublish)' == ''">false</UsePrebuiltPublish>
+    <InstallerBuildIsolationKey>InstallerPublish-$(RuntimeIdentifier)</InstallerBuildIsolationKey>
+    <PublishDirForMsi Condition="'$(PublishDirForMsi)' == ''">$(MSBuildProjectDirectory)\..\artifacts\publish\$(RuntimeIdentifier)\</PublishDirForMsi>
+    <PublishDirForMsiNormalized>$([System.String]::Copy('$(PublishDirForMsi)').TrimEnd('\'))</PublishDirForMsiNormalized>
+    <HarvestPublishDir>$(PublishDirForMsiNormalized)</HarvestPublishDir>
+    <GeneratedPublishFragment>$(MSBuildProjectDirectory)\obj\$(InstallerPlatform)\GeneratedPublishFiles.wxs</GeneratedPublishFragment>
+    <!-- ICE91 warns about hypothetical per-machine copying into per-user directories.
+         This package is hard-scoped to per-user, so Microsoft documents the warning as harmless here. -->
+    <SuppressIces>ICE91</SuppressIces>
+    <DefineConstants>AppVersion=$(AppVersion);ProductName=$(ProductName);ManufacturerName=$(ManufacturerName);UpgradeCode=$(UpgradeCode);HarvestPublishDir=$(HarvestPublishDir)</DefineConstants>
+    <OutputName>AudioPilot-$(AppVersion)-$(InstallerPlatform)</OutputName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <BindPath Include="$(HarvestPublishDir)" BindName="PublishDir" />
+    <Compile Include="$(GeneratedPublishFragment)" />
+    <PackageReference Include="WixToolset.UI.wixext" />
+    <PackageReference Include="WixToolset.Util.wixext" />
+  </ItemGroup>
+
+  <Target Name="PublishAudioPilotForMsi" BeforeTargets="BeforeBuild" Condition="'$(UsePrebuiltPublish)' != 'true'">
+    <RemoveDir Directories="$(PublishDirForMsi)" />
+    <MakeDir Directories="$(PublishDirForMsi)" />
+    <Exec
+      WorkingDirectory="$(MSBuildProjectDirectory)"
+      Command="dotnet publish ..\AudioPilot\AudioPilot.csproj -c $(Configuration) -r $(RuntimeIdentifier) --self-contained $(SelfContained) -p:RestoreLockedMode=true -p:PublishSingleFile=$(PublishSingleFile) -p:PublishReadyToRun=$(PublishReadyToRun) -p:BuildIsolationKey=$(InstallerBuildIsolationKey) -p:Version=$(AppVersion) -p:AssemblyVersion=$(AssemblyVersion) -p:FileVersion=$(FileVersion) -p:InformationalVersion=$(InformationalVersion) -p:DebugSymbols=false -p:DebugType=None -o &quot;$(PublishDirForMsi)&quot;" />
+  </Target>
+
+  <Target Name="GenerateWixPublishFragment" BeforeTargets="BeforeBuild" DependsOnTargets="PublishAudioPilotForMsi">
+    <Error Condition="'$(UsePrebuiltPublish)' == 'true' and '$(Configuration)' != 'Release'" Text="Prebuilt MSI payload reuse requires a Release build." />
+    <ReadLinesFromFile File="$(PublishDirForMsiNormalized)\ABOUT.txt" Condition="'$(UsePrebuiltPublish)' == 'true'">
+      <Output TaskParameter="Lines" ItemName="MsiPayloadAboutLine" />
+    </ReadLinesFromFile>
+    <ItemGroup Condition="'$(UsePrebuiltPublish)' == 'true'">
+      <MsiPayloadRuntime Include="@(MsiPayloadAboutLine)" Condition="'%(Identity)' == 'Runtime identifier: $(RuntimeIdentifier)'" />
+      <MsiPayloadConfiguration Include="@(MsiPayloadAboutLine)" Condition="'%(Identity)' == 'Build configuration: Release'" />
+    </ItemGroup>
+    <Error Condition="'$(UsePrebuiltPublish)' == 'true' and ('@(MsiPayloadRuntime)' == '' or '@(MsiPayloadConfiguration)' == '')" Text="Prebuilt MSI payload architecture or configuration does not match this build." />
+    <Error Condition="!Exists('$(PublishDirForMsiNormalized)\AudioPilot.exe') or !Exists('$(PublishDirForMsiNormalized)\AudioPilot.Cli.exe') or !Exists('$(PublishDirForMsiNormalized)\coreclr.dll')" Text="The MSI requires a complete self-contained app and CLI publish directory." />
+    <GetAssemblyIdentity AssemblyFiles="$(PublishDirForMsiNormalized)\AudioPilot.dll;$(PublishDirForMsiNormalized)\AudioPilot.Cli.dll">
+      <Output TaskParameter="Assemblies" ItemName="MsiPayloadAssembly" />
+    </GetAssemblyIdentity>
+    <Error Condition="'%(MsiPayloadAssembly.Version)' != '$(AppVersion).0'" Text="MSI payload assembly %(MsiPayloadAssembly.Name) version %(MsiPayloadAssembly.Version) does not match $(AppVersion).0." />
+    <Exec
+      WorkingDirectory="$(MSBuildProjectDirectory)"
+      Command="pwsh -NoLogo -NoProfile -ExecutionPolicy Bypass -File &quot;..\scripts\generate-wix-publish-fragment.ps1&quot; -PublishDir &quot;$(PublishDirForMsiNormalized)&quot; -OutputPath &quot;$(GeneratedPublishFragment)&quot; -ManufacturerName &quot;$(ManufacturerName)&quot; -ProductName &quot;$(ProductName)&quot;" />
+  </Target>
+</Project>
