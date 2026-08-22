@@ -1,0 +1,21 @@
+* text=auto eol=lf
+
+*.sln text eol=crlf
+*.csproj text eol=crlf
+*.props text eol=crlf
+*.targets text eol=crlf
+*.cs text eol=crlf
+*.xaml text eol=crlf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+
+# Preserve the pinned upstream resources' exact line endings and final blank line.
+.github/quality/spdx-3.0.1/spdx-json-schema.json -text whitespace=cr-at-eol
+.github/quality/spdx-3.0.1/spdx-model.ttl whitespace=-blank-at-eof

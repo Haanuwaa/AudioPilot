@@ -1,0 +1,533 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="AudioPilot is a free, open-source Windows app for audio shortcuts, per-app volume, microphone controls, and automatic audio routines."
+    />
+    <meta name="theme-color" content="#171c1d" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="AudioPilot | Put your audio in order." />
+    <meta
+      property="og:description"
+      content="Device switching, mixers, microphone controls, and routines. One small Windows utility. Free and open source."
+    />
+    <meta property="og:url" content="https://haanuwaa.github.io/AudioPilot/" />
+    <meta
+      property="og:image"
+      content="https://haanuwaa.github.io/AudioPilot/assets/audiopilot.png"
+    />
+    <link rel="canonical" href="https://haanuwaa.github.io/AudioPilot/" />
+    <link rel="icon" href="assets/audiopilot.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css?v=@@STYLE_VERSION@@" />
+    <title>AudioPilot | Put your audio in order.</title>
+    <script id="release-data" type="application/json">
+      @@DOWNLOADS_JSON@@
+    </script>
+    <script src="site.js?v=@@SCRIPT_VERSION@@" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header wrap">
+      <a class="brand" href="#" aria-label="AudioPilot home"
+        ><img src="assets/audiopilot.svg" width="40" height="40" alt="" /><span
+          >AudioPilot<small>Windows audio utility</small></span
+        ></a
+      >
+      <nav aria-label="Main navigation">
+        <a href="#features">The controls</a><a href="#download">Download</a
+        ><a
+          href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md"
+          >Manual</a
+        ><a href="https://github.com/Haanuwaa/AudioPilot"
+          >Source <span aria-hidden="true">↗</span></a
+        >
+      </nav>
+    </header>
+    <main id="main">
+      <section class="hero wrap" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow">
+            <span class="section-number">01</span> A little order for your
+            desktop.
+          </p>
+          <h1 id="hero-title">
+            Put your<br />audio<br /><span>in order.</span>
+          </h1>
+          <p class="hero-lead">
+            Switch devices. Set the balance. Keep your mic in check. One small
+            Windows app for the audio you use every day.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="#download"
+              >Get AudioPilot <span aria-hidden="true">↓</span></a
+            ><a
+              class="text-link"
+              href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md#start-here"
+              >Read the setup guide <span aria-hidden="true">↗</span></a
+            >
+          </div>
+          <p class="hero-note">Free &amp; open source / Windows 10 &amp; 11</p>
+          <div class="shortcut-note">
+            <span class="key">Ctrl</span><span>+</span
+            ><span class="key">Alt</span><span>+</span><span class="key">O</span
+            ><span>Example shortcut.<br />Choose your own.</span>
+          </div>
+        </div>
+        <div class="hero-preview">
+          <div class="preview-topline">
+            <span class="display-label">AP / Device control</span>
+            <div
+              class="segmented"
+              role="group"
+              aria-label="App theme in the screenshot"
+              data-enhanced
+              hidden
+            >
+              <span class="theme-label">App theme</span>
+              <button type="button" data-theme="dark" aria-pressed="true">
+                Dark</button
+              ><button type="button" data-theme="light" aria-pressed="false">
+                Light
+              </button>
+            </div>
+          </div>
+          <div class="app-frame">
+            <img
+              id="hero-screenshot"
+              class="app-screenshot"
+              src="assets/main_window_dark.png"
+              alt="AudioPilot Output tab with a device switch order and configurable shortcut"
+              width="892"
+              height="800"
+              fetchpriority="high"
+            />
+          </div>
+          <div class="display-footer">
+            <span>Output / Input / Routines</span
+            ><span>Version @@VERSION@@</span>
+          </div>
+          <p class="screenshot-caption">
+            Actual app screenshots. Sample devices and applications.
+            <a
+              id="hero-fullsize"
+              class="fullsize-link"
+              href="assets/main_window_dark.png"
+              target="_blank"
+              rel="noopener"
+              aria-label="View full-size Output screenshot (opens in a new tab)"
+              >View full-size screenshot <span aria-hidden="true">↗</span></a
+            >
+          </p>
+        </div>
+      </section>
+
+      <div class="signal-rule wrap" aria-hidden="true">
+        <span>AudioPilot / Windows audio control</span>
+        <div class="calibration">
+          <span>−30</span><span>−20</span><span>−10</span><span>−5</span
+          ><span>0</span><span>+3</span>
+        </div>
+        <span>Free / MIT licensed</span>
+      </div>
+
+      <section class="quick-features wrap" aria-label="At a glance">
+        <div>
+          <span class="feature-number">A</span>
+          <p>
+            <strong>Switch.</strong>Speakers, headsets, and microphones.<br />Your
+            devices, in the order you want.
+          </p>
+        </div>
+        <div>
+          <span class="feature-number">B</span>
+          <p>
+            <strong>Mix.</strong>Turn down the game. Keep the conversation.<br />Give
+            each application its own balance.
+          </p>
+        </div>
+        <div>
+          <span class="feature-number">C</span>
+          <p>
+            <strong>Automate.</strong>Different app. Different setup.<br />Let a
+            routine handle the change.
+          </p>
+        </div>
+      </section>
+
+      <section
+        id="features"
+        class="feature-section wrap"
+        aria-labelledby="features-title"
+      >
+        <div class="section-heading">
+          <p class="eyebrow">
+            <span class="section-number">02</span> The control surface
+          </p>
+          <h2 id="features-title">Every app.<br />In the mix.</h2>
+          <p>Keep the parts you need close at hand.</p>
+        </div>
+        <div class="showcase">
+          <div class="showcase-copy">
+            <div
+              class="view-switch"
+              role="group"
+              aria-label="Explore AudioPilot"
+              data-enhanced
+              hidden
+            >
+              <button type="button" data-view="mixer" aria-pressed="true">
+                Mixers</button
+              ><button type="button" data-view="routines" aria-pressed="false">
+                Routines</button
+              ><button type="button" data-view="input" aria-pressed="false">
+                Microphone
+              </button>
+            </div>
+            <div id="view-copy" aria-live="polite">
+              <div class="view-panel is-active" data-view-panel="mixer">
+                <h3>A place for every app.</h3>
+                <p>
+                  Turn down the game without turning down your conversation.
+                  Adjust playback and recording levels, route an app to another
+                  device, or select several playback apps to adjust them
+                  together.
+                </p>
+                <a
+                  class="text-link"
+                  href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md#mixer-view"
+                  >Explore the mixers <span aria-hidden="true">↗</span></a
+                >
+              </div>
+              <div
+                class="view-panel"
+                data-view-panel="routines"
+                aria-hidden="true"
+                inert
+              >
+                <h3>A setup for every session.</h3>
+                <p>
+                  Choose audio actions, add triggers, and set the requirements
+                  that must pass. Change your setup when an app opens or closes,
+                  a device connects, or a schedule fires. Pause automatic
+                  routines when you need to.
+                </p>
+                <a
+                  class="text-link"
+                  href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md#routines"
+                  >Build your first routine <span aria-hidden="true">↗</span></a
+                >
+              </div>
+              <div
+                class="view-panel"
+                data-view-panel="input"
+                aria-hidden="true"
+                inert
+              >
+                <h3>Your mic, on your terms.</h3>
+                <p>
+                  Adjust microphone and recording-app levels, test your input,
+                  or set up push-to-talk and hold-to-mute. Enabling push-to-talk
+                  mutes the default microphones until you hold its key.
+                </p>
+                <a
+                  class="text-link"
+                  href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md#set-up-push-to-talk-or-hold-to-mute"
+                  >Set up microphone controls
+                  <span aria-hidden="true">↗</span></a
+                >
+              </div>
+            </div>
+            <ul class="control-list">
+              <li>
+                <span aria-hidden="true">↔</span>
+                <div>
+                  <strong>Devices, without the detour</strong>
+                  <p>
+                    Switch output and input with a shortcut, the quick picker,
+                    or a routine.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <span aria-hidden="true">⌨</span>
+                <div>
+                  <strong>Keep your hands where they are</strong>
+                  <p>
+                    Foreground-app volume, media keys, push-to-talk, and
+                    hold-to-mute.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <span aria-hidden="true">↳</span>
+                <div>
+                  <strong>A small part of your desktop</strong>
+                  <p>
+                    Configure your controls, then keep AudioPilot in the tray.
+                  </p>
+                </div>
+              </li>
+            </ul>
+          </div>
+          <figure class="detail-frame">
+            <div class="detail-label">
+              <span>Control display</span><span>AudioPilot</span>
+            </div>
+            <div class="preview-screen">
+              <img
+                id="detail-screenshot"
+                src="assets/volume_mixer.png"
+                alt="AudioPilot Volume Mixer showing individual application levels and mute controls"
+                width="892"
+                height="880"
+                loading="lazy"
+              />
+            </div>
+            <figcaption>
+              <span class="is-active" data-view-caption="mixer"
+                >Individual app levels. One place to adjust them.</span
+              ><span data-view-caption="routines" aria-hidden="true"
+                >Audio actions, triggers, and requirements together.</span
+              ><span data-view-caption="input" aria-hidden="true"
+                >Microphone controls and recording levels, within reach.</span
+              >
+              <a
+                id="detail-fullsize"
+                class="fullsize-link"
+                href="assets/volume_mixer.png"
+                target="_blank"
+                rel="noopener"
+                aria-label="View full-size Volume Mixer screenshot (opens in a new tab)"
+                >View full-size screenshot <span aria-hidden="true">↗</span></a
+              >
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section
+        class="automation-strip wrap"
+        aria-label="Scripting and diagnostics"
+      >
+        <div>
+          <p class="eyebrow">
+            <span class="section-number">03</span> Script control
+          </p>
+          <h2>Command line.<br />Same controls.</h2>
+          <p>
+            Use the GUI for everyday adjustments, or the CLI for scripts and
+            automation. On-demand diagnostics and redacted support bundles help
+            when something needs a closer look.
+          </p>
+          <a
+            class="text-link"
+            href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/CLI.md"
+            >Read the CLI reference <span aria-hidden="true">↗</span></a
+          >
+        </div>
+        <div class="code-example">
+          <div class="code-label">PowerShell <span>Example commands</span></div>
+          <pre><code><span class="code-comment"># See the current audio state</span>
+AudioPilot.Cli.exe status --json
+
+<span class="code-comment"># Lower an app's volume</span>
+AudioPilot.Cli.exe app volume adjust -5 --process game
+
+<span class="code-comment"># Switch to a named output</span>
+AudioPilot.Cli.exe switch output --device "Headset"</code></pre>
+        </div>
+      </section>
+
+      <section
+        id="download"
+        class="download-section wrap"
+        aria-labelledby="download-title"
+      >
+        <div class="download-heading">
+          <div>
+            <p class="eyebrow">
+              <span class="section-number">04</span> Get AudioPilot
+            </p>
+            <h2 id="download-title">Pick your setup.</h2>
+          </div>
+          <span class="release-badge">@@VERSION@@ / Stable release</span>
+        </div>
+        <div class="download-panel">
+          <div class="download-toolbar" data-enhanced hidden>
+            <label for="architecture">Your Windows architecture</label
+            ><select id="architecture">
+              <option value="x64">x64 · Most Windows PCs</option>
+              <option value="arm64">ARM64 · Windows on ARM</option>
+              <option value="x86">x86 · 32-bit Windows</option>
+            </select>
+          </div>
+          <div class="packages">
+            <article class="package recommended">
+              <span class="package-label">01 / Recommended</span>
+              <h3>Windows installer</h3>
+              <p>
+                Includes the runtime. Installs for your Windows account, with
+                shortcuts and normal Windows uninstall support.
+              </p>
+              <a
+                class="button primary"
+                id="installer-download"
+                href="@@INSTALLER_URL@@"
+                >Download x64 installer <span aria-hidden="true">↓</span></a
+              ><span class="package-size" id="installer-size"
+                >@@INSTALLER_SIZE@@ · MSI</span
+              >
+            </article>
+            <article class="package">
+              <span class="package-label">02 / Smaller download</span>
+              <h3>Portable, shared runtime</h3>
+              <p>
+                Already have the matching .NET 10 Desktop Runtime? Use it
+                instead of downloading another copy.
+              </p>
+              <a
+                class="button secondary"
+                id="framework-download"
+                href="@@FRAMEWORK_URL@@"
+                >Download framework-dependent ZIP
+                <span aria-hidden="true">↓</span></a
+              ><span class="package-size" id="framework-size"
+                >@@FRAMEWORK_SIZE@@ · ZIP</span
+              ><a
+                class="small-link"
+                href="https://dotnet.microsoft.com/en-us/download/dotnet/10.0"
+                >Get the .NET Desktop Runtime ↗</a
+              >
+            </article>
+            <article class="package">
+              <span class="package-label">03 / Runtime included</span>
+              <h3>Portable, self-contained</h3>
+              <p>
+                Prefer a portable copy without installing a runtime? Extract the
+                whole folder, then launch AudioPilot.
+              </p>
+              <a
+                class="button secondary"
+                id="portable-download"
+                href="@@PORTABLE_URL@@"
+                >Download self-contained ZIP
+                <span aria-hidden="true">↓</span></a
+              ><span class="package-size" id="portable-size"
+                >@@PORTABLE_SIZE@@ · ZIP</span
+              >
+            </article>
+          </div>
+          <p class="download-footnote">
+            Free under the MIT license. Downloads are hosted on GitHub.
+            <a href="https://github.com/Haanuwaa/AudioPilot/releases/latest"
+              >Release notes, checksums, and all downloads ↗</a
+            >
+          </p>
+          <noscript
+            ><p class="download-footnote">
+              The links above are for x64. For ARM64 or x86, choose a package on
+              the
+              <a href="https://github.com/Haanuwaa/AudioPilot/releases/latest"
+                >release page</a
+              >.
+            </p></noscript
+          >
+        </div>
+      </section>
+
+      <section class="questions wrap" aria-labelledby="questions-title">
+        <div>
+          <p class="eyebrow">
+            <span class="section-number">05</span> Notes from the manual
+          </p>
+          <h2 id="questions-title">Before you<br />plug in.</h2>
+          <a
+            class="text-link"
+            href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md"
+            >Open the full user guide <span aria-hidden="true">↗</span></a
+          >
+        </div>
+        <div class="answers">
+          <details>
+            <summary>Which Windows versions can I use?</summary>
+            <p>
+              AudioPilot requires Windows 10 version 2004 (build 19041) or
+              later. Official support covers Windows 11 and supported Windows 10
+              Enterprise/LTSC editions that meet that minimum, subject to the
+              Microsoft and .NET 10 support lifecycles.
+            </p>
+          </details>
+          <details>
+            <summary>Why does Windows show a download warning?</summary>
+            <p>
+              AudioPilot is currently unsigned. Windows may show an
+              unknown-publisher or SmartScreen warning. Read the
+              <a
+                href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md#unsigned-downloads-and-windows-warnings"
+                >download guidance</a
+              >
+              before opening it. Work-managed PCs may also apply their own
+              software policies.
+            </p>
+          </details>
+          <details>
+            <summary>Do I need to set up everything?</summary>
+            <p>
+              No. Start with the controls you need. You can use volume and
+              microphone shortcuts without configuring a device-switch list. The
+              <a
+                href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md#start-here"
+                >setup guide</a
+              >
+              walks through the first steps.
+            </p>
+          </details>
+          <details>
+            <summary>Does AudioPilot update itself?</summary>
+            <p>
+              No. Optional update checks show a release link when a newer
+              version is available. Downloading and installing an update stays
+              in your hands.
+            </p>
+          </details>
+          <details>
+            <summary>Where can I report a problem or suggest an idea?</summary>
+            <p>
+              Open an
+              <a href="https://github.com/Haanuwaa/AudioPilot/issues"
+                >issue on GitHub</a
+              >. For troubleshooting, the app can save a redacted support bundle
+              on demand. Review it before sharing.
+            </p>
+          </details>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer wrap">
+      <a class="brand" href="#"
+        ><img
+          src="assets/audiopilot.svg"
+          width="30"
+          height="30"
+          alt=""
+        />AudioPilot</a
+      ><span>A Windows audio utility.<br />Open source. MIT licensed.</span>
+      <div>
+        <a href="https://github.com/Haanuwaa/AudioPilot">Source</a
+        ><a href="https://github.com/Haanuwaa/AudioPilot/blob/main/LICENSE"
+          >License</a
+        ><a
+          href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/SECURITY.md"
+          >Security</a
+        >
+      </div>
+    </footer>
+  </body>
+</html>

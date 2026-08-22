@@ -1,0 +1,143 @@
+name: Project website
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "website/**"
+      - "scripts/build-website.ps1"
+      - "scripts/tests/test-website.ps1"
+      - "scripts/pages-recovery.mjs"
+      - "scripts/tests/pages-recovery.test.mjs"
+      - "docs/images/**"
+      - "AudioPilot/Images/**"
+      - ".github/workflows/website.yml"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "website/**"
+      - "scripts/build-website.ps1"
+      - "scripts/tests/test-website.ps1"
+      - "scripts/pages-recovery.mjs"
+      - "scripts/tests/pages-recovery.test.mjs"
+      - "docs/images/**"
+      - "AudioPilot/Images/**"
+      - ".github/workflows/website.yml"
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      recovery_attempt:
+        description: "Recovery attempt (disables another automatic retry)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('website-pr-{0}', github.event.pull_request.number) || github.event_name == 'release' && 'website-release-notification' || 'github-pages' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  refresh-after-publication:
+    if: github.event_name == 'release' && !github.event.release.prerelease && !github.event.release.draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      actions: write
+    steps:
+      - name: Request website deployment from main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST repos/Haanuwaa/AudioPilot/actions/workflows/website.yml/dispatches -f ref=main
+
+  build:
+    if: github.event_name != 'release'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require main for manual deployment
+        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
+        run: |
+          echo '::error::Run the website workflow from main. Other refs cannot deploy to the production site.'
+          exit 1
+
+      - name: Checkout website source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.ref || 'main' }}
+          persist-credentials: false
+
+      - name: Check website build and JavaScript
+        shell: pwsh
+        run: |
+          ./scripts/tests/test-website.ps1
+          node --test scripts/tests/pages-recovery.test.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Pages recovery checks failed.' }
+          node --check website/site.js
+          if ($LASTEXITCODE -ne 0) { throw 'Website JavaScript syntax check failed.' }
+
+      - name: Build with published downloads
+        if: github.event_name != 'pull_request'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api repos/Haanuwaa/AudioPilot/releases/latest > artifacts/website-release.json
+          if ($LASTEXITCODE -ne 0) { throw 'Could not read the latest published release.' }
+          ./scripts/build-website.ps1 -ReleaseMetadataPath artifacts/website-release.json
+
+      - name: Upload website
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: artifacts/website/public
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  recover:
+    if: >-
+      always() && !cancelled() && needs.deploy.result == 'failure' &&
+      needs.deploy.outputs.page_url != '' && !inputs.recovery_attempt &&
+      github.run_attempt == 1 && github.ref == 'refs/heads/main'
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      contents: read
+      pages: read
+      actions: write
+    steps:
+      - name: Checkout recovery helper
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Request one fresh run for a confirmed Pages backend failure
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PAGES_DEPLOYMENT_URL: ${{ needs.deploy.outputs.page_url }}
+          PAGES_RECOVERY_ATTEMPT: ${{ inputs.recovery_attempt || false }}
+          PAGES_RECOVERY_REF: main
+        run: node scripts/pages-recovery.mjs

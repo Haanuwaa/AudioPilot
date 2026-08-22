@@ -1,0 +1,85 @@
+name: Dependency Scan
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-scan-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: ["main"]
+  push:
+    branches: ["main"]
+  schedule:
+    - cron: "0 8 * * 1"
+
+jobs:
+  nuget-vulnerability-scan:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup .NET
+        uses: ./.github/actions/setup-dotnet-solution
+        with:
+          package-cache-scope: dependencies
+
+      - name: Restore
+        shell: pwsh
+        run: |
+          dotnet restore AudioPilot.Installer/AudioPilot.Installer.wixproj --locked-mode
+          if ($LASTEXITCODE -ne 0) { throw 'Installer restore failed.' }
+          dotnet restore AudioPilot.Benchmarks/AudioPilot.Benchmarks.csproj --locked-mode
+          if ($LASTEXITCODE -ne 0) { throw 'Benchmark restore failed.' }
+
+      - name: Scan NuGet vulnerabilities (direct + transitive)
+        shell: pwsh
+        run: ./scripts/scan-dependencies.ps1 -Mode Vulnerabilities
+
+      - name: Upload dependency reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dependency-vulnerabilities-${{ github.run_id }}
+          path: artifacts/dependencies
+          if-no-files-found: warn
+          retention-days: 14
+
+  nuget-outdated-scan:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup .NET
+        uses: ./.github/actions/setup-dotnet-solution
+        with:
+          package-cache-scope: dependencies
+
+      - name: Restore
+        shell: pwsh
+        run: |
+          dotnet restore AudioPilot.Installer/AudioPilot.Installer.wixproj --locked-mode
+          if ($LASTEXITCODE -ne 0) { throw 'Installer restore failed.' }
+          dotnet restore AudioPilot.Benchmarks/AudioPilot.Benchmarks.csproj --locked-mode
+          if ($LASTEXITCODE -ne 0) { throw 'Benchmark restore failed.' }
+
+      - name: Check NuGet freshness
+        shell: pwsh
+        run: ./scripts/scan-dependencies.ps1 -Mode Outdated
+
+      - name: Upload dependency reports
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dependency-outdated-${{ github.run_id }}
+          path: artifacts/dependencies
+          if-no-files-found: warn
+          retention-days: 14
