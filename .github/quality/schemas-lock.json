@@ -1,0 +1,26 @@
+{
+  "spdx-3.0.1/spdx-context.jsonld": {
+    "sha256": "c72b0928f094c83e5c127784edb1ebca2af74a104fcacc007c332b23cbc788bd",
+    "source": "https://spdx.org/rdf/3.0.1/spdx-context.jsonld"
+  },
+  "spdx-3.0.1/spdx-json-schema.json": {
+    "sha256": "582c64e809d5b3ef9bd0c4de13a32391b47b0284a3e8d199569fb96f649234b1",
+    "source": "https://spdx.org/schema/3.0.1/spdx-json-schema.json"
+  },
+  "spdx-3.0.1/spdx-model.ttl": {
+    "sha256": "30ebb4af2d70a9809044ef46f44cc3dc5125226d70f818a50ed2e1d5f404c593",
+    "source": "https://spdx.org/rdf/3.0.1/spdx-model.ttl"
+  },
+  "winget-1.28.0/defaultLocale.json": {
+    "sha256": "734c069c82470e3436d274fb381bfbe03e22f8fbfae2d2dd50df7dc055a3e061",
+    "source": "https://raw.githubusercontent.com/microsoft/winget-cli/5d302e449b63ca1534bf4b7c871f048ad07d5dca/schemas/JSON/manifests/v1.28.0/manifest.defaultLocale.1.28.0.json"
+  },
+  "winget-1.28.0/installer.json": {
+    "sha256": "2caa4cd3a630c284b5ef750522e2e5861f751f376180b89cd29873eb30504ef4",
+    "source": "https://raw.githubusercontent.com/microsoft/winget-cli/5d302e449b63ca1534bf4b7c871f048ad07d5dca/schemas/JSON/manifests/v1.28.0/manifest.installer.1.28.0.json"
+  },
+  "winget-1.28.0/version.json": {
+    "sha256": "5c9fa37ebe70dd410114157d31e4d9e84451b2bb8890e1c4345b4c690406ee1a",
+    "source": "https://raw.githubusercontent.com/microsoft/winget-cli/5d302e449b63ca1534bf4b7c871f048ad07d5dca/schemas/JSON/manifests/v1.28.0/manifest.version.1.28.0.json"
+  }
+}

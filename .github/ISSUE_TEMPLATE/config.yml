@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security issue
+    url: https://github.com/Haanuwaa/AudioPilot/security/policy
+    about: Please use the private security reporting path described in the security policy.
+  - name: User guide and troubleshooting
+    url: https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md
+    about: Check the user guide first for setup, troubleshooting, routines, logging, and recovery steps.
+  - name: CLI reference
+    url: https://github.com/Haanuwaa/AudioPilot/blob/main/docs/CLI.md
+    about: Check the CLI guide for diagnostics commands, config validation, export and import behavior, and automation examples.

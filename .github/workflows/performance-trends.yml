@@ -1,0 +1,72 @@
+name: Performance trends
+
+on:
+  schedule:
+    - cron: '17 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: performance-trends-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  trends:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-latest
+            architecture: X64
+          - runner: windows-11-arm
+            architecture: Arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    env:
+      AUDIOPILOT_TEST_ARCHITECTURE: ${{ matrix.architecture }}
+      AUDIOPILOT_TEST_CAPTURE_DIR: ${{ github.workspace }}/artifacts/benchmarks/trends
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: ./.github/actions/setup-dotnet-solution
+        with:
+          build: 'true'
+      - name: Retrieve previous successful reports for this architecture
+        continue-on-error: true
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TREND_ARCHITECTURE: ${{ matrix.architecture }}
+        run: |
+          $runs = gh run list --workflow performance-trends.yml --branch $env:GITHUB_REF_NAME --status success --limit 1 --json databaseId | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or @($runs).Count -eq 0) { Write-Host 'No previous successful performance report is available.'; exit 0 }
+          $runId = $runs[0].databaseId
+          gh run download $runId --name "performance-trends-$env:TREND_ARCHITECTURE-$runId" --dir artifacts/benchmarks/baseline
+      - name: Measure picker, overlay, mixer, media, and synthetic switching lifecycles
+        shell: pwsh
+        env:
+          TREND_ARCHITECTURE: ${{ matrix.architecture }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $cases = @(
+            @{ Category = 'visual'; TestClass = 'QuickDevicePickerWindowTests'; TestMethod = 'RepeatedOpenClose_ReleasesPickerWindowsAndReportsResources'; AllowDesktopInteraction = $true },
+            @{ Category = 'visual'; TestClass = 'OverlayResourceTests'; AllowDesktopInteraction = $true },
+            @{ Category = 'stress'; TestClass = 'MixerViewModelChurnTests'; TestMethod = 'RepeatedCreationRefreshAndIdleTrim_ReportsResources' },
+            @{ Category = 'stress'; TestClass = 'MediaCommandLifecycleStressTests' },
+            @{ Category = 'stress'; TestClass = 'AudioDeviceServiceSwitchSoakStressTests'; TestMethod = 'SuccessfulRoleSwitches_KeepOutputAndInputAssignmentsIndependentAcrossRepeatedChanges' }
+          )
+          foreach ($case in $cases) {
+            ./scripts/run-tests.ps1 @case -NoBuild -NoRestore
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          ./scripts/report-performance-trends.ps1 -ReportDirectory $env:AUDIOPILOT_TEST_CAPTURE_DIR -Architecture $env:TREND_ARCHITECTURE -BaselineDirectory artifacts/benchmarks/baseline
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: performance-trends-${{ matrix.architecture }}-${{ github.run_id }}
+          path: artifacts/benchmarks/trends
+          if-no-files-found: error
+          retention-days: 90

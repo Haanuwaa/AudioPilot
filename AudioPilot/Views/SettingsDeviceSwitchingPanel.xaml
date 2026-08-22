@@ -1,0 +1,213 @@
+<UserControl
+    x:Class="AudioPilot.Views.SettingsDeviceSwitchingPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    AutomationProperties.Name="Device switching settings panel">
+    <StackPanel>
+        <TextBlock Style="{DynamicResource SettingsSectionHeaderStyle}" Text="Device switching" />
+
+        <TextBlock
+            Margin="0,0,0,6"
+            FontWeight="SemiBold"
+            Text="Output roles" />
+
+        <StackPanel
+            Margin="0,0,0,8"
+            HorizontalAlignment="Center"
+            Orientation="Horizontal">
+            <ToggleButton
+                Margin="0,0,6,0"
+                Content="Multimedia"
+                IsChecked="{Binding SettingsOutputRoleMultimediaDraft, Mode=TwoWay}"
+                Style="{DynamicResource SettingsRolePillStyle}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="When switching outputs, update the Multimedia default used by media playback apps that follow this Windows role." />
+                </i:Interaction.Behaviors>
+            </ToggleButton>
+            <ToggleButton
+                Margin="0,0,6,0"
+                Content="Communications"
+                IsChecked="{Binding SettingsOutputRoleCommunicationsDraft, Mode=TwoWay}"
+                Style="{DynamicResource SettingsRolePillStyle}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="When switching outputs, update the Communications default used by call and voice-chat apps that follow this Windows role." />
+                </i:Interaction.Behaviors>
+            </ToggleButton>
+            <ToggleButton
+                Content="Console"
+                IsChecked="{Binding SettingsOutputRoleConsoleDraft, Mode=TwoWay}"
+                Style="{DynamicResource SettingsRolePillStyle}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="When switching outputs, update the Console default for games, system sounds, and interactive apps that follow this Windows role." />
+                </i:Interaction.Behaviors>
+            </ToggleButton>
+        </StackPanel>
+
+        <TextBlock
+            Margin="0,0,0,6"
+            FontWeight="SemiBold"
+            Text="Input roles" />
+
+        <StackPanel
+            Margin="0,0,0,6"
+            HorizontalAlignment="Center"
+            Orientation="Horizontal">
+            <ToggleButton
+                Margin="0,0,6,0"
+                Content="Multimedia"
+                IsChecked="{Binding SettingsInputRoleMultimediaDraft, Mode=TwoWay}"
+                Style="{DynamicResource SettingsRolePillStyle}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="When switching inputs, update the Multimedia default used by media recording apps that follow this Windows role." />
+                </i:Interaction.Behaviors>
+            </ToggleButton>
+            <ToggleButton
+                Margin="0,0,6,0"
+                Content="Communications"
+                IsChecked="{Binding SettingsInputRoleCommunicationsDraft, Mode=TwoWay}"
+                Style="{DynamicResource SettingsRolePillStyle}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="When switching inputs, update the Communications default used by call and voice-chat apps that follow this Windows role." />
+                </i:Interaction.Behaviors>
+            </ToggleButton>
+            <ToggleButton
+                Content="Console"
+                IsChecked="{Binding SettingsInputRoleConsoleDraft, Mode=TwoWay}"
+                Style="{DynamicResource SettingsRolePillStyle}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="When switching inputs, update the Console default used by voice commands and interactive apps that follow this Windows role." />
+                </i:Interaction.Behaviors>
+            </ToggleButton>
+        </StackPanel>
+
+        <CheckBox
+            Margin="0,0,0,10"
+            Content="Preserve audio levels"
+            IsChecked="{Binding SettingsPreserveAudioLevelsDraft, Mode=TwoWay}">
+            <i:Interaction.Behaviors>
+                <b:HoverInfoPopupBehavior Text="Preserves output mixer and per-app volume levels when switching outputs, and the microphone level when switching inputs." />
+            </i:Interaction.Behaviors>
+        </CheckBox>
+
+        <CheckBox
+            Margin="0,0,0,10"
+            Content="Keep mute state when switching"
+            IsChecked="{Binding SettingsKeepMuteStateWhenSwitchingDraft, Mode=TwoWay}">
+            <i:Interaction.Behaviors>
+                <b:HoverInfoPopupBehavior Text="Carries the current muted or unmuted state to the selected output or microphone. Turn off to use each device's existing mute state. Routine mute actions, deafen, and microphone hold controls take priority." />
+            </i:Interaction.Behaviors>
+        </CheckBox>
+
+        <TextBlock
+            Margin="0,0,0,6"
+            FontWeight="SemiBold"
+            Text="Reverse hotkeys" />
+
+        <StackPanel Margin="0,0,0,6" Orientation="Horizontal">
+            <Label
+                Width="150"
+                VerticalAlignment="Center"
+                Content="Output reverse:" />
+            <TextBox
+                Width="170"
+                AutomationProperties.Name="Output reverse hotkey"
+                ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                IsEnabled="{Binding OutputHotkeysEnabled, Mode=TwoWay}"
+                Text="{Binding OutputReverseHotkey.DisplayText, Mode=OneWay}">
+                <i:Interaction.Behaviors>
+                    <b:PlaceholderExampleBehavior
+                        Identity="output-reverse-hotkey"
+                        Options="Alt+Shift+O|Alt+MouseLeft"
+                        PreferredFamily="mouse-left" />
+                    <b:HoverInfoPopupBehavior Text="{Binding OutputReverseHotkey.HoverText}" WarningKind="{Binding OutputReverseHotkey.WarningKind}" />
+                    <b:HotkeyCaptureBehavior Target="{Binding OutputReverseHotkey}" />
+                    <b:HotkeyWarningBorderBehavior HasWarning="{Binding OutputReverseHotkey.HasWarning}" WarningKind="{Binding OutputReverseHotkey.WarningKind}" />
+                </i:Interaction.Behaviors>
+            </TextBox>
+        </StackPanel>
+
+        <StackPanel Margin="0,0,0,10" Orientation="Horizontal">
+            <Label
+                Width="150"
+                VerticalAlignment="Center"
+                Content="Input reverse:" />
+            <TextBox
+                Width="170"
+                AutomationProperties.Name="Input reverse hotkey"
+                ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                IsEnabled="{Binding InputHotkeysEnabled, Mode=TwoWay}"
+                Text="{Binding InputReverseHotkey.DisplayText, Mode=OneWay}">
+                <i:Interaction.Behaviors>
+                    <b:PlaceholderExampleBehavior
+                        Identity="input-reverse-hotkey"
+                        Options="Alt+Shift+I|Alt+MouseRight"
+                        PreferredFamily="mouse-right" />
+                    <b:HoverInfoPopupBehavior Text="{Binding InputReverseHotkey.HoverText}" WarningKind="{Binding InputReverseHotkey.WarningKind}" />
+                    <b:HotkeyCaptureBehavior Target="{Binding InputReverseHotkey}" />
+                    <b:HotkeyWarningBorderBehavior HasWarning="{Binding InputReverseHotkey.HasWarning}" WarningKind="{Binding InputReverseHotkey.WarningKind}" />
+                </i:Interaction.Behaviors>
+            </TextBox>
+        </StackPanel>
+
+        <TextBlock
+            Margin="0,0,0,6"
+            FontWeight="SemiBold"
+            Text="Bluetooth" />
+
+        <StackPanel Margin="0,0,0,14" Orientation="Horizontal">
+            <CheckBox Content="Enable reconnect preflight" IsChecked="{Binding SettingsBluetoothReconnectEnabledDraft, Mode=TwoWay}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="Tries to reconnect disconnected Bluetooth audio devices before switching to them. Reconnecting can make the switch take longer." />
+                </i:Interaction.Behaviors>
+            </CheckBox>
+        </StackPanel>
+
+        <TextBlock
+            Margin="0,0,0,6"
+            FontWeight="SemiBold"
+            Text="Input Monitoring" />
+
+        <StackPanel Margin="0,0,0,6" Orientation="Horizontal">
+            <Label
+                Width="150"
+                VerticalAlignment="Center"
+                Content="Listen Hotkey:" />
+            <TextBox
+                Width="170"
+                AutomationProperties.Name="Listen hotkey"
+                ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                Text="{Binding SettingsListenToInputHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                <i:Interaction.Behaviors>
+                    <b:PlaceholderExampleBehavior
+                        Identity="listen-hotkey"
+                        Options="Ctrl+Alt+L|Alt+MouseMiddle"
+                        PreferredFamily="letter" />
+                    <b:HoverInfoPopupBehavior Text="{Binding SettingsListenToInputHotkeyDraftCapture.HoverText}" WarningKind="{Binding SettingsListenToInputHotkeyDraftCapture.WarningKind}" />
+                    <b:HotkeyCaptureBehavior Target="{Binding SettingsListenToInputHotkeyDraftCapture}" />
+                    <b:HotkeyWarningBorderBehavior HasWarning="{Binding SettingsListenToInputHotkeyDraftCapture.HasWarning}" WarningKind="{Binding SettingsListenToInputHotkeyDraftCapture.WarningKind}" />
+                </i:Interaction.Behaviors>
+            </TextBox>
+        </StackPanel>
+
+        <StackPanel Margin="0,0,0,22" Orientation="Horizontal">
+            <Label
+                Width="150"
+                VerticalAlignment="Center"
+                Content="Listen Monitor Output:" />
+            <ComboBox
+                Width="170"
+                AutomationProperties.Name="Listen monitor output"
+                DisplayMemberPath="Name"
+                ItemsSource="{Binding SettingsListenMonitorOutputDevices}"
+                SelectedValue="{Binding SettingsListenMonitorOutputDeviceIdDraft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                SelectedValuePath="Id">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="Selects which output device receives input-monitoring audio when Listen is enabled. If the selected output is unavailable, monitoring will not be enabled. Default output uses the current system playback default." />
+                </i:Interaction.Behaviors>
+            </ComboBox>
+        </StackPanel>
+
+    </StackPanel>
+</UserControl>

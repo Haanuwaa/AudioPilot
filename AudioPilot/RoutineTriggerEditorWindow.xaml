@@ -1,0 +1,365 @@
+<Window x:Class="AudioPilot.RoutineTriggerEditorWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    Title="{Binding TriggerEditorHeading}" Width="520" Height="620" MinWidth="400" MinHeight="420"
+    FontFamily="Segoe UI" FontSize="13" UseLayoutRounding="True" ShowInTaskbar="False"
+    ResizeMode="CanResizeWithGrip" WindowStartupLocation="Manual"
+    FocusManager.FocusedElement="{Binding ElementName=TriggerTypeBox}"
+    Background="{DynamicResource WindowBackgroundBrush}" Foreground="{DynamicResource TextBrush}">
+    <Window.CommandBindings><CommandBinding Command="ApplicationCommands.Help" Executed="OpenHelp_Executed" /></Window.CommandBindings>
+    <Window.InputBindings><KeyBinding Key="F1" Command="ApplicationCommands.Help" /></Window.InputBindings>
+    <Window.Resources>
+        <ResourceDictionary Source="Themes/RoutineEditorResources.xaml" />
+    </Window.Resources>
+    <Grid Margin="20">
+        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+        <StackPanel Margin="0,0,0,14">
+            <TextBlock Text="{Binding TriggerEditorHeading}" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock Text="Choose when this routine starts. Save the routine afterward to apply it."
+                       Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap" Margin="0,5,0,0" />
+        </StackPanel>
+        <ScrollViewer x:Name="TriggerEditorScrollViewer" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" CanContentScroll="False">
+            <i:Interaction.Behaviors><b:KeyboardFocusScrollBehavior /></i:Interaction.Behaviors>
+            <StackPanel x:Name="TriggerEditorPanel" Margin="0,0,12,0">
+                <TextBlock Margin="0,0,0,4" Text="Trigger type" />
+                <ComboBox
+                    MaxWidth="450"
+                    Height="32"
+                    Margin="0,0,0,10"
+                    x:Name="TriggerTypeBox"
+                    AutomationProperties.Name="Automatic trigger"
+                    ItemsSource="{Binding AvailableTriggerModes}"
+                    SelectedItem="{Binding SelectedTriggerMode, Mode=TwoWay}" />
+                <Border
+                    Margin="0,0,0,10"
+                    Padding="0"
+                    Background="{DynamicResource WindowBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0"
+                    CornerRadius="6"
+                    Visibility="{Binding IsApplicationTriggerSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel>
+                        <TextBlock Margin="0,0,0,4" Text="Run when" />
+                        <ComboBox
+                            MaxWidth="450"
+                            Height="32"
+                            Margin="0,0,0,10"
+                            AutomationProperties.Name="Application trigger mode"
+                            ItemsSource="{Binding ApplicationTriggerModeOptions}"
+                            SelectedItem="{Binding SelectedApplicationTriggerMode, Mode=TwoWay}" />
+                        <TextBlock
+                            Margin="0,0,0,4"
+                            Text="Application"
+                            Visibility="{Binding ShowApplicationTriggerPathInput, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <Grid MaxWidth="450" Visibility="{Binding ShowApplicationTriggerPathInput, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                            <TextBox
+                                x:Name="ApplicationTargetTextBox"
+                                Height="32"
+                                b:TextBoxPlaceholderBehavior.Text="e.g. C:\Apps\Game\Game.exe"
+                                AutomationProperties.Name="Application target path or AUMID"
+                                VerticalContentAlignment="Center"
+                                ContextMenu="{StaticResource EditableTextContextMenu}"
+                                Text="{Binding TriggerAppPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <i:Interaction.Behaviors>
+                                    <b:HoverInfoPopupBehavior Text="Paste a full .exe path or packaged app AUMID.&#x0a;Use Browse for desktop apps.&#x0a;Use Pick App for Microsoft Store/UWP apps." />
+                                </i:Interaction.Behaviors>
+                            </TextBox>
+                            <StackPanel x:Name="ApplicationPickerButtons" Grid.Row="1" Margin="0,12,0,0" HorizontalAlignment="Center" Orientation="Horizontal">
+                                <Button Height="32" Width="72"
+                                    Margin="0"
+                                    Click="BrowseExecutable_Click"
+                                    Content="Browse" />
+                                <Button Height="32"
+                                    Width="84"
+                                    Margin="8,0,0,0"
+                                    AutomationProperties.HelpText="Pick an installed Microsoft Store or UWP app and insert its AUMID automatically."
+                                    Click="PickPackagedApp_Click"
+                                    Content="Pick App">
+                                    <i:Interaction.Behaviors>
+                                        <b:HoverInfoPopupBehavior Text="Pick an installed Microsoft Store or UWP app and insert its AUMID automatically." />
+                                    </i:Interaction.Behaviors>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock
+                            x:Name="ResolvedAppTargetText"
+                            MaxWidth="450"
+                            Margin="0,6,0,0"
+                            Foreground="{DynamicResource MutedTextBrush}"
+                            TextAlignment="Center"
+                            TextWrapping="Wrap"
+                            Visibility="{Binding HasResolvedTriggerAppTarget, Converter={StaticResource BoolToVisibilityConverter}}"><Run Text="Resolved app: " /><Run x:Name="ResolvedAppName" Text="{Binding ResolvedTriggerAppTargetDisplayName, Mode=OneWay}" Foreground="{DynamicResource AccentTextBrush}" FontWeight="SemiBold" /></TextBlock>
+                        <StackPanel Margin="0,10,0,0" Visibility="{Binding IsProcessFocusModeSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Margin="0,0,0,4" Text="Window title pattern (optional)" />
+                            <TextBox
+                                MaxWidth="450"
+                                Height="32"
+                                Margin="0,0,0,10"
+                                b:TextBoxPlaceholderBehavior.Text="e.g. Twitch"
+                                AutomationProperties.Name="Window title pattern"
+                                VerticalContentAlignment="Center"
+                                ContextMenu="{StaticResource EditableTextContextMenu}"
+                                Text="{Binding ApplicationTriggerTitlePattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <i:Interaction.Behaviors>
+                                    <b:HoverInfoPopupBehavior Text="Matches when the app gains focus or its focused window title changes. Leave empty to match any title." />
+                                </i:Interaction.Behaviors>
+                            </TextBox>
+                            <TextBlock Margin="0,0,0,4" Text="Title match mode" />
+                            <ComboBox
+                                MaxWidth="450"
+                                Height="32"
+                                AutomationProperties.Name="Title match mode"
+                                ItemsSource="{Binding ApplicationTriggerTitleMatchModeOptions}"
+                                SelectedItem="{Binding SelectedApplicationTriggerTitleMatchMode, Mode=TwoWay}" />
+                        </StackPanel>
+                        <TextBlock
+                            MaxWidth="450"
+                            Margin="0,4,0,0"
+                            Foreground="{DynamicResource MutedTextBrush}"
+                            TextAlignment="Center"
+                            Text="{Binding ApplicationTriggerLifetimeDescription}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+                <StackPanel Margin="0,0,0,10" Visibility="{Binding IsSteamBigPictureTriggerSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBlock
+                        MaxWidth="450"
+                        Foreground="{DynamicResource MutedTextBrush}"
+                        Text="Activates when Steam Big Picture opens. Restore on close is optional, and Steam can remain open."
+                        TextWrapping="Wrap" />
+                </StackPanel>
+                <TextBlock Margin="0,8,0,8" TextWrapping="Wrap" Foreground="{DynamicResource MutedTextBrush}"
+                           Text="{Binding SystemEventTriggerDescription}"
+                           Visibility="{Binding IsSystemEventTriggerSelected, Converter={StaticResource BoolToVisibilityConverter}}" />
+                <StackPanel Margin="0,0,0,10" Visibility="{Binding IsAudioPilotStartupTriggerSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBlock
+                        MaxWidth="450"
+                        Foreground="{DynamicResource MutedTextBrush}"
+                        Text="Runs this routine once when the app finishes booting up."
+                        TextWrapping="Wrap" />
+                </StackPanel>
+                <StackPanel Margin="0,0,0,10" Visibility="{Binding IsDeviceAvailabilityTriggerSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBlock Margin="0,0,0,8" Foreground="{DynamicResource MutedTextBrush}" Text="Run when this device connects or disconnects." TextWrapping="Wrap">
+                        <i:Interaction.Behaviors>
+                            <b:HoverInfoPopupBehavior Text="Opening AudioPilot does not count as connecting a device." />
+                        </i:Interaction.Behaviors>
+                    </TextBlock>
+                    <TextBlock Margin="0,0,0,4" Text="Audio device" />
+                    <ComboBox Height="32" Margin="0,0,0,10" AutomationProperties.Name="Availability trigger device"
+                              ItemsSource="{Binding RoutineDeviceChoices}" DisplayMemberPath="DisplayName"
+                              SelectedItem="{Binding SelectedAvailabilityDevice, Mode=TwoWay}">
+                        <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{Binding SelectedAvailabilityDevice.DisplayName}" /></i:Interaction.Behaviors>
+                    </ComboBox>
+                    <TextBlock Margin="0,0,0,4" Text="Run on" />
+                    <ComboBox Height="32" AutomationProperties.Name="Device availability transition"
+                              ItemsSource="{Binding DeviceTransitions}" SelectedItem="{Binding DeviceTransition, Mode=TwoWay}" />
+                </StackPanel>
+                <StackPanel Margin="0,0,0,10" Visibility="{Binding IsDeviceChangeTriggerSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <TextBlock
+                        MaxWidth="450"
+                        Foreground="{DynamicResource MutedTextBrush}"
+                        Text="Runs after device refresh finishes for a hotplug or default-device change event."
+                        TextWrapping="Wrap" />
+                </StackPanel>
+                <Border
+                    Margin="0,0,0,10"
+                    Padding="0"
+                    Background="{DynamicResource WindowBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0"
+                    CornerRadius="6"
+                    Visibility="{Binding IsNetworkTriggerSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel>
+                        <TextBlock
+                            Margin="0,0,0,4"
+                            FontWeight="SemiBold"
+                            Text="Network" />
+                        <TextBlock
+                            MaxWidth="450"
+                            Margin="0,0,0,10"
+                            Foreground="{DynamicResource MutedTextBrush}"
+                            Text="Runs when this PC connects to or disconnects from a network."
+                            TextWrapping="Wrap" />
+                        <StackPanel Margin="0,0,0,10">
+                            <TextBlock Margin="0,0,0,4" Text="Trigger direction" />
+                            <ComboBox
+                                MaxWidth="450"
+                                Height="32"
+                                AutomationProperties.Name="Network trigger direction"
+                                DisplayMemberPath="Value"
+                                ItemsSource="{Binding NetworkTriggerDirectionOptions}"
+                                SelectedValue="{Binding NetworkTriggerDirection}"
+                                SelectedValuePath="Key" />
+                        </StackPanel>
+                        <StackPanel>
+                            <TextBlock Margin="0,0,0,4" Text="Network name (optional for Disconnect)" />
+                            <Grid MaxWidth="450">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ComboBox
+                                    Grid.Column="0"
+                                    Height="32"
+                                    x:Name="TriggerNetworkBox"
+                                    b:TextBoxPlaceholderBehavior.Text="Select or type a network name"
+                                    DropDownOpened="NetworkPicker_DropDownOpened"
+                                    AutomationProperties.Name="Network name"
+                                    IsEditable="True"
+                                    ItemsSource="{Binding AvailableNetworkNames}"
+                                    SelectedItem="{Binding SelectedAvailableNetworkName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Text="{Binding TriggerNetworkName, UpdateSourceTrigger=PropertyChanged}">
+                                    <i:Interaction.Behaviors>
+                                        <b:HoverInfoPopupBehavior Text="Enter a network name or select one. For Disconnect, leave blank to run only when all networks disconnect." />
+                                    </i:Interaction.Behaviors>
+                                </ComboBox>
+                                <Button x:Name="TriggerNetworkRefreshButton" Grid.Column="1" AutomationProperties.Name="Refresh networks" Style="{StaticResource NetworkRefreshButtonStyle}">
+                                    <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="Refresh networks" /></i:Interaction.Behaviors>
+                                </Button>
+                            </Grid>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+                <Border
+                    Margin="0,0,0,10"
+                    Padding="0"
+                    Background="{DynamicResource WindowBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="0"
+                    CornerRadius="6"
+                    Visibility="{Binding IsScheduledTriggerSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel>
+                        <TextBlock
+                            Margin="0,0,0,4"
+                            FontWeight="SemiBold"
+                            Text="Schedule" />
+                        <TextBlock
+                            MaxWidth="450"
+                            Margin="0,0,0,10"
+                            Foreground="{DynamicResource MutedTextBrush}"
+                            Text="Run at this time on the selected days."
+                            TextWrapping="Wrap">
+                            <i:Interaction.Behaviors>
+                                <b:HoverInfoPopupBehavior Text="The routine keeps the displayed time zone. During a daylight-saving gap, it runs at the first valid time." />
+                            </i:Interaction.Behaviors>
+                        </TextBlock>
+                        <TextBlock Margin="0,0,0,4" Text="Time" />
+                        <Grid MaxWidth="450" Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <ComboBox
+                                Grid.Column="0"
+                                Height="32"
+                                MaxDropDownHeight="224"
+                                AutomationProperties.Name="Scheduled hour"
+                                VerticalContentAlignment="Center"
+                                ItemsSource="{Binding HourOptions}"
+                                SelectedIndex="{Binding ScheduleHourIndex, Mode=TwoWay}" />
+                            <TextBlock
+                                Grid.Column="1"
+                                Margin="8,0,8,0"
+                                VerticalAlignment="Center"
+                                Text=":" />
+                            <ComboBox
+                                Grid.Column="2"
+                                Height="32"
+                                MaxDropDownHeight="224"
+                                AutomationProperties.Name="Scheduled minute"
+                                VerticalContentAlignment="Center"
+                                ItemsSource="{Binding MinuteOptions}"
+                                SelectedIndex="{Binding ScheduleMinuteIndex, Mode=TwoWay}" />
+                            <ComboBox
+                                Grid.Column="3"
+                                Width="92"
+                                Height="32"
+                                Margin="8,0,0,0"
+                                AutomationProperties.Name="Scheduled AM or PM"
+                                VerticalContentAlignment="Center"
+                                ItemsSource="{Binding AmPmOptions}"
+                                SelectedIndex="{Binding ScheduleAmPmIndex, Mode=TwoWay}"
+                                Visibility="{Binding Is24HourFormat, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                        </Grid>
+                        <TextBlock Margin="0,0,0,4" Text="Day of week (leave blank for daily)" />
+                        <UniformGrid MaxWidth="450" Columns="4">
+                            <CheckBox
+                                Margin="0,0,8,4"
+                                Content="Sun"
+                                IsChecked="{Binding IsSundaySelected, Mode=TwoWay}" />
+                            <CheckBox
+                                Margin="0,0,8,4"
+                                Content="Mon"
+                                IsChecked="{Binding IsMondaySelected, Mode=TwoWay}" />
+                            <CheckBox
+                                Margin="0,0,8,4"
+                                Content="Tue"
+                                IsChecked="{Binding IsTuesdaySelected, Mode=TwoWay}" />
+                            <CheckBox
+                                Margin="0,0,8,4"
+                                Content="Wed"
+                                IsChecked="{Binding IsWednesdaySelected, Mode=TwoWay}" />
+                            <CheckBox
+                                Margin="0,0,8,4"
+                                Content="Thu"
+                                IsChecked="{Binding IsThursdaySelected, Mode=TwoWay}" />
+                            <CheckBox
+                                Margin="0,0,8,4"
+                                Content="Fri"
+                                IsChecked="{Binding IsFridaySelected, Mode=TwoWay}" />
+                            <CheckBox
+                                Margin="0,0,0,4"
+                                Content="Sat"
+                                IsChecked="{Binding IsSaturdaySelected, Mode=TwoWay}" />
+                        </UniformGrid>
+                        <TextBlock
+                            MaxWidth="450"
+                            Margin="0,10,0,0"
+                            AutomationProperties.Name="Scheduled routine time zone"
+                            AutomationProperties.HelpText="{Binding ScheduleTimeZoneDetails}"
+                            Foreground="{DynamicResource MutedTextBrush}"
+                            Text="{Binding ScheduleTimeZoneDisplayName, StringFormat='Time zone: {0}'}"
+                            TextTrimming="CharacterEllipsis">
+                            <i:Interaction.Behaviors>
+                                <b:HoverInfoPopupBehavior Text="{Binding ScheduleTimeZoneDetails}" />
+                            </i:Interaction.Behaviors>
+                        </TextBlock>
+                        <CheckBox
+                            Margin="0,10,0,0"
+                            Content="Notify me 1 minute before"
+                            AutomationProperties.HelpText="Show a tray reminder before this routine runs. AudioPilot must be running."
+                            IsChecked="{Binding NotifyBeforeScheduledRun, Mode=TwoWay}">
+                            <i:Interaction.Behaviors>
+                                <b:HoverInfoPopupBehavior Text="Show a tray reminder before this routine runs. AudioPilot must be running." />
+                            </i:Interaction.Behaviors>
+                        </CheckBox>
+                    </StackPanel>
+                </Border>
+                <TextBlock x:Name="NetworkDiscoveryWarningText" Text="{Binding NetworkDiscoveryWarning}" TextWrapping="Wrap"
+                           Foreground="{DynamicResource MutedTextBrush}" Margin="0,0,0,8">
+                    <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers>
+                        <DataTrigger Binding="{Binding NetworkDiscoveryWarning}" Value=""><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
+                    </Style.Triggers></Style></TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
+        </ScrollViewer>
+        <StackPanel Grid.Row="2" Margin="0,12,0,0">
+            <TextBlock x:Name="TriggerValidationMessage" Text="{Binding TriggerEditorError}" TextWrapping="Wrap"
+                       Foreground="{DynamicResource DialogWarningBrush}" Margin="0,0,0,10" AutomationProperties.LiveSetting="Polite">
+                <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers>
+                    <DataTrigger Binding="{Binding TriggerEditorError}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
+                </Style.Triggers></Style></TextBlock.Style>
+            </TextBlock>
+            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                <Button MinWidth="88" Content="Cancel" IsCancel="True" Margin="0,0,8,0" />
+                <Button x:Name="ConfirmTriggerButton" Style="{StaticResource AppPrimaryButtonStyle}" MinWidth="110" Content="{Binding TriggerEditorConfirmText}"
+                        IsDefault="True" Click="ConfirmTrigger_Click" AutomationProperties.Name="Confirm trigger" />
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>
