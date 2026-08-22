@@ -1,0 +1,134 @@
+{
+  "SchemaVersion": "1.0.0",
+  "Theme": "Dark",
+  "RunAtStartup": true,
+  "DeviceSwitching": {
+    "PreserveAudioLevels": false,
+    "BluetoothReconnectEnabled": false,
+    "Output": {
+      "CycleDevices": [
+        {
+          "Id": "output-fixture",
+          "Name": "Output fixture"
+        }
+      ],
+      "SwitchRoles": [
+        "Communications"
+      ],
+      "SwitchHotkey": "Ctrl+Shift+O",
+      "ReverseSwitchHotkey": "Ctrl+Alt+Shift+O",
+      "HotkeysEnabled": false
+    },
+    "Input": {
+      "CycleDevices": [
+        {
+          "Id": "input-fixture",
+          "Name": "Input fixture"
+        }
+      ],
+      "SwitchRoles": [
+        "Communications"
+      ],
+      "SwitchHotkey": "Ctrl+Shift+I",
+      "ReverseSwitchHotkey": "Ctrl+Alt+Shift+I",
+      "HotkeysEnabled": false
+    }
+  },
+  "Hotkeys": {
+    "App": {
+      "ToggleAppVisibility": "Ctrl+Alt+H"
+    },
+    "Media": {
+      "ShowCurrentTrack": "",
+      "PlayPause": "Ctrl+Alt+P",
+      "NextTrack": "Ctrl+Alt+.",
+      "PreviousTrack": "Ctrl+Alt+,"
+    },
+    "Mute": {
+      "Mic": "",
+      "Sound": "",
+      "Deafen": ""
+    },
+    "Volume": {
+      "MasterUp": "",
+      "MasterDown": "",
+      "MasterVolumeStepPercent": 9,
+      "MicUp": "",
+      "MicDown": "",
+      "MicVolumeStepPercent": 7
+    },
+    "Listen": {
+      "ListenToInput": "Ctrl+Shift+L",
+      "MonitorOutputDeviceId": "monitor-fixture",
+      "MonitorOutputDeviceName": "Monitor fixture"
+    },
+    "Global": {
+      "AdditionalStandaloneKeys": []
+    }
+  },
+  "Routines": {
+    "Items": [
+      {
+        "Id": "scheduled-fixture",
+        "Name": "Evening audio",
+        "Enabled": false,
+        "OutputDeviceId": "output-fixture",
+        "OutputDeviceName": "Output fixture",
+        "InputDeviceId": "input-fixture",
+        "InputDeviceName": "Input fixture",
+        "TriggerKind": "Scheduled",
+        "ScheduleTime": "21:45:00",
+        "ScheduleDays": [
+          1,
+          5
+        ],
+        "ScheduleTimeZoneId": "UTC",
+        "NotifyBeforeScheduledRun": true,
+        "ShowInTrayMenu": false
+      },
+      {
+        "Id": "hotkey-fixture",
+        "Name": "Desk audio",
+        "Enabled": true,
+        "OutputDeviceId": "output-fixture",
+        "InputDeviceId": "input-fixture",
+        "TriggerKind": "Hotkey",
+        "Hotkey": "Ctrl+Shift+R",
+        "ShowInTrayMenu": true,
+        "MasterVolumePercent": 35,
+        "MicVolumePercent": 65
+      }
+    ]
+  },
+  "Overlay": {
+    "Enabled": false,
+    "Position": "BottomLeft",
+    "DurationSeconds": 4.5
+  },
+  "Miscellaneous": {
+    "DeviceReferenceFileMode": "Hashed",
+    "LogLevel": "Debug",
+    "RedactLogContent": false,
+    "AutoSaveEnabled": true,
+    "PlayAppSounds": false,
+    "ScheduleTimeZoneId": "UTC",
+    "AutoScrollToMixerOnRestore": false,
+    "UseScheduledStartup": true,
+    "CheckForUpdates": true,
+    "SuppressDeviceStartupWarnings": true
+  },
+  "AdvancedTuning": {
+    "BluetoothReconnect": {
+      "MaxAttempts": 2,
+      "AttemptTimeoutMs": 1200,
+      "CooldownMs": 5000,
+      "OnlyLikelyBluetoothEndpoints": true,
+      "CachedEndpointVisibilityProbeAttempts": 4,
+      "CachedEndpointVisibilityProbeDelayMs": 120
+    },
+    "SteamBigPicture": {
+      "MonitorDebounceMs": 150,
+      "ConfirmationDelayMs": 650
+    }
+  }
+}
