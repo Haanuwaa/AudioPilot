@@ -84,7 +84,7 @@ jobs:
 
       - name: Upload unit test results
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: release-testresults-unit-${{ matrix.architecture }}-${{ github.run_id }}
           path: artifacts/testresults/unit
@@ -165,7 +165,7 @@ jobs:
 
       - name: Upload integration test results
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: release-testresults-integration-${{ github.run_id }}
           path: artifacts/testresults/integration
@@ -193,7 +193,7 @@ jobs:
 
       - name: Upload stress test results
         if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: release-testresults-stress-${{ github.run_id }}
           path: artifacts/testresults/stress
@@ -239,7 +239,7 @@ jobs:
           ./scripts/publish-release-profiles.ps1 -TargetProfile $profile -Configuration Release -Version $env:RELEASE_VERSION
 
       - name: Upload published profile output
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: publish-${{ matrix.profile }}
           path: artifacts/publish
@@ -413,14 +413,14 @@ jobs:
 
       - name: Upload MSI smoke logs
         if: always() && matrix.runSmoke
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: installer-smoke-logs-x64
           path: artifacts/msi-smoke
           if-no-files-found: warn
 
       - name: Upload MSI outputs
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: installer-${{ matrix.platform }}
           path: AudioPilot.Installer/bin/${{ matrix.platform }}/Release/*.msi
@@ -529,7 +529,7 @@ jobs:
           sbom-path: ${{ steps.release-metadata.outputs.sbom-path }}
 
       - name: Upload packaged artifacts
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: audio-pilot-release-artifacts
           path: artifacts/release
