@@ -3,7 +3,7 @@ name: Updater staging maintenance
 on:
   workflow_dispatch:
   schedule:
-    - cron: "7,22,37,52 * * * *"
+    - cron: "47 2,8,14,20 * * *"
 
 permissions:
   contents: read
