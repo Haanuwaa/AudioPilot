@@ -31,6 +31,7 @@ jobs:
       code: ${{ steps.filter.outputs.code }}
       docs: ${{ steps.filter.outputs.docs }}
       benchmarks: ${{ steps.filter.outputs.benchmarks }}
+      updater_tools: ${{ steps.filter.outputs.updater_tools }}
 
     steps:
       - name: Checkout
@@ -41,8 +42,17 @@ jobs:
         uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
         with:
           filters: |
+            updater_tools:
+              - 'AudioPilot.Updater/TufBridge/**'
+              - 'scripts/build-tuf-bridge.ps1'
+              - 'scripts/*update*staging*.ps1'
+              - 'scripts/tests/*UpdateStaging*.ps1'
+              - 'scripts/tests/test-update-authority.ps1'
+              - '.github/workflows/update-staging.yml'
+              - '.github/workflows/ci.yml'
             benchmarks:
               - 'AudioPilot.Benchmarks/**'
+              - 'AudioPilot.UpdateProtocol/**'
               - 'AudioPilot/**'
               - 'AudioPilot.CliHost/**'
               - 'scripts/benchmark.ps1'
@@ -57,6 +67,9 @@ jobs:
               - 'global.json'
             code:
               - 'AudioPilot/**'
+              - 'AudioPilot.Updater/**'
+              - 'AudioPilot.Updater.Ui/**'
+              - 'AudioPilot.UpdateProtocol/**'
               - 'AudioPilot.CliHost/**'
               - 'AudioPilot.Installer/**'
               - 'AudioPilot.Tests/**'
@@ -393,6 +406,34 @@ jobs:
         if: github.event_name != 'pull_request'
         shell: pwsh
         run: ./scripts/validate-format.ps1 -Action check -NoRestore
+
+  updater-tools:
+    needs: changes
+    if: github.event_name == 'workflow_dispatch' || needs.changes.outputs.updater_tools == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: AudioPilot.Updater/TufBridge/.go-version
+          cache-dependency-path: AudioPilot.Updater/TufBridge/go.sum
+      - name: Test TUF client and publisher and build all client architectures
+        shell: pwsh
+        run: ./scripts/build-tuf-bridge.ps1 -OutputRoot artifacts/tuf-ci
+      - name: Test disposable authority recovery and online renewal
+        shell: pwsh
+        run: |
+          Push-Location AudioPilot.Updater/TufBridge
+          try {
+            go build -mod=readonly -trimpath -o ../../artifacts/tuf-ci/staging-publisher.exe ./cmd/staging-publisher
+            if ($LASTEXITCODE -ne 0) { throw 'Authority tool build failed.' }
+          } finally { Pop-Location }
+          ./scripts/tests/test-update-authority.ps1 -Publisher artifacts/tuf-ci/staging-publisher.exe -OutputDirectory artifacts/tuf-ci/authority-flow
 
   docs-links:
     needs: changes

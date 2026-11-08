@@ -8,7 +8,7 @@ function dotnet {
     $state.Calls++
     if ($args -notcontains '--no-restore' -or $args -notcontains '--output-version' -or $args -notcontains '1') { throw 'Missing stable query options.' }
     $projects = if ($args[1] -like '*.sln') {
-        @('AudioPilot/AudioPilot.csproj', 'AudioPilot.Tests/AudioPilot.Tests.csproj', 'AudioPilot.CliHost/AudioPilot.CliHost.csproj', 'AudioPilot.Installer/AudioPilot.Installer.wixproj')
+        @('AudioPilot/AudioPilot.csproj', 'AudioPilot.Tests/AudioPilot.Tests.csproj', 'AudioPilot.CliHost/AudioPilot.CliHost.csproj', 'AudioPilot.Installer/AudioPilot.Installer.wixproj', 'AudioPilot.UpdateProtocol/AudioPilot.UpdateProtocol.csproj')
     }
     else { @('AudioPilot.Benchmarks/AudioPilot.Benchmarks.csproj') }
     $report = @{ version = 1; projects = @($projects | ForEach-Object { @{ path = Join-Path $repoRoot $_ } }) }

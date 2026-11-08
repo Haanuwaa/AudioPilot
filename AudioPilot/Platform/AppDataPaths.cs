@@ -31,6 +31,7 @@ namespace AudioPilot.Platform
         public static string GetPrimaryDataRoot()
         {
             if (DiagnosticSession.DataRoot is { } isolatedRoot) return isolatedRoot;
+            if (AudioPilot.UpdateProtocol.PortableLayout.GetDataRoot(GetBaseDirectory(), null) is { } managedRoot) return managedRoot;
             if (TryGetInstalledDataRoot(out string? installedDataRoot))
             {
                 return installedDataRoot;

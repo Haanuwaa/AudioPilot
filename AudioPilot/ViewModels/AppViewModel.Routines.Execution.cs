@@ -9,6 +9,7 @@ namespace AudioPilot.ViewModels
     {
         private async Task<RoutineExecutionResult> ExecuteRoutineForResolvedProcessAsync(AudioRoutine routine, int processId, bool showOverlay, string executionSource, string? correlatedOperationId = null, bool trackLifetime = true, CancellationToken cancellationToken = default)
         {
+            if (IsRuntimeShutdownRequested || IsUpdateAdmissionBlocked) return BuildSkippedRoutineExecutionResult();
             AudioRoutine snapshot = routine.Clone();
             bool isManual = executionSource is "hotkey" or "tray" or "cli" or "manual";
             if (_routineRuntime.AutomaticPaused && !isManual)

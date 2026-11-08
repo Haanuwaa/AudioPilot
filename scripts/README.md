@@ -183,6 +183,37 @@ See [website/README.md](../website/README.md) for preview and deployment instruc
 Run its HTTP-isolated checks with `node --test scripts/tests/pages-recovery.test.mjs`.
 
 `lib/` contains shared helper code for scripts and is not intended as a direct command surface.
+
+The opt-in updater engineering scripts are described in [the updater guide](../AudioPilot.Updater/README.md).
+
+`publish-update-staging.ps1` provides authority status, encrypted backup/restore,
+root rotation and explicit catalog approval. `renew-update-staging.ps1` performs
+metadata-only renewal or read-only expiry checks. See [trust operations](../docs/UPDATE_STAGING.md)
+for custody and protected workflow setup. `tests/test-update-authority.ps1` uses
+disposable keys and prepares an offline cross-account Sandbox recovery proof.
+`build-tuf-bridge.ps1` checks and cross-builds the maintained local-only TUF adapter.
+`sign-update-artifacts.ps1` scaffolds first-party payload/MSI signing; production
+needs a configured identity and timestamp service.
+`prepare-update-signing-sandbox.ps1` isolates temporary identities and the signing/recovery proof from host trust stores.
+These scripts do not enable live updates or change the normal release pipeline.
+
+The [signing and staging guide](../docs/UPDATE_STAGING.md) covers the separate
+operator-only TUF publisher, DPAPI staging authority, package approval and optional
+HTTPS feed attachment to the website. `sign-update-payload.ps1` signs first-party
+files before packaging; `approve-update-package.ps1` checks the final package.
+`publish-update-staging.ps1` initializes, publishes, renews and exports staging
+metadata. `prepare-update-staging-sandbox.ps1` tests that complete ordering without
+adding certificate trust on the host. The website attachment is disabled until
+`UPDATE_STAGING_PAGES_ENABLED=true` is set together with an independently pinned
+`UPDATE_STAGING_ROOT_SHA256`.
+
+`prepare-update-ui-sandbox.ps1` stages the opt-in themed UI and local MSI/portable
+packages for pause, safe-close and rollback checks. See the
+[local UI guide](../AudioPilot.Updater.Ui/README.md).
+Its `-StagingFeed` mode maps only baseline packages, enables guest networking and exercises the pinned public HTTPS
+feed with explicit themed download/install confirmations. Microphone, camera and clipboard remain disabled.
+`publish-github-update-staging.ps1` publishes verified public metadata and immutable package assets to the separate
+Sandbox prerelease, with the timestamp last; it does not change the stable release or enable public app updates.
 `tests/test-msi-helpers.ps1` creates a small test database without installing anything and checks query results and
 immediate file-lock release, including missing-table queries.
 Pass `-InstallerPath` with an MSI matching the host architecture to check option defaults, saved unchecked values,

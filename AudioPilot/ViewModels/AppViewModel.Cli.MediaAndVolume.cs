@@ -18,7 +18,7 @@ namespace AudioPilot.ViewModels
         }
 
         private bool CanExecuteTaskbarMediaCommand(object? command) =>
-            !IsRuntimeShutdownRequested && !_isCleaningUp && !ShutdownToken.IsCancellationRequested &&
+            !IsRuntimeShutdownRequested && !IsUpdateAdmissionBlocked && !_isCleaningUp && !ShutdownToken.IsCancellationRequested &&
             (ReferenceEquals(command, MediaCommands.PreviousTrack) ||
              ReferenceEquals(command, MediaCommands.TogglePlayPause) ||
              ReferenceEquals(command, MediaCommands.NextTrack));

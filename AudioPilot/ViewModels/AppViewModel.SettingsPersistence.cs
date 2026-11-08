@@ -746,13 +746,14 @@ namespace AudioPilot.ViewModels
 
         private bool CommitSavedSettingsDuringShutdown(Settings settings)
         {
-            if (!IsRuntimeShutdownRequested) return false;
+            if (Volatile.Read(ref _runtimeShutdownStarted) == 0) return false;
             lock (_settingsLock) _cachedSettings = settings;
             return true;
         }
 
         private async Task ApplyPostSaveHotkeyAndMuteStateAsync(CancellationToken shutdownToken)
         {
+            if (IsUpdatePreparationBlocked) return;
             PostSaveMuteApplication? muteApplication = await InvokeOnDispatcherAsync(
                 () => (PostSaveMuteApplication?)new PostSaveMuteApplication(
                     _muteMicBackingField || _deafenBackingField,
@@ -836,6 +837,7 @@ namespace AudioPilot.ViewModels
 
         private void QueueAutoSave(string trigger)
         {
+            if (Services.Updates.AppUpdateLifecycleSession.Current?.StartupBlocked == true) return;
             if (_isInitializing || _isCleaningUp || IsResettingSettings)
             {
                 return;

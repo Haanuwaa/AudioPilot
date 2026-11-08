@@ -27,6 +27,8 @@
   <ItemGroup>
     <ProjectReference Include="..\AudioPilot\AudioPilot.csproj" />
     <ProjectReference Include="..\AudioPilot.CliHost\AudioPilot.CliHost.csproj" />
+    <ProjectReference Include="..\AudioPilot.Updater\AudioPilot.Updater.csproj" />
+    <ProjectReference Include="..\AudioPilot.Updater.Ui\AudioPilot.Updater.Ui.csproj" />
   </ItemGroup>
 
 </Project>

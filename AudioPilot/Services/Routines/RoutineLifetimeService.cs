@@ -26,6 +26,7 @@ internal sealed partial class RoutineLifetimeService
     private bool _automaticPaused;
 
     internal bool AutomaticPaused { get { lock (_sync) return _automaticPaused; } }
+    internal bool HasPendingActivations { get { lock (_sync) return _activations.Count != 0; } }
 
     internal void SetAutomaticPaused(bool paused)
     {

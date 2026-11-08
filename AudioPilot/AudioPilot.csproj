@@ -33,6 +33,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\AudioPilot.UpdateProtocol\AudioPilot.UpdateProtocol.csproj" />
 		<PackageReference Include="H.NotifyIcon.Wpf" />
 		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" />
 		<PackageReference Include="NAudio.Wasapi" />

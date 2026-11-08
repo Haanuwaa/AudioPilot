@@ -272,6 +272,8 @@ namespace AudioPilot
         private SingleInstanceHelper? _singleInstanceWithLifetimeHandlers;
         private bool _sessionEnding;
         private readonly CancellationTokenSource _startupCancellation = new();
+        private Task? _updateLifecycleTask;
+        private Task? _updateAttachmentTask;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -285,6 +287,7 @@ namespace AudioPilot
         {
             try
             {
+                Services.Updates.AppUpdateLifecycleSession.InitializeFromEnvironment();
                 _logger = Logger.Instance;
                 await RunStartupAsync(args);
             }
@@ -298,6 +301,11 @@ namespace AudioPilot
                 _runtimeReadyForActivation.TrySetResult(false);
                 try
                 {
+                    if (Environment.GetEnvironmentVariable(UpdateProtocol.UpdateLifecycleWire.EnvironmentVariable) != null)
+                    {
+                        TryLogLifecycleWarning("Opt-in update lifecycle startup failed", nameof(RunStartupObservedAsync), ex);
+                        return;
+                    }
                     if (_logger == null)
                     {
                         NativeAppDialogFallback.ShowStartupError(ex is System.IO.IOException or UnauthorizedAccessException or System.Security.SecurityException
@@ -432,6 +440,8 @@ namespace AudioPilot
             try
             {
                 AppShellIntegration.InitializeIdentity();
+                if (Services.Updates.AppUpdateLifecycleSession.Current is { } authenticatingSession)
+                    await authenticatingSession.AuthenticateAsync(_startupCancellation.Token);
                 AppRuntimeHost runtimeHost = await AppRuntimeHost.CreateAndInitializeAsync(
                     this,
                     singleInstance,
@@ -441,6 +451,9 @@ namespace AudioPilot
                     _startupCancellation.Token);
                 _runtimeReadyForActivation.TrySetResult(true);
                 AppShellIntegration.RegisterJumpList(this);
+                if (Services.Updates.AppUpdateLifecycleSession.Current is { } updateSession)
+                    _updateLifecycleTask = ObserveUpdateLifecycleAsync(updateSession, runtimeHost);
+                _updateAttachmentTask = ObserveUpdateAttachmentsAsync(runtimeHost);
 
                 if (shellLaunch) _ = await ExecuteShellActionAsync(runtimeHost, Dispatcher, shellAction, runtimeHost.AppViewModel.ShutdownToken);
             }
@@ -474,6 +487,29 @@ namespace AudioPilot
             }
         }
 
+        private async Task ObserveUpdateLifecycleAsync(Services.Updates.AppUpdateLifecycleSession session, AppRuntimeHost host)
+        {
+            try { await session.RunAsync(host, _startupCancellation.Token); }
+            catch (Exception ex) when (ex is System.IO.IOException or OperationCanceledException)
+            {
+                if (!_startupCancellation.IsCancellationRequested)
+                    TryLogLifecycleWarning("Opt-in lifecycle control ended without a confirmed update shutdown", nameof(ObserveUpdateLifecycleAsync), ex);
+            }
+            catch (Exception ex)
+            {
+                TryLogLifecycleWarning("Opt-in lifecycle channel failed", nameof(ObserveUpdateLifecycleAsync), ex);
+                host.CancelUpdatePreparation();
+            }
+            finally { session.Dispose(); }
+        }
+
+        private async Task ObserveUpdateAttachmentsAsync(AppRuntimeHost host)
+        {
+            try { await Services.Updates.AppUpdateLifecycleSession.ListenForAttachmentsAsync(host, _startupCancellation.Token); }
+            catch (OperationCanceledException) when (_startupCancellation.IsCancellationRequested) { }
+            catch (Exception error) { TryLogLifecycleWarning("Opt-in updater attachment listener failed", nameof(ObserveUpdateAttachmentsAsync), error); }
+        }
+
         protected override void OnSessionEnding(SessionEndingCancelEventArgs e)
         {
             base.OnSessionEnding(e);
@@ -498,6 +534,10 @@ namespace AudioPilot
 
         protected override void OnExit(ExitEventArgs e)
         {
+            try { Services.Updates.AppUpdateLifecycleSession.Current?.Dispose(); }
+            catch (Exception error) { TryLogLifecycleWarning("Failed to close the opt-in lifecycle channel", nameof(OnExit), error); }
+            if (_updateLifecycleTask?.IsFaulted == true) _ = _updateLifecycleTask.Exception;
+            if (_updateAttachmentTask?.IsFaulted == true) _ = _updateAttachmentTask.Exception;
             if (!_startupCancellation.IsCancellationRequested) _startupCancellation.Cancel();
             _runtimeReadyForActivation.TrySetResult(false);
             AppRuntimeHost? runtimeHost = Interlocked.Exchange(ref _runtimeHost, null);
@@ -679,7 +719,7 @@ namespace AudioPilot
 
             AppRuntimeHost? runtimeHost = _runtimeHost;
             Dispatcher dispatcher = Dispatcher;
-            if (runtimeHost == null || AppDispatcherHelper.IsDispatcherUnavailable(dispatcher))
+            if (runtimeHost == null || runtimeHost.IsUpdateAdmissionBlocked || AppDispatcherHelper.IsDispatcherUnavailable(dispatcher))
             {
                 return false;
             }
@@ -692,7 +732,7 @@ namespace AudioPilot
                 }
 
                 return await dispatcher.InvokeAsync(
-                    () => runtimeHost.AppViewModel.ShowWindowAsync(cancellationToken),
+                    () => runtimeHost.IsUpdateAdmissionBlocked ? Task.FromResult(false) : runtimeHost.AppViewModel.ShowWindowAsync(cancellationToken),
                     DispatcherPriority.Input, cancellationToken).Task.Unwrap();
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -713,6 +753,8 @@ namespace AudioPilot
 
         private async Task<SingleInstanceCommandResult> OnCommandRequested(string payload, CancellationToken cancellationToken)
         {
+            if (_runtimeHost?.IsUpdateAdmissionBlocked == true)
+                return new SingleInstanceCommandResult(3, ErrorCode: "update-preparation-active", ProtocolVersion: SingleInstanceHelper.ResponseProtocolVersion);
             if (ShellActivation.TryParsePayload(payload, out ShellAction shellAction))
             {
                 if (!await _runtimeReadyForActivation.Task.WaitAsync(cancellationToken))

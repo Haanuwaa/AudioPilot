@@ -35,6 +35,27 @@ internal sealed class MicrophoneHoldService(Logger logger, Action<MicrophoneHold
     private bool _waitingForEndpointRecovery;
     private long _endpointChangeVersion;
     private bool? _mutePreference;
+    private bool _updateSuspended;
+
+    internal IDisposable? TrySuspendIdleForUpdate()
+    {
+        lock (_sync)
+        {
+            if (_disposed || _updateSuspended || _enabled || _holds.Count > 0 || Volatile.Read(ref _leaseActive) != 0) return null;
+            _updateSuspended = true;
+            return new UpdateSuspension(this);
+        }
+    }
+
+    private sealed class UpdateSuspension(MicrophoneHoldService owner) : IDisposable
+    {
+        private int _disposed;
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
+            lock (owner._sync) owner._updateSuspended = false;
+        }
+    }
 
     internal bool IsControlling
     {
@@ -45,7 +66,7 @@ internal sealed class MicrophoneHoldService(Logger logger, Action<MicrophoneHold
     {
         lock (_sync)
         {
-            if (_disposed || (_enabled == enabled && !_faulted)) return;
+            if (_disposed || _updateSuspended || (_enabled == enabled && !_faulted)) return;
             _enabled = enabled;
             _revision++;
             _requestVersion++;
@@ -58,7 +79,7 @@ internal sealed class MicrophoneHoldService(Logger logger, Action<MicrophoneHold
     {
         lock (_sync)
         {
-            if (_disposed || (!muted && !_enabled) || !held()) return;
+            if (_disposed || _updateSuspended || (!muted && !_enabled) || !held()) return;
             if (_cancelledHolds.TryGetValue(muted, out var cancelled) && cancelled()) return;
             _cancelledHolds.Remove(muted);
             _holds[muted] = held;

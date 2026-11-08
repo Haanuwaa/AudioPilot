@@ -97,7 +97,7 @@ if ($FromArchive) {
     Write-Host "Validated complete archived $DeploymentMode $RuntimeIdentifier payload."
     return
 }
-$inputs = & git -C $repository ls-files --cached --others --exclude-standard -- AudioPilot AudioPilot.CliHost Directory.Build.props Directory.Build.targets Directory.Packages.props Version.props global.json nuget.config LICENSE THIRD-PARTY-NOTICES.txt
+$inputs = & git -C $repository ls-files --cached --others --exclude-standard -- AudioPilot AudioPilot.CliHost AudioPilot.UpdateProtocol Directory.Build.props Directory.Build.targets Directory.Packages.props Version.props global.json nuget.config LICENSE THIRD-PARTY-NOTICES.txt
 if ($LASTEXITCODE -ne 0) { throw 'Cannot determine publish source inputs.' }
 $sourceLines = foreach ($inputPath in ($inputs | Sort-Object -Unique)) {
     $path = Join-Path $repository $inputPath

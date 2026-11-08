@@ -14,7 +14,8 @@ $findings = [Collections.Generic.List[object]]::new()
 $targets = @(
     @{ Name = 'solution'; Path = 'AudioPilot.sln'; Projects = @(
         'AudioPilot/AudioPilot.csproj', 'AudioPilot.Tests/AudioPilot.Tests.csproj',
-        'AudioPilot.CliHost/AudioPilot.CliHost.csproj', 'AudioPilot.Installer/AudioPilot.Installer.wixproj') },
+        'AudioPilot.CliHost/AudioPilot.CliHost.csproj', 'AudioPilot.Installer/AudioPilot.Installer.wixproj',
+        'AudioPilot.UpdateProtocol/AudioPilot.UpdateProtocol.csproj') },
     @{ Name = 'benchmarks'; Path = 'AudioPilot.Benchmarks/AudioPilot.Benchmarks.csproj'; Projects = @(
         'AudioPilot.Benchmarks/AudioPilot.Benchmarks.csproj') }
 )

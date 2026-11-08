@@ -101,7 +101,7 @@ namespace AudioPilot.Services.Configuration
 
         public string GetSettingsPath() => _activeSettingsPath;
 
-        public Settings LoadSettings() => LoadSettingsCore(persistOnLoad: true);
+        public Settings LoadSettings() => LoadSettingsCore(persistOnLoad: Services.Updates.AppUpdateLifecycleSession.Current?.StartupBlocked != true);
 
         /// <summary>Loads normalized or recovered settings in memory without creating or repairing settings files.</summary>
         internal Settings LoadSettingsReadOnly(bool allowRecovery = true) => LoadSettingsCore(persistOnLoad: false, allowRecovery);

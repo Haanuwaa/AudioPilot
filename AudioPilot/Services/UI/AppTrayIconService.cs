@@ -70,6 +70,12 @@ namespace AudioPilot.Services.UI
         private PauseDurationWindow? _pauseDurationWindow;
         private TaskbarIcon? _taskbarIcon;
         private ContextMenu? _contextMenu;
+        private bool _updateActionsSuspended;
+        internal void SetUpdateActionsSuspended(bool suspended)
+        {
+            _updateActionsSuspended = suspended;
+            _contextMenu?.IsEnabled = !suspended;
+        }
         private TaskCompletionSource? _contextMenuClosed;
         private IAppTrayRuntimeActions? _runtimeActions;
         private IAppMainWindowManager? _windowManager;
@@ -203,6 +209,7 @@ namespace AudioPilot.Services.UI
                 ContextMenu contextMenu = new()
                 {
                     Name = "AudioPilotTrayContextMenu",
+                    IsEnabled = !_updateActionsSuspended,
                 };
                 contextMenu.SetResourceReference(FrameworkElement.StyleProperty, "AppTrayContextMenuStyle");
                 System.Windows.Automation.AutomationProperties.SetName(contextMenu, "AudioPilot tray menu");
@@ -763,13 +770,14 @@ namespace AudioPilot.Services.UI
 
         private void ObserveUiAction(Func<Task<bool>> action, string operation)
         {
-            _ = ObserveUiActionAsync(action, operation);
+            if (!_updateActionsSuspended) _ = ObserveUiActionAsync(action, operation);
         }
 
         private async Task ObserveUiActionAsync(Func<Task<bool>> action, string operation)
         {
             try
             {
+                if (_updateActionsSuspended) return;
                 _ = await action();
             }
             catch (Exception ex)

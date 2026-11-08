@@ -53,6 +53,9 @@
           "System.Numerics.Tensors": "9.0.0"
         }
       },
+      "audiopilot.updateprotocol": {
+        "type": "Project"
+      },
       "System.Numerics.Tensors": {
         "type": "CentralTransitive",
         "requested": "[10.0.14, )",

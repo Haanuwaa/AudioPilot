@@ -11,3 +11,4 @@ using System.Windows;
 [assembly: InternalsVisibleTo("AudioPilot.Cli")]
 [assembly: InternalsVisibleTo("AudioPilot.Tests")]
 [assembly: InternalsVisibleTo("AudioPilot.Benchmarks")]
+[assembly: InternalsVisibleTo("AudioPilot.Updater.Ui")]

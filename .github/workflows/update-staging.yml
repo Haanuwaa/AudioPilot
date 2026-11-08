@@ -1,0 +1,95 @@
+name: Updater staging maintenance
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "47 2,8,14,20 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: updater-staging-publication
+  cancel-in-progress: false
+
+jobs:
+  renew:
+    if: github.ref == 'refs/heads/main' && vars.UPDATE_STAGING_RENEWAL_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: updater-staging-renewal
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: AudioPilot.Updater/TufBridge/.go-version
+          cache-dependency-path: AudioPilot.Updater/TufBridge/go.sum
+      - name: Build and test the authority tool
+        working-directory: AudioPilot.Updater/TufBridge
+        run: |
+          mkdir -p ../../artifacts
+          go mod verify
+          go test -count=1 ./internal/staging ./cmd/staging-publisher
+          go build -mod=readonly -trimpath -o ../../artifacts/staging-publisher ./cmd/staging-publisher
+      - name: Renew approved staging metadata
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STAGING_ROOT: ${{ vars.UPDATE_STAGING_ROOT_SHA256 }}
+          STAGING_ROOT_VERSION: ${{ vars.UPDATE_STAGING_ROOT_VERSION || '1' }}
+          UPDATE_STAGING_RENEWAL_KEYS: ${{ secrets.UPDATE_STAGING_RENEWAL_KEYS }}
+        run: |
+          ./scripts/renew-update-staging.ps1 -Publisher artifacts/staging-publisher -BootstrapHash $env:STAGING_ROOT -MinimumRootVersion $env:STAGING_ROOT_VERSION -OutputDirectory artifacts/staging-renewal -Publish
+      - name: Report maintenance health
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          MAINTENANCE_STATUS: ${{ job.status }}
+        shell: pwsh
+        run: ./scripts/report-update-staging-health.ps1 -Recovered:($env:MAINTENANCE_STATUS -eq 'success') -RunUrl $env:RUN_URL
+
+  health:
+    needs: renew
+    if: always() && github.ref == 'refs/heads/main' && vars.UPDATE_STAGING_ROOT_SHA256 != '' && vars.UPDATE_STAGING_RENEWAL_ENABLED != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: AudioPilot.Updater/TufBridge/.go-version
+          cache-dependency-path: AudioPilot.Updater/TufBridge/go.sum
+      - name: Check public feed without signing keys
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STAGING_ROOT: ${{ vars.UPDATE_STAGING_ROOT_SHA256 }}
+          STAGING_ROOT_VERSION: ${{ vars.UPDATE_STAGING_ROOT_VERSION || '1' }}
+        run: |
+          Push-Location AudioPilot.Updater/TufBridge
+          try {
+            New-Item -ItemType Directory -Path ../../artifacts -Force | Out-Null
+            go build -mod=readonly -trimpath -o ../../artifacts/staging-publisher ./cmd/staging-publisher
+            if ($LASTEXITCODE -ne 0) { throw 'Authority verifier build failed.' }
+          } finally { Pop-Location }
+          ./scripts/renew-update-staging.ps1 -Publisher artifacts/staging-publisher -BootstrapHash $env:STAGING_ROOT -MinimumRootVersion $env:STAGING_ROOT_VERSION -OutputDirectory artifacts/staging-health -CheckOnly
+
+      - name: Report maintenance health
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          MAINTENANCE_STATUS: ${{ job.status }}
+        shell: pwsh
+        run: ./scripts/report-update-staging-health.ps1 -Recovered:($env:MAINTENANCE_STATUS -eq 'success') -RunUrl $env:RUN_URL

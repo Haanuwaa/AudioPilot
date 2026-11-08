@@ -204,6 +204,7 @@ function Get-LockFileDependencyInventory {
     $lockFiles = @(
         'AudioPilot/packages.lock.json',
         'AudioPilot.CliHost/packages.lock.json',
+        'AudioPilot.UpdateProtocol/packages.lock.json',
         'AudioPilot.Installer/packages.lock.json',
         'AudioPilot.Tests/packages.lock.json'
     ) | ForEach-Object { Get-Item -LiteralPath (Join-Path $RepoRoot $_) } |
@@ -276,6 +277,7 @@ function Get-ProvenanceMaterial {
         "AudioPilot.sln",
         "AudioPilot/packages.lock.json",
         "AudioPilot.CliHost/packages.lock.json",
+        "AudioPilot.UpdateProtocol/packages.lock.json",
         "AudioPilot.Installer/packages.lock.json",
         "AudioPilot.Tests/packages.lock.json",
         'scripts/package-release.ps1',

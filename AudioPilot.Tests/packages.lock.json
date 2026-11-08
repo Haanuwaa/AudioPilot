@@ -233,6 +233,7 @@
       "audiopilot": {
         "type": "Project",
         "dependencies": {
+          "AudioPilot.UpdateProtocol": "[1.0.0, )",
           "H.NotifyIcon.Wpf": "[2.4.1, )",
           "Microsoft.Xaml.Behaviors.Wpf": "[1.1.161, )",
           "NAudio.Wasapi": "[3.3.0, )",
@@ -243,6 +244,22 @@
         "type": "Project",
         "dependencies": {
           "AudioPilot": "[1.0.0, )"
+        }
+      },
+      "audiopilot.updateprotocol": {
+        "type": "Project"
+      },
+      "audiopilot.updater": {
+        "type": "Project",
+        "dependencies": {
+          "AudioPilot.UpdateProtocol": "[1.0.0, )"
+        }
+      },
+      "audiopilot.updater.ui": {
+        "type": "Project",
+        "dependencies": {
+          "AudioPilot": "[1.0.0, )",
+          "AudioPilot.Updater": "[1.0.0, )"
         }
       },
       "H.NotifyIcon.Wpf": {

@@ -222,7 +222,8 @@ namespace AudioPilot
                     appViewModel,
                     hotkeyService,
                     dialogs,
-                    onStartHiddenToTray: visibilityCoordinator.MarkPendingAutoScrollOnNextShow);
+                    onStartHiddenToTray: visibilityCoordinator.MarkPendingAutoScrollOnNextShow,
+                    updateGate: Services.Updates.AppUpdateLifecycleSession.Current);
                 AppHotplugOverlayCoordinator hotplugOverlayCoordinator = new(
                     settingsService,
                     appViewModel,
@@ -235,7 +236,8 @@ namespace AudioPilot
                     startupCoordinator,
                     appViewModel,
                     hotplugOverlayCoordinator,
-                    message => dialogs.ShowErrorAsync(message, DialogText.Captions.StartupError, cancellationToken: appViewModel.ShutdownToken),
+                    message => Services.Updates.AppUpdateLifecycleSession.Current != null ? Task.CompletedTask
+                        : dialogs.ShowErrorAsync(message, DialogText.Captions.StartupError, cancellationToken: appViewModel.ShutdownToken),
                     () => hostReference!.PublishStartupShellAsync(),
                     appViewModel.ShutdownToken);
 
@@ -257,7 +259,8 @@ namespace AudioPilot
                         appViewModel,
                         shell,
                         visibilityCoordinator,
-                        () => host.RequestShutdownAsync("main-window-close"))));
+                        () => host.RequestShutdownAsync("main-window-close")))
+                { IsEnabled = !host.IsUpdateAdmissionBlocked });
                 trayService.AttachRuntime(new AppViewModelTrayRuntimeActions(appViewModel), windowManager, () => host.RequestShutdownAsync("tray-exit"));
                 return host;
             }
@@ -348,6 +351,10 @@ namespace AudioPilot
             AppRuntimeStartupInitializationOutcome startupOutcome = await _startupWork;
             _appVm.ShutdownToken.ThrowIfCancellationRequested();
             EnsureStartupSucceeded(startupOutcome);
+            if (Services.Updates.AppUpdateLifecycleSession.Current?.Restart == true)
+                OnPushToTalkModeChanged(_appVm.CurrentSettings?.Hotkeys.Mute.PushToTalkEnabled ?? false);
+            _trayService.SetUpdateActionsSuspended(false);
+            if (_windowManager.CurrentWindow is { } initializedWindow) initializedWindow.IsEnabled = true;
             _appVm.Updates.Start();
             _logger.Info(
                 "AppRuntimeHost",
@@ -362,10 +369,15 @@ namespace AudioPilot
             _overlayService.PrepareForFirstUse();
             bool trayReady = await AppTrayStartupCoordinator.EnsureVisibleAsync(
                 () => _trayService.EnsureVisible(logFailure: false), _logger, token);
+            _trayService.SetUpdateActionsSuspended(_appVm.IsUpdateAdmissionBlocked);
             await AppTrayStartupCoordinator.EnsureWindowFallbackAsync(trayReady, _windowManager, _logger, token);
             token.ThrowIfCancellationRequested();
 
             _startupShellReady = true;
+            if (Services.Updates.AppUpdateLifecycleSession.Current?.StartupBlocked == true && _runtimeServices.SettingsService.LastLoadUserWarning != null)
+                throw new InvalidOperationException("A restart candidate requires settings recovery; validation cannot be committed.");
+            if (Services.Updates.AppUpdateLifecycleSession.Current?.StartupBlocked == true && _appVm.CurrentSettings?.Hotkeys.Mute.PushToTalkEnabled == true)
+                throw new InvalidOperationException("A restart candidate cannot acquire push-to-talk ownership before commit.");
             _appVm.ReportHotkeyAvailability();
             OnPushToTalkModeChanged(_appVm.CurrentSettings?.Hotkeys.Mute.PushToTalkEnabled ?? false);
             if (trayReady) _trayService.SchedulePresentationPrewarm();
@@ -422,8 +434,8 @@ namespace AudioPilot
                 onForegroundMute: () => _appVm.ChangeForegroundAudioFromHotkey(0),
                 onMicrophoneHold: (muted, held) =>
                 {
-                    if (!IsShutdownRequested() && (muted || !_appVm.Deafen))
-                        _microphoneHold.Begin(muted, () => held() && !IsShutdownRequested() && (muted || !_appVm.Deafen));
+                    if (!IsUserWorkBlocked() && (muted || !_appVm.Deafen))
+                        _microphoneHold.Begin(muted, () => held() && !IsUserWorkBlocked() && (muted || !_appVm.Deafen));
                 },
                 onMicrophoneHoldCancelled: () => _microphoneHold.Cancel(),
                 onQuickDevicePicker: () => DispatchUiHotkeyAction(_appVm.ToggleQuickDevicePicker));
@@ -460,7 +472,7 @@ namespace AudioPilot
 
         private void OnPushToTalkModeChanged(bool enabled)
         {
-            if (!_startupShellReady || IsShutdownRequested()) return;
+            if (!_startupShellReady || IsUserWorkBlocked()) return;
             bool registered = _hotkeyService.GetLastRegistrationOutcome(AppConstants.Hotkeys.PushToTalkHotkeyId).Kind
                 is HotkeyRegistrationOutcomeKind.Registered or HotkeyRegistrationOutcomeKind.Fallback;
             _microphoneHold.SetPushToTalkEnabled(enabled && registered);
@@ -473,7 +485,7 @@ namespace AudioPilot
 
         private void DispatchUiHotkeyAction(Action action, bool guardCapture = true)
         {
-            if (IsShutdownRequested())
+            if (IsUserWorkBlocked())
             {
                 return;
             }
@@ -484,7 +496,7 @@ namespace AudioPilot
                 _logger,
                 () =>
                 {
-                    if (!IsShutdownRequested() && (!guardCapture || _hotkeyService.CanDispatch(generation))) action();
+                    if (!IsUserWorkBlocked() && (!guardCapture || _hotkeyService.CanDispatch(generation))) action();
                 },
                 "Hotkey action error",
                 nameof(DispatchUiHotkeyAction));
@@ -492,7 +504,7 @@ namespace AudioPilot
 
         private void DispatchUiHotkeyActionAsync(Func<Task> action, string errorMessage)
         {
-            if (IsShutdownRequested())
+            if (IsUserWorkBlocked())
             {
                 return;
             }
@@ -503,7 +515,7 @@ namespace AudioPilot
                 _logger,
                 async () =>
                 {
-                    if (!IsShutdownRequested() && _hotkeyService.CanDispatch(generation))
+                    if (!IsUserWorkBlocked() && _hotkeyService.CanDispatch(generation))
                     {
                         await action();
                     }
@@ -514,7 +526,7 @@ namespace AudioPilot
 
         private void RunBackgroundHotkeyAction(Action action, string errorMessage)
         {
-            if (IsShutdownRequested())
+            if (IsUserWorkBlocked())
             {
                 return;
             }
@@ -535,7 +547,7 @@ namespace AudioPilot
             string enabledMessage,
             string disabledMessage)
         {
-            if (IsShutdownRequested())
+            if (IsUserWorkBlocked())
             {
                 return;
             }
@@ -544,7 +556,7 @@ namespace AudioPilot
             DispatchUiHotkeyActionAsync(async () =>
             {
                 var result = await _appVm.ChangeMuteStateAsync(toggle);
-                if (IsShutdownRequested() || !_hotkeyService.CanDispatch(generation) || !result.IsCurrent
+                if (IsUserWorkBlocked() || !_hotkeyService.CanDispatch(generation) || !result.IsCurrent
                     || result.Revision != _appVm.MuteIntentRevision) return;
                 if (!result.Succeeded)
                 {
@@ -561,7 +573,7 @@ namespace AudioPilot
 
         private void RunCycleHotkey(bool output, bool reverse)
         {
-            if (IsShutdownRequested())
+            if (IsUserWorkBlocked())
             {
                 return;
             }
@@ -569,7 +581,7 @@ namespace AudioPilot
             long generation = _hotkeyService.CaptureGeneration;
             _ = AppDispatcherHelper.ExecuteAsync(
                 () => _appVm.SwitchCycleFromHotkeyAsync(output, reverse,
-                    () => !IsShutdownRequested() && _hotkeyService.CanDispatch(generation)),
+                    () => !IsUserWorkBlocked() && _hotkeyService.CanDispatch(generation)),
                 _logger,
                 _application.Dispatcher,
                 _dialogs,
@@ -909,7 +921,8 @@ namespace AudioPilot
                 await AwaitShutdownStepAsync(_startupWork, "drain-startup", opId));
             bool resumeDrained = CanDisposeDependentResources(
                 await AwaitShutdownStepAsync(_startupResumeCoordinator.DrainResumeAsync(), "drain-resume", opId));
-            bool autoSaveDrained = CanDisposeDependentResources(await finalAutoSave);
+            bool autoSaveDrained = CanDisposeDependentResources(await finalAutoSave)
+                && (!_updatePrepared || !_appVm.HasPendingUpdateEdits);
             allTrackedStepsDrained &= startupDrained && resumeDrained && autoSaveDrained;
             bool presentationDrained = CanDisposeDependentResources(closeWindows)
                 && CanDisposeDependentResources(windowManager);
@@ -985,6 +998,7 @@ namespace AudioPilot
                 allTrackedStepsDrained &= CanDisposeDependentResources(loggerDrain);
             }
             if (allTrackedStepsDrained) DetachExceptionHandlers();
+            _lastShutdownDrained = allTrackedStepsDrained;
 
             if (exitApplication
                 && !_application.Dispatcher.HasShutdownStarted

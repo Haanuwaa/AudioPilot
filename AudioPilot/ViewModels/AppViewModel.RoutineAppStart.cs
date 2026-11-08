@@ -13,6 +13,7 @@ namespace AudioPilot.ViewModels
         internal void EnableRoutineAppStartMonitoring()
         {
             _routineRuntime.EnableMonitoring();
+            if (Services.Updates.AppUpdateLifecycleSession.Current?.Restart == true) _routineRuntime.UpdateAutomaticTriggers();
             RefreshRoutineRuntimeTriggers();
         }
 

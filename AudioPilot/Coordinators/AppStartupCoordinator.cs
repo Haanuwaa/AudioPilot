@@ -2,6 +2,7 @@ using System.Diagnostics;
 using AudioPilot.Constants;
 using AudioPilot.Logging;
 using AudioPilot.Models;
+using AudioPilot.Services.Updates;
 using AudioPilot.ViewModels;
 
 namespace AudioPilot.Coordinators
@@ -83,18 +84,21 @@ namespace AudioPilot.Coordinators
         private readonly Logger _logger;
         private readonly Func<AppDialogRequest, CancellationToken, Task<AppDialogResult>> _showWarning;
         private readonly Action _onStartHiddenToTray;
+        private readonly IUpdateStartupGate? _updateGate;
 
         internal AppStartupCoordinator(
             AppViewModel appVm,
             HotkeyService hotkeyService,
             IAppDialogService dialogs,
-            Action? onStartHiddenToTray = null)
+            Action? onStartHiddenToTray = null,
+            IUpdateStartupGate? updateGate = null)
             : this(
                 new AppViewModelAdapter(appVm),
                 new HotkeyServiceAdapter(hotkeyService),
                 Logger.Instance,
                 showWarning: dialogs.ShowAsync,
-                onStartHiddenToTray: onStartHiddenToTray)
+                onStartHiddenToTray: onStartHiddenToTray,
+                updateGate: updateGate)
         {
         }
 
@@ -103,13 +107,15 @@ namespace AudioPilot.Coordinators
             IStartupHotkeyRegistrar hotkeyService,
             Logger logger,
             Func<AppDialogRequest, CancellationToken, Task<AppDialogResult>>? showWarning = null,
-            Action? onStartHiddenToTray = null)
+            Action? onStartHiddenToTray = null,
+            IUpdateStartupGate? updateGate = null)
         {
             _appVm = appVm;
             _hotkeyService = hotkeyService;
             _logger = logger;
             _showWarning = showWarning ?? (static (_, _) => Task.FromResult(AppDialogResult.Acknowledged));
             _onStartHiddenToTray = onStartHiddenToTray ?? (() => { });
+            _updateGate = updateGate;
         }
 
         /// <summary>
@@ -134,6 +140,7 @@ namespace AudioPilot.Coordinators
             var settings = _appVm.CurrentSettings;
             if (settings == null)
             {
+                if (_updateGate?.Restart == true) throw new InvalidOperationException("Restart settings are unavailable; validation cannot be committed.");
                 _logger.Warning("AppStartupCoordinator", () => $"{AppConstants.Audio.LogEvents.StartupCoordinator.SettingsUnavailable} | opId={startupOpId} action=show-window");
                 _appVm.MarkStartupVisibilityResolved();
                 _ = await _appVm.ShowWindowAsync();
@@ -144,7 +151,7 @@ namespace AudioPilot.Coordinators
 
             using ((_hotkeyService as IStartupHotkeyRegistrationLoggingScope)?.SuppressVerboseRegistrationLogs())
                 RegisterHotkeys(settings, startupOpId);
-            _appVm.EnableRoutineAppStartMonitoring();
+            if (_updateGate?.Restart != true) _appVm.EnableRoutineAppStartMonitoring();
             double hotkeyRegistrationMs = startupStopwatch.Elapsed.TotalMilliseconds - appVmInitMs;
 
             bool configured =
@@ -158,7 +165,7 @@ namespace AudioPilot.Coordinators
                 settings.DeviceSwitching.Output.CycleDevices.Count > 0 ||
                 settings.DeviceSwitching.Input.CycleDevices.Count > 0 ||
                 HasConfiguredControls(settings.Hotkeys);
-            bool startHiddenToTray = configured && !_appVm.HasInteractiveShowRequest;
+            bool startHiddenToTray = _updateGate?.Restart == true ? !_updateGate.Visible : configured && !_appVm.HasInteractiveShowRequest;
             _appVm.MarkStartupVisibilityResolved();
             string startupAction = startHiddenToTray
                 ? "start-hidden-to-tray"
@@ -178,6 +185,13 @@ namespace AudioPilot.Coordinators
             await publishShellAsync();
             cancellationToken.ThrowIfCancellationRequested();
 
+            if (_updateGate?.Restart == true)
+            {
+                await _updateGate.WaitForCommitAsync(cancellationToken);
+                cancellationToken.ThrowIfCancellationRequested();
+                _appVm.EnableRoutineAppStartMonitoring();
+            }
+
             IReadOnlyList<string> warnings = BuildStartupWarningMessages(
                 settings,
                 _appVm.GetConfigurationWarningDiagnosticsForUi(),
@@ -187,8 +201,9 @@ namespace AudioPilot.Coordinators
             if (warnings.Count > 0 && !noSettingsFileExists)
             {
                 string summary = warningCount == 1 ? "One setting needs attention." : $"{warningCount} settings warnings need attention.";
-                await _showWarning(AppDialogRequest.Acknowledge(string.Join("\n\n", warnings), DialogText.Captions.SettingsWarnings,
-                    AppDialogKind.Warning, allowCopy: true, summary: summary), cancellationToken);
+                if (_updateGate?.Restart != true)
+                    await _showWarning(AppDialogRequest.Acknowledge(string.Join("\n\n", warnings), DialogText.Captions.SettingsWarnings,
+                        AppDialogKind.Warning, allowCopy: true, summary: summary), cancellationToken);
                 cancellationToken.ThrowIfCancellationRequested();
                 _logger.Warning("AppStartupCoordinator", () => $"{AppConstants.Audio.LogEvents.StartupCoordinator.SettingsWarnings} | opId={startupOpId} count={warningCount} suppressed={suppressedWarningCount}");
             }
@@ -197,7 +212,7 @@ namespace AudioPilot.Coordinators
                 _logger.Debug("AppStartupCoordinator", () => $"startup-settings-warnings-suppressed | opId={startupOpId} count={suppressedWarningCount} reason=disconnected-device-startup-warnings-disabled");
             }
 
-            await _appVm.ExecuteAudioPilotStartupRoutinesAsync(showOverlay: true);
+            if (_updateGate?.Restart != true) await _appVm.ExecuteAudioPilotStartupRoutinesAsync(showOverlay: true);
             cancellationToken.ThrowIfCancellationRequested();
 
             startupStopwatch.Stop();

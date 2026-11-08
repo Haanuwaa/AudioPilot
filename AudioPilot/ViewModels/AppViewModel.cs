@@ -47,7 +47,7 @@ namespace AudioPilot.ViewModels
         private readonly List<IDisposable> _ownedCommands = [];
         private readonly List<(HotkeyViewModel Draft, PropertyChangedEventHandler Handler)> _hotkeyDraftHandlers = [];
 
-        internal bool IsRuntimeShutdownRequested => Volatile.Read(ref _runtimeShutdownStarted) != 0;
+        internal bool IsRuntimeShutdownRequested => Volatile.Read(ref _runtimeShutdownStarted) != 0 || IsUpdatePreparationBlocked;
 
         internal CancellationToken ShutdownToken
         {

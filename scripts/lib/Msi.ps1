@@ -28,7 +28,7 @@ function Assert-AudioPilotMsiComponentBitness {
 }
 
 function Assert-AudioPilotMsiPayload {
-    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string]$PublishArchive)
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string]$PublishArchive, [switch]$FlatArchive)
     $directories = @{}
     foreach ($row in @(Invoke-AudioPilotMsiQuery -Path $Path -Query 'SELECT `Directory`, `Directory_Parent`, `DefaultDir` FROM `Directory`' -Columns @('Directory', 'Parent', 'Name'))) { $directories[$row.Directory] = $row }
     $components = @{}
@@ -58,8 +58,8 @@ function Assert-AudioPilotMsiPayload {
         $archivePaths = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
         $extracted = Expand-AudioPilotMsiPayload -Path $Path -Destination $temporary -FileIds $fileIds -FileSizes $files
         foreach ($entry in $entries) {
-            if (-not $entry.FullName.StartsWith('AudioPilot/', [StringComparison]::Ordinal)) { throw 'Unexpected portable archive root.' }
-            $relative = $entry.FullName.Substring('AudioPilot/'.Length)
+            if (-not $FlatArchive -and -not $entry.FullName.StartsWith('AudioPilot/', [StringComparison]::Ordinal)) { throw 'Unexpected portable archive root.' }
+            $relative = if ($FlatArchive) { $entry.FullName } else { $entry.FullName.Substring('AudioPilot/'.Length) }
             if (-not $archivePaths.Add($relative)) { throw 'Portable archive contains a duplicate payload path.' }
             if (-not $files.ContainsKey($relative) -or $files[$relative] -ne $entry.Length) { throw "MSI payload differs from the self-contained release archive: $relative" }
             $stream = $entry.Open()

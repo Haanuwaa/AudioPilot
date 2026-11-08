@@ -909,6 +909,7 @@ namespace AudioPilot.ViewModels
 
         private void UpdateAutomaticRoutineTriggerStates()
         {
+            if (Services.Updates.AppUpdateLifecycleSession.Current?.StartupBlocked == true) return;
             _routineRuntime.UpdateAutomaticTriggers();
             RefreshRoutineRuntimeTriggers();
         }

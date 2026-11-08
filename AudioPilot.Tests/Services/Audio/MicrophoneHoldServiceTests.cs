@@ -70,6 +70,76 @@ public sealed class MicrophoneHoldServiceTests
     private sealed class Input { public volatile bool Held = true; }
 
     [Fact]
+    public async Task UpdateSuspension_IsAtomicWithHoldAdmissionAndLeavesMuteUntouched()
+    {
+        var lease = new Lease(true);
+        await using var service = new MicrophoneHoldService(Logger.Instance, _ => { }, () => lease);
+        using (var suspension = service.TrySuspendIdleForUpdate())
+        {
+            Assert.NotNull(suspension);
+            service.Begin(true, () => true);
+            service.SetPushToTalkEnabled(true);
+            Assert.False(service.IsControlling);
+            Assert.Empty(lease.Applied);
+            Assert.Equal(0, lease.Restores);
+        }
+        var input = new Input();
+        service.Begin(true, () => input.Held);
+        Assert.Null(service.TrySuspendIdleForUpdate());
+        await UntilAsync(() => !lease.Applied.IsEmpty);
+        input.Held = false;
+        await lease.Disposed.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        Assert.True(lease.Muted);
+    }
+
+    [Fact]
+    public async Task UpdateRestart_DefersThroughoutPushToTalkOwnershipWithoutRestoringLiveMicrophone()
+    {
+        var lease = new Lease(false);
+        var input = new Input();
+        await using var service = new MicrophoneHoldService(Logger.Instance, _ => { }, () => lease);
+        bool flushed = false;
+        Task<Updater.RestartReadiness> Prepare() => AudioPilot.Updater.RestartBarrier.PrepareAsync(
+            () => service.IsControlling, _ => { flushed = true; return Task.FromResult(true); }, TestContext.Current.CancellationToken);
+        service.SetPushToTalkEnabled(true);
+        await UntilAsync(() => lease.Muted);
+        Assert.Equal(AudioPilot.Updater.RestartReadiness.MicrophoneOwned, await Prepare());
+        service.Begin(false, () => input.Held);
+        await UntilAsync(() => !lease.Muted);
+        Assert.Equal(AudioPilot.Updater.RestartReadiness.MicrophoneOwned, await Prepare());
+        input.Held = false;
+        await UntilAsync(() => lease.Muted);
+        Assert.Equal(AudioPilot.Updater.RestartReadiness.MicrophoneOwned, await Prepare());
+        Assert.False(flushed);
+        Assert.Equal(0, lease.Restores);
+        service.SetPushToTalkEnabled(false);
+        await lease.Disposed.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        await UntilAsync(() => !service.IsControlling);
+        Assert.Equal(AudioPilot.Updater.RestartReadiness.Ready, await Prepare());
+        Assert.True(flushed);
+    }
+
+    [Fact]
+    public async Task UpdateRestart_DefersHoldToMuteAndAllowsRestartOnlyAfterNormalRelease()
+    {
+        var lease = new Lease(false);
+        var input = new Input();
+        await using var service = new MicrophoneHoldService(Logger.Instance, _ => { }, () => lease);
+        service.Begin(true, () => input.Held);
+        await UntilAsync(() => lease.Muted);
+        Assert.Equal(AudioPilot.Updater.RestartReadiness.MicrophoneOwned,
+            await AudioPilot.Updater.RestartBarrier.PrepareAsync(() => service.IsControlling, _ => throw new InvalidOperationException("Must not shut down"), TestContext.Current.CancellationToken));
+        Assert.Equal(0, lease.Restores);
+        Assert.True(lease.Muted);
+        input.Held = false;
+        await lease.Disposed.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        await UntilAsync(() => !service.IsControlling);
+        Assert.Equal(AudioPilot.Updater.RestartReadiness.Ready,
+            await AudioPilot.Updater.RestartBarrier.PrepareAsync(() => service.IsControlling, _ => Task.FromResult(true), TestContext.Current.CancellationToken));
+        Assert.False(lease.Muted);
+    }
+
+    [Fact]
     public async Task PushToTalk_MissingHookReleaseRemutesFromIndependentRelease()
     {
         var lease = new Lease(false);

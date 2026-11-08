@@ -11,7 +11,8 @@ internal static class DiagnosticSession
     internal const string EnvironmentVariable = "AUDIOPILOT_DIAGNOSTIC_SESSION";
     internal static string? Id { get; } = Parse(Environment.GetEnvironmentVariable(EnvironmentVariable));
     internal static bool IsActive => Id != null;
-    internal static string? DataRoot => Id == null ? null : Path.Combine(Path.GetTempPath(), "AudioPilot.Diagnostics", Id);
+    private static readonly Lazy<string?> PortableDataRoot = new(() => AudioPilot.UpdateProtocol.PortableLayout.GetDataRoot(AppContext.BaseDirectory, Id));
+    internal static string? DataRoot => Id == null ? null : PortableDataRoot.Value ?? Path.Combine(Path.GetTempPath(), "AudioPilot.Diagnostics", Id);
     internal static string InstanceName => Id == null ? "AudioPilot" : $"AudioPilot.Diagnostics.{Id}";
 
     internal static string? Parse(string? value)

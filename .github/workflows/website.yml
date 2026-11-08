@@ -6,6 +6,8 @@ on:
     paths:
       - "website/**"
       - "scripts/build-website.ps1"
+      - "scripts/attach-update-staging-feed.ps1"
+      - "AudioPilot.Updater/TufBridge/**"
       - "scripts/tests/test-website.ps1"
       - "scripts/pages-recovery.mjs"
       - "scripts/tests/pages-recovery.test.mjs"
@@ -17,6 +19,8 @@ on:
     paths:
       - "website/**"
       - "scripts/build-website.ps1"
+      - "scripts/attach-update-staging-feed.ps1"
+      - "AudioPilot.Updater/TufBridge/**"
       - "scripts/tests/test-website.ps1"
       - "scripts/pages-recovery.mjs"
       - "scripts/tests/pages-recovery.test.mjs"
@@ -55,7 +59,7 @@ jobs:
   build:
     if: github.event_name != 'release'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: ${{ vars.UPDATE_STAGING_PAGES_ENABLED == 'true' && vars.UPDATE_STAGING_ROOT_SHA256 != '' && 10 || 5 }}
     steps:
       - name: Require main for manual deployment
         if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
@@ -87,6 +91,43 @@ jobs:
           gh api repos/Haanuwaa/AudioPilot/releases/latest > artifacts/website-release.json
           if ($LASTEXITCODE -ne 0) { throw 'Could not read the latest published release.' }
           ./scripts/build-website.ps1 -ReleaseMetadataPath artifacts/website-release.json
+
+      - name: Setup Go for the optional staging feed verifier
+        if: github.event_name != 'pull_request' && vars.UPDATE_STAGING_PAGES_ENABLED == 'true' && vars.UPDATE_STAGING_ROOT_SHA256 != ''
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: AudioPilot.Updater/TufBridge/.go-version
+          cache-dependency-path: AudioPilot.Updater/TufBridge/go.sum
+
+      - name: Verify and attach the optional staging feed
+        if: github.event_name != 'pull_request' && vars.UPDATE_STAGING_PAGES_ENABLED == 'true' && vars.UPDATE_STAGING_ROOT_SHA256 != ''
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STAGING_ROOT: ${{ vars.UPDATE_STAGING_ROOT_SHA256 }}
+        run: |
+          if ($env:STAGING_ROOT -cnotmatch '^[A-Fa-f0-9]{64}$') { throw 'Invalid independently pinned staging root.' }
+          $release = gh api repos/Haanuwaa/AudioPilot/releases/tags/updater-staging-feed | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0 -or $release.draft -or -not $release.prerelease) { throw 'Staging needs an explicit published prerelease, separate from stable downloads.' }
+          $assets = @($release.assets | Where-Object name -CEQ 'feed.zip')
+          if ($assets.Count -ne 1 -or $assets[0].size -le 0 -or $assets[0].size -gt 900MB) { throw 'Expected one bounded public staging feed archive.' }
+          gh release download updater-staging-feed --repo Haanuwaa/AudioPilot --pattern feed.zip --dir artifacts/staging-source
+          if ($LASTEXITCODE -ne 0) { throw 'Staging feed download failed. Retaining the previous deployment.' }
+          Push-Location AudioPilot.Updater/TufBridge
+          try {
+            go mod verify
+            if ($LASTEXITCODE -ne 0) { throw 'Staging verifier module verification failed.' }
+            go build -mod=readonly -trimpath -o ../../artifacts/staging-publisher ./cmd/staging-publisher
+            if ($LASTEXITCODE -ne 0) { throw 'Staging verifier build failed.' }
+          } finally { Pop-Location }
+          $previous = $null
+          try {
+            Invoke-WebRequest -Uri https://haanuwaa.github.io/AudioPilot/updates/staging/metadata/timestamp.json -OutFile artifacts/staging-previous.json -MaximumRedirection 0 -TimeoutSec 30
+            $previous = 'artifacts/staging-previous.json'
+          } catch {
+            if ($null -eq $_.Exception.Response -or [int]$_.Exception.Response.StatusCode -ne 404) { throw }
+          }
+          ./scripts/attach-update-staging-feed.ps1 -Archive artifacts/staging-source/feed.zip -BootstrapHash $env:STAGING_ROOT -Publisher ./artifacts/staging-publisher -WebsiteDirectory artifacts/website/public -PreviousTimestamp $previous
 
       - name: Upload website
         if: github.event_name != 'pull_request'
