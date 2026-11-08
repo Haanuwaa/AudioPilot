@@ -1,0 +1,75 @@
+using System.Text.Json.Serialization;
+using AudioPilot.Helpers;
+using AudioPilot.Localization;
+
+namespace AudioPilot.Models;
+
+[JsonConverter(typeof(JsonStringEnumConverter<DeviceAvailabilityTransition>))]
+public enum DeviceAvailabilityTransition { Connected, Disconnected, Both }
+
+/// <summary>Identifies one audio endpoint by its current or stable identity, with a name for display.</summary>
+public sealed record RoutineDeviceReference
+{
+    public string Id { get; init; } = string.Empty;
+    public string? StableId { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public bool Playback { get; init; } = true;
+    [JsonIgnore] public string DisplayName => $"{(Playback ? "Output" : "Input")}: {Name}";
+    [JsonIgnore] public Func<LocalizationService, string> DisplayLabel => FormatDisplayName;
+    internal string FormatDisplayName(LocalizationService localization) => localization.FormatKey(Playback ? "Routine_Output" : "Routine_Input", Name);
+    [JsonIgnore] internal bool IsValid => !string.IsNullOrWhiteSpace(Id) || !string.IsNullOrEmpty(StableId);
+    [JsonIgnore] internal string IdentityKey => $"{Playback}\u001f{Id}\u001f{StableId}";
+
+    internal bool? GetAvailability(IReadOnlyList<CycleDevice> devices)
+    {
+        var (device, ambiguous) = Resolve(devices);
+        return device != null ? true : ambiguous || devices is AudioDeviceInventory { IsComplete: false } ? null : false;
+    }
+
+    internal (CycleDevice? Device, bool Ambiguous) Resolve(IReadOnlyList<CycleDevice> devices)
+    {
+        if (!string.IsNullOrWhiteSpace(Id) && devices.FirstOrDefault(device => string.Equals(device.Id, Id, StringComparison.OrdinalIgnoreCase)) is { } exact) return (exact, false);
+        if (devices is AudioDeviceInventory { IsComplete: false }) return (null, false);
+        if (string.IsNullOrEmpty(StableId)) return (null, false);
+        var matches = devices.Where(device => string.Equals(device.StableId, StableId, StringComparison.Ordinal)).Take(2).ToArray();
+        return matches.Length == 1 ? (matches[0], false) : (null, matches.Length > 1);
+    }
+
+}
+
+/// <summary>Optional requirements checked together before executing a routine's actions.</summary>
+public sealed record RoutineConditions
+{
+    public RoutineTimeWindow? TimeWindow { get; init; }
+    public RoutineDeviceReference? Device { get; init; }
+    public bool DeviceAvailable { get; init; } = true;
+    public bool DeviceMustBeDefault { get; init; }
+    public string RunningAppPath { get; init; } = string.Empty;
+    public bool ApplicationMustBeRunning { get; init; } = true;
+    public string ConnectedNetwork { get; init; } = string.Empty;
+    public bool NetworkMustBeConnected { get; init; } = true;
+    [JsonIgnore] public bool HasRequirements => TimeWindow != null || Device != null || !string.IsNullOrWhiteSpace(RunningAppPath) || !string.IsNullOrWhiteSpace(ConnectedNetwork);
+    [JsonIgnore] internal string ConfigurationKey => $"{Device?.IdentityKey}\u001f{DeviceAvailable}\u001f{DeviceMustBeDefault}\u001f{RunningAppPath}\u001f{ApplicationMustBeRunning}\u001f{ConnectedNetwork}\u001f{NetworkMustBeConnected}\u001f{TimeWindow?.ConfigurationKey}";
+    [JsonIgnore]
+    public string Summary => BuildSummary();
+
+    internal string BuildSummary(string? runningAppDisplayName = null, LocalizationService? localization = null)
+    {
+        localization ??= LocalizationService.English;
+        return string.Join("; ", new[]
+        {
+            TimeWindow?.FormatSummary(localization),
+            Device == null ? null : localization.FormatKey(
+                DeviceMustBeDefault ? "Routine_RequireDefault" : DeviceAvailable ? "Routine_RequireAvailable" : "Routine_RequireUnavailable", Device.FormatDisplayName(localization)),
+            string.IsNullOrWhiteSpace(RunningAppPath) ? null : localization.FormatKey(ApplicationMustBeRunning ? "Routine_RequireRunning" : "Routine_RequireNotRunning",
+                string.IsNullOrWhiteSpace(runningAppDisplayName) ? RoutineTriggerPathHelper.GetTriggerDisplayName(RunningAppPath) : runningAppDisplayName),
+            string.IsNullOrWhiteSpace(ConnectedNetwork) ? null : localization.FormatKey(NetworkMustBeConnected ? "Routine_RequireConnected" : "Routine_RequireDisconnected", ConnectedNetwork),
+        }.OfType<string>());
+    }
+
+    internal string? Validate() => ValidateMessage() is { } message ? LocalizationService.English.Format(message) : null;
+
+    internal LocalizedText? ValidateMessage() => Device is { IsValid: false } ? new("Message_ChooseTheDeviceRequiredByThisRoutine")
+        : !string.IsNullOrWhiteSpace(RunningAppPath) && !RoutineTriggerPathHelper.LooksLikeSupportedStartupTarget(RunningAppPath)
+            ? new("Message_RequiredApplicationMustBeAFullExe") : TimeWindow?.ValidateMessage();
+}

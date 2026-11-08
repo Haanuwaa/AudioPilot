@@ -1,0 +1,119 @@
+name: Updater stable maintenance
+run-name: >-
+  Stable metadata |
+  ${{ github.event_name == 'workflow_run' && format('after {0}', github.event.workflow_run.name) || github.event_name == 'schedule' && 'scheduled check' || 'manual maintenance' }}
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "47 * * * *"
+  workflow_run:
+    workflows: ["CI", "Release Artifacts"]
+    branches: [main]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  renew:
+    if: >-
+      github.ref == 'refs/heads/main' && vars.UPDATE_STABLE_RENEWAL_ENABLED == 'true' &&
+      (github.event_name != 'workflow_run' ||
+        (github.event.workflow_run.conclusion == 'success' &&
+         github.event.workflow_run.head_repository.full_name == github.repository &&
+         github.event.workflow_run.event != 'pull_request'))
+    concurrency:
+      group: updater-stable-publication
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: updater-stable-renewal
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: main
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: AudioPilot.Updater/TufBridge/.go-version
+          cache-dependency-path: AudioPilot.Updater/TufBridge/go.sum
+      - name: Build and test the authority tool
+        working-directory: AudioPilot.Updater/TufBridge
+        run: |
+          mkdir -p ../../artifacts
+          go mod verify
+          go test -count=1 ./internal/... ./cmd/staging-publisher
+          go build -mod=readonly -trimpath -o ../../artifacts/staging-publisher ./cmd/staging-publisher
+      - name: Renew approved stable metadata
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STABLE_ROOT: ${{ vars.UPDATE_STABLE_ROOT_SHA256 }}
+          STABLE_ROOT_VERSION: ${{ vars.UPDATE_STABLE_ROOT_VERSION || '1' }}
+          UPDATE_STABLE_RENEWAL_KEYS: ${{ secrets.UPDATE_STABLE_RENEWAL_KEYS }}
+        run: |
+          ./scripts/renew-update-staging.ps1 -Channel stable -Publisher artifacts/staging-publisher -BootstrapHash $env:STABLE_ROOT -MinimumRootVersion $env:STABLE_ROOT_VERSION -OutputDirectory artifacts/stable-renewal -RenewBeforeHours 18 -Publish
+      - name: Report maintenance health
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          MAINTENANCE_STATUS: ${{ job.status }}
+          UPDATE_STABLE_HEARTBEAT_URL: ${{ secrets.UPDATE_STABLE_HEARTBEAT_URL }}
+        shell: pwsh
+        run: ./scripts/report-update-staging-health.ps1 -Channel stable -Recovered:($env:MAINTENANCE_STATUS -eq 'success') -RunUrl $env:RUN_URL
+
+  health:
+    needs: renew
+    if: >-
+      always() && github.ref == 'refs/heads/main' && vars.UPDATE_STABLE_ROOT_SHA256 != '' &&
+      vars.UPDATE_STABLE_RENEWAL_ENABLED != 'true' &&
+      (github.event_name != 'workflow_run' ||
+        (github.event.workflow_run.conclusion == 'success' &&
+         github.event.workflow_run.head_repository.full_name == github.repository &&
+         github.event.workflow_run.event != 'pull_request'))
+    concurrency:
+      group: updater-stable-publication
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          ref: main
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: AudioPilot.Updater/TufBridge/.go-version
+          cache-dependency-path: AudioPilot.Updater/TufBridge/go.sum
+      - name: Check public feed without signing keys
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STABLE_ROOT: ${{ vars.UPDATE_STABLE_ROOT_SHA256 }}
+          STABLE_ROOT_VERSION: ${{ vars.UPDATE_STABLE_ROOT_VERSION || '1' }}
+        run: |
+          Push-Location AudioPilot.Updater/TufBridge
+          try {
+            New-Item -ItemType Directory -Path ../../artifacts -Force | Out-Null
+            go build -mod=readonly -trimpath -o ../../artifacts/staging-publisher ./cmd/staging-publisher
+            if ($LASTEXITCODE -ne 0) { throw 'Authority verifier build failed.' }
+          } finally { Pop-Location }
+          ./scripts/renew-update-staging.ps1 -Channel stable -Publisher artifacts/staging-publisher -BootstrapHash $env:STABLE_ROOT -MinimumRootVersion $env:STABLE_ROOT_VERSION -OutputDirectory artifacts/stable-health -CheckOnly
+
+      - name: Report maintenance health
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          MAINTENANCE_STATUS: ${{ job.status }}
+          UPDATE_STABLE_HEARTBEAT_URL: ${{ secrets.UPDATE_STABLE_HEARTBEAT_URL }}
+        shell: pwsh
+        run: ./scripts/report-update-staging-health.ps1 -Channel stable -Recovered:($env:MAINTENANCE_STATUS -eq 'success') -RunUrl $env:RUN_URL

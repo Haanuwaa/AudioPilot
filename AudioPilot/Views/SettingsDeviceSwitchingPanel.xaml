@@ -1,0 +1,207 @@
+<UserControl
+    x:Class="AudioPilot.Views.SettingsDeviceSwitchingPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:loc="clr-namespace:AudioPilot.Localization"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    AutomationProperties.Name="{loc:Loc Ui_DeviceSwitchingSettingsPanel}">
+    <StackPanel>
+        <TextBlock Style="{DynamicResource SettingsSectionHeaderStyle}" Text="{loc:Loc Ui_DeviceSwitching}" />
+
+        <TextBlock
+            Margin="0,0,0,6"
+            FontWeight="SemiBold"
+            Text="{loc:Loc Ui_OutputRoles}" />
+
+        <StackPanel
+            Margin="0,0,0,8"
+            HorizontalAlignment="Center"
+            Orientation="Horizontal">
+            <ToggleButton
+                Margin="0,0,6,0"
+                Content="Multimedia"
+                IsChecked="{Binding SettingsOutputRoleMultimediaDraft, Mode=TwoWay}"
+                Style="{DynamicResource SettingsRolePillStyle}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_WhenSwitchingOutputsUpdateTheMultimediaDefaultUsed}" />
+                </i:Interaction.Behaviors>
+            </ToggleButton>
+            <ToggleButton
+                Margin="0,0,6,0"
+                Content="{loc:Loc Ui_Communications}"
+                IsChecked="{Binding SettingsOutputRoleCommunicationsDraft, Mode=TwoWay}"
+                Style="{DynamicResource SettingsRolePillStyle}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_WhenSwitchingOutputsUpdateTheCommunicationsDefaultUsed}" />
+                </i:Interaction.Behaviors>
+            </ToggleButton>
+            <ToggleButton
+                Content="{loc:Loc Ui_Console}"
+                IsChecked="{Binding SettingsOutputRoleConsoleDraft, Mode=TwoWay}"
+                Style="{DynamicResource SettingsRolePillStyle}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_WhenSwitchingOutputsUpdateTheConsoleDefaultFor}" />
+                </i:Interaction.Behaviors>
+            </ToggleButton>
+        </StackPanel>
+
+        <TextBlock
+            Margin="0,0,0,6"
+            FontWeight="SemiBold"
+            Text="{loc:Loc Ui_InputRoles}" />
+
+        <StackPanel
+            Margin="0,0,0,6"
+            HorizontalAlignment="Center"
+            Orientation="Horizontal">
+            <ToggleButton
+                Margin="0,0,6,0"
+                Content="Multimedia"
+                IsChecked="{Binding SettingsInputRoleMultimediaDraft, Mode=TwoWay}"
+                Style="{DynamicResource SettingsRolePillStyle}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_WhenSwitchingInputsUpdateTheMultimediaDefaultUsed}" />
+                </i:Interaction.Behaviors>
+            </ToggleButton>
+            <ToggleButton
+                Margin="0,0,6,0"
+                Content="{loc:Loc Ui_Communications}"
+                IsChecked="{Binding SettingsInputRoleCommunicationsDraft, Mode=TwoWay}"
+                Style="{DynamicResource SettingsRolePillStyle}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_WhenSwitchingInputsUpdateTheCommunicationsDefaultUsed}" />
+                </i:Interaction.Behaviors>
+            </ToggleButton>
+            <ToggleButton
+                Content="{loc:Loc Ui_Console}"
+                IsChecked="{Binding SettingsInputRoleConsoleDraft, Mode=TwoWay}"
+                Style="{DynamicResource SettingsRolePillStyle}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_WhenSwitchingInputsUpdateTheConsoleDefaultUsed}" />
+                </i:Interaction.Behaviors>
+            </ToggleButton>
+        </StackPanel>
+
+        <CheckBox
+            Margin="0,0,0,10"
+            Content="{loc:Loc Ui_PreserveAudioLevels}"
+            IsChecked="{Binding SettingsPreserveAudioLevelsDraft, Mode=TwoWay}">
+            <i:Interaction.Behaviors>
+                <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_PreservesOutputMixerAndPerAppVolumeLevels}" />
+            </i:Interaction.Behaviors>
+        </CheckBox>
+
+        <CheckBox
+            Margin="0,0,0,10"
+            Content="{loc:Loc Ui_KeepMuteStateWhenSwitching}"
+            IsChecked="{Binding SettingsKeepMuteStateWhenSwitchingDraft, Mode=TwoWay}">
+            <i:Interaction.Behaviors>
+                <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_CarriesTheCurrentMutedOrUnmutedStateTo}" />
+            </i:Interaction.Behaviors>
+        </CheckBox>
+
+        <TextBlock
+            Margin="0,0,0,6"
+            FontWeight="SemiBold"
+            Text="{loc:Loc Ui_ReverseHotkeys}" />
+
+        <StackPanel Margin="0,0,0,6" Orientation="Horizontal">
+            <Label
+                Width="150"
+                VerticalAlignment="Center"
+                Content="{loc:Loc Ui_OutputReverse}" />
+            <TextBox
+                Width="{DynamicResource SettingsFieldWidth}"
+                AutomationProperties.Name="{loc:Loc Ui_OutputReverseHotkey}"
+                ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                IsEnabled="{Binding OutputHotkeysEnabled, Mode=TwoWay}"
+                Text="{Binding OutputReverseHotkey.DisplayText, Mode=OneWay}">
+                <i:Interaction.Behaviors>
+                    <b:HotkeyPlaceholderBehavior />
+                    <b:HoverInfoPopupBehavior Text="{loc:LocBinding OutputReverseHotkey.HoverText, Message=True}" WarningKind="{Binding OutputReverseHotkey.WarningKind}" />
+                    <b:HotkeyCaptureBehavior Target="{Binding OutputReverseHotkey}" />
+                    <b:HotkeyWarningBorderBehavior HasWarning="{Binding OutputReverseHotkey.HasWarning}" WarningKind="{Binding OutputReverseHotkey.WarningKind}" />
+                </i:Interaction.Behaviors>
+            </TextBox>
+        </StackPanel>
+
+        <StackPanel Margin="0,0,0,10" Orientation="Horizontal">
+            <Label
+                Width="150"
+                VerticalAlignment="Center"
+                Content="{loc:Loc Ui_InputReverse}" />
+            <TextBox
+                Width="{DynamicResource SettingsFieldWidth}"
+                AutomationProperties.Name="{loc:Loc Ui_InputReverseHotkey}"
+                ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                IsEnabled="{Binding InputHotkeysEnabled, Mode=TwoWay}"
+                Text="{Binding InputReverseHotkey.DisplayText, Mode=OneWay}">
+                <i:Interaction.Behaviors>
+                    <b:HotkeyPlaceholderBehavior />
+                    <b:HoverInfoPopupBehavior Text="{loc:LocBinding InputReverseHotkey.HoverText, Message=True}" WarningKind="{Binding InputReverseHotkey.WarningKind}" />
+                    <b:HotkeyCaptureBehavior Target="{Binding InputReverseHotkey}" />
+                    <b:HotkeyWarningBorderBehavior HasWarning="{Binding InputReverseHotkey.HasWarning}" WarningKind="{Binding InputReverseHotkey.WarningKind}" />
+                </i:Interaction.Behaviors>
+            </TextBox>
+        </StackPanel>
+
+        <TextBlock
+            Margin="0,0,0,6"
+            FontWeight="SemiBold"
+            Text="Bluetooth" />
+
+        <StackPanel Margin="0,0,0,14" Orientation="Horizontal">
+            <CheckBox Content="{loc:Loc Ui_EnableReconnectPreflight}" IsChecked="{Binding SettingsBluetoothReconnectEnabledDraft, Mode=TwoWay}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_TriesToReconnectDisconnectedBluetoothAudioDevicesBefore}" />
+                </i:Interaction.Behaviors>
+            </CheckBox>
+        </StackPanel>
+
+        <TextBlock
+            Margin="0,0,0,6"
+            FontWeight="SemiBold"
+            Text="{loc:Loc Ui_InputMonitoring}" />
+
+        <StackPanel Margin="0,0,0,6" Orientation="Horizontal">
+            <Label
+                Width="150"
+                VerticalAlignment="Center"
+                Content="{loc:Loc Ui_ListenHotkey}" />
+            <TextBox
+                Width="{DynamicResource SettingsFieldWidth}"
+                AutomationProperties.Name="{loc:Loc Ui_ListenHotkeyText}"
+                ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                Text="{Binding SettingsListenToInputHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                <i:Interaction.Behaviors>
+                    <b:HotkeyPlaceholderBehavior />
+                    <b:HoverInfoPopupBehavior Text="{loc:LocBinding SettingsListenToInputHotkeyDraftCapture.HoverText, Message=True}" WarningKind="{Binding SettingsListenToInputHotkeyDraftCapture.WarningKind}" />
+                    <b:HotkeyCaptureBehavior Target="{Binding SettingsListenToInputHotkeyDraftCapture}" />
+                    <b:HotkeyWarningBorderBehavior HasWarning="{Binding SettingsListenToInputHotkeyDraftCapture.HasWarning}" WarningKind="{Binding SettingsListenToInputHotkeyDraftCapture.WarningKind}" />
+                </i:Interaction.Behaviors>
+            </TextBox>
+        </StackPanel>
+
+        <StackPanel Margin="0,0,0,22" Orientation="Horizontal">
+            <Label
+                Width="150"
+                VerticalAlignment="Center"
+                Content="{loc:Loc Ui_ListenMonitorOutput}" />
+            <ComboBox
+                Width="{DynamicResource SettingsFieldWidth}"
+                AutomationProperties.Name="{loc:Loc Ui_ListenMonitorOutputText}"
+                ItemsSource="{Binding SettingsListenMonitorOutputDevices}"
+                SelectedValue="{Binding SettingsListenMonitorOutputDeviceIdDraft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                SelectedValuePath="Id">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate><TextBlock Text="{loc:LocBinding ChoiceLabel}" /></DataTemplate>
+                </ComboBox.ItemTemplate>
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_SelectsWhichOutputDeviceReceivesInputMonitoringAudio}" />
+                </i:Interaction.Behaviors>
+            </ComboBox>
+        </StackPanel>
+
+    </StackPanel>
+</UserControl>

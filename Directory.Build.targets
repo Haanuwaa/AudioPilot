@@ -1,0 +1,32 @@
+<Project>
+  <Target Name="BuildPortableProfileReferences" BeforeTargets="ResolveProjectReferences" DependsOnTargets="PrepareProjectReferences"
+          Condition="'$(MSBuildProjectName)' == 'AudioPilot' and '$(AudioPilotPortableProfile)' == 'true' and '$(BuildingInsideVisualStudio)' == 'true' and '$(DesignTimeBuild)' != 'true'">
+    <!-- Visual Studio's preceding solution build has no publish RID; build the matching references before WPF compilation. -->
+    <MSBuild Projects="@(_MSBuildProjectReferenceExistent)" Targets="Build"
+             BuildInParallel="$(BuildInParallel)"
+             Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration);%(_MSBuildProjectReferenceExistent.SetPlatform);%(_MSBuildProjectReferenceExistent.SetTargetFramework);BuildingInsideVisualStudio=false;BuildProjectReferences=true"
+             RemoveProperties="%(_MSBuildProjectReferenceExistent.GlobalPropertiesToRemove)$(_GlobalPropertiesToRemoveFromProjectReferences)"
+             Condition="'%(_MSBuildProjectReferenceExistent.BuildReference)' == 'true'" />
+  </Target>
+  <Target Name="StagePortableProfile" BeforeTargets="PrepareForPublish"
+          Condition="'$(MSBuildProjectName)' == 'AudioPilot' and '$(AudioPilotPortableProfile)' == 'true' and '$(AudioPilotPayloadOnly)' != 'true'">
+    <PropertyGroup>
+      <!-- Visual Studio also evaluates this target in .NET Framework MSBuild. -->
+      <_AudioPilotPortableDestination>$([System.String]::Copy('$(PublishDir)').TrimEnd('\/'))</_AudioPilotPortableDestination>
+      <PublishDir>$(MSBuildThisFileDirectory)artifacts\profile-payloads\$(RuntimeIdentifier)-$(SelfContained)\</PublishDir>
+    </PropertyGroup>
+  </Target>
+  <Target Name="PackagePortableProfile" AfterTargets="Publish"
+          Condition="'$(MSBuildProjectName)' == 'AudioPilot' and '$(AudioPilotPortableProfile)' == 'true' and '$(AudioPilotPayloadOnly)' != 'true'">
+    <Exec WorkingDirectory="$(MSBuildThisFileDirectory)"
+          Command="pwsh -NoProfile -File &quot;$(MSBuildThisFileDirectory)scripts\publish-portable-profile.ps1&quot; -RuntimeIdentifier $(RuntimeIdentifier) -SelfContained $(SelfContained) -Destination &quot;$(_AudioPilotPortableDestination)&quot; -Version $(Version)" />
+  </Target>
+  <Target Name="LimitReadyToRunToApplicationAssemblies"
+          BeforeTargets="_PrepareForReadyToRunCompilation"
+          Condition="'$(PublishReadyToRun)' == 'true' and ('$(MSBuildProjectName)' == 'AudioPilot' or '$(MSBuildProjectName)' == 'AudioPilot.CliHost')">
+    <ItemGroup>
+      <PublishReadyToRunExclude Include="@(ResolvedFileToPublish->'%(Filename)%(Extension)')"
+                                Exclude="AudioPilot.dll;AudioPilot.Cli.dll" />
+    </ItemGroup>
+  </Target>
+</Project>

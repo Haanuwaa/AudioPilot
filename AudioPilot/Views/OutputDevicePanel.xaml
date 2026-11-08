@@ -1,0 +1,273 @@
+<UserControl
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:h="clr-namespace:AudioPilot.Helpers"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:loc="clr-namespace:AudioPilot.Localization"
+    x:Class="AudioPilot.Views.OutputDevicePanel"
+    AutomationProperties.Name="{loc:Loc Ui_OutputDeviceConfiguration}"
+    Foreground="{DynamicResource TextBrush}"
+    xmlns:controls="clr-namespace:AudioPilot.Controls">
+    <UserControl.Resources>
+        <h:WindowListHeightConverter x:Key="DeviceListHeightConverter" InitialHeight="104" InitialWindowHeight="440" RowHeight="24" />
+    </UserControl.Resources>
+    <StackPanel Margin="10">
+        <Label Content="{loc:Loc Ui_AvailableOutputDevices}" />
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ComboBox
+                x:Name="AvailableDevicesComboBox"
+                AutomationProperties.Name="{loc:Loc Ui_AvailableOutputDevicesText}"
+                MinWidth="140"
+                ItemsSource="{Binding AvailableOutputDeviceNames}"
+                SelectedIndex="{Binding SelectedAvailableOutputIndex, Mode=TwoWay}" />
+            <TextBlock Text="{loc:Loc Ui_SelectAnOutputDevice}" Foreground="{DynamicResource MutedTextBrush}"
+                       Margin="10,0,30,0" VerticalAlignment="Center" IsHitTestVisible="False" Focusable="False">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SelectedIndex, ElementName=AvailableDevicesComboBox}" Value="-1">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <Button
+                Width="62"
+                AutomationProperties.Name="{loc:Loc Ui_AddSelectedOutputDevice}"
+                Margin="8,0,0,0"
+                Command="{Binding AddOutputCycleDeviceCommand}"
+                Content="{loc:Loc Ui_AddText}"
+                Grid.Column="1" />
+        </Grid>
+        <StackPanel Orientation="Horizontal">
+            <Label VerticalAlignment="Center">
+                <TextBlock x:Name="SwitchOrderTitle">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+                            <Setter Property="Text" Value="{loc:LocBinding OutputCycleDevices.Count, Format=Device_OutputCount}" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding OutputCycleDevices.Count}" Value="0">
+                                    <Setter Property="Text" Value="{loc:Loc Ui_OutputSwitchOrder}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Label>
+            <Button Command="{Binding ManageListCommand}" CommandParameter="Output"
+                    AutomationProperties.Name="{loc:Loc Ui_OpenFullOutputSwitchOrderList}">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource OpenFullListButtonStyle}">
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding OutputCycleDevices.Count}" Value="0" />
+                                    <Condition Binding="{Binding IsOutputDeviceInventoryKnownEmpty}" Value="True" />
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_OpenFullList}" />
+                </i:Interaction.Behaviors>
+            </Button>
+        </StackPanel>
+        <Grid b:ListBoxSelectedItemsBehavior.SelectionContext="{Binding SelectedOutputCycleDevices}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <ListBox
+                x:Name="SwitchOrderListBox"
+                b:NestedListScrollBehavior.IsEnabled="True"
+                AutomationProperties.Name="{loc:Loc Ui_OutputSwitchOrder}"
+                AutomationProperties.HelpText="{loc:Loc Ui_DoubleClickADeviceToOpenItIn}"
+                Grid.Column="0"
+                MinHeight="104"
+                Height="{Binding ActualHeight, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource DeviceListHeightConverter}}"
+                Padding="3"
+                VirtualizingPanel.ScrollUnit="Item"
+                DisplayMemberPath="DisplayName"
+                ItemsSource="{Binding OutputCycleDevices}"
+                SelectedIndex="{Binding SelectedOutputCycleIndex, Mode=TwoWay}"
+                SelectionMode="Extended"
+                MouseDoubleClick="SwitchOrderListBox_MouseDoubleClick">
+                <ListBox.ContextMenu>
+                    <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}" Style="{DynamicResource AppContextMenuStyle}">
+                        <MenuItem Header="{loc:Loc Ui_OpenFullListText}" Command="{Binding ManageListCommand}" CommandParameter="Output"
+                                  Icon="{StaticResource AppMenuExpandIcon}" Style="{DynamicResource AppContextMenuItemStyle}" />
+                    </ContextMenu>
+                </ListBox.ContextMenu>
+                <ListBox.InputBindings>
+                    <KeyBinding Key="W" Command="{Binding RemoveOutputCycleDeviceCommand}" Modifiers="Control" />
+                    <KeyBinding Key="Up" Command="{Binding MoveOutputCycleDeviceUpCommand}" Modifiers="Alt" />
+                    <KeyBinding Key="Down" Command="{Binding MoveOutputCycleDeviceDownCommand}" Modifiers="Alt" />
+                </ListBox.InputBindings>
+                <ListBox.ItemContainerStyle>
+                    <Style BasedOn="{StaticResource CycleDeviceListBoxItemStyle}" TargetType="ListBoxItem">
+                        <Setter Property="AutomationProperties.Name" Value="{Binding DisplayName}" />
+                        <Setter Property="Tag" Value="{Binding DataContext, RelativeSource={RelativeSource AncestorType=ListBox}}" />
+                        <Setter Property="ContextMenu">
+                            <Setter.Value>
+                                <ContextMenu
+                                    AutomationProperties.Name="{loc:Loc Ui_OutputDeviceActions}"
+                                    DataContext="{Binding PlacementTarget, RelativeSource={RelativeSource Self}}"
+                                    Style="{DynamicResource AppContextMenuStyle}">
+                                    <MenuItem
+                                        AutomationProperties.Name="{loc:Loc Ui_TestOutput}"
+                                        Command="{Binding Tag.AudioTesting.TestOutputCommand}"
+                                        CommandParameter="{Binding DataContext}"
+                                        Header="{loc:Loc Ui_TestOutputText}"
+                                        Icon="{StaticResource AppMenuOutputIcon}"
+                                        Style="{DynamicResource AppContextMenuItemStyle}"
+                                        Visibility="{Binding Tag.AudioTesting.IsOutputTestRunning, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                                    <MenuItem
+                                        AutomationProperties.Name="{loc:Loc Ui_StopOutputTest}"
+                                        Command="{Binding Tag.AudioTesting.StopCommand}"
+                                        Header="{loc:Loc Ui_StopTest}"
+                                        Icon="{StaticResource AppMenuStopIcon}"
+                                        Style="{DynamicResource AppContextMenuItemStyle}"
+                                        Visibility="{Binding Tag.AudioTesting.IsOutputTestRunning, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                    <MenuItem
+                                        AutomationProperties.Name="{loc:Loc Ui_SetAsDefaultOutput}"
+                                        Command="{Binding Tag.SetDefaultOutputDeviceCommand}"
+                                        CommandParameter="{Binding DataContext}"
+                                        Header="{loc:Loc Ui_SetAsDefaultOutputText}"
+                                        Icon="{StaticResource AppMenuSetDefaultIcon}"
+                                        Style="{DynamicResource AppContextMenuItemStyle}" />
+                                    <MenuItem
+                                        Header="{loc:Loc Ui_OpenWindowsDeviceSettings}"
+                                        Command="{Binding Tag.OpenWindowsDeviceSettingsCommand}"
+                                        CommandParameter="{Binding DataContext}"
+                                        Icon="{StaticResource AppMenuSettingsIcon}"
+                                        Style="{DynamicResource AppContextMenuItemStyle}" />
+                                    <Separator Style="{DynamicResource AppContextMenuSeparatorStyle}" />
+                                    <MenuItem Header="{loc:Loc Ui_OpenFullListText}" Command="{Binding Tag.ManageListCommand}" CommandParameter="Output"
+                                              Icon="{StaticResource AppMenuExpandIcon}" Style="{DynamicResource AppContextMenuItemStyle}" />
+                                </ContextMenu>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <i:Interaction.Behaviors>
+                    <b:ListBoxSelectedItemsBehavior SelectedItems="{Binding SelectedOutputCycleDevices}" />
+                    <b:ListBoxReorderBehavior ReorderCommand="{Binding ReorderOutputCycleDevicesCommand}" />
+                </i:Interaction.Behaviors>
+            </ListBox>
+            <TextBlock Text="{loc:Loc Ui_ChooseADeviceAboveThenClickAdd}" TextWrapping="Wrap"
+                       Margin="16,0" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       Foreground="{DynamicResource MutedTextBrush}" IsHitTestVisible="False" Focusable="False">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasItems, ElementName=SwitchOrderListBox}" Value="False">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <StackPanel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center">
+                <Button Height="30" Margin="0,0,0,4" Command="{Binding MoveOutputCycleDeviceUpCommand}" AutomationProperties.Name="{loc:Loc Ui_MoveUpText}">
+                    <Path
+                        Width="14"
+                        Height="14"
+                        Data="{x:Static controls:AppMenuGlyphs.MoveUp}"
+                        Stretch="Uniform"
+                        StrokeThickness="1.25"
+                        Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                        Focusable="False"
+                        IsHitTestVisible="False" />
+                    <i:Interaction.Behaviors>
+                        <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_MoveUpText}" />
+                    </i:Interaction.Behaviors>
+                </Button>
+                <Button
+                    Height="30"
+                    Margin="0,0,0,4"
+                    Command="{Binding MoveOutputCycleDeviceDownCommand}"
+                    AutomationProperties.Name="{loc:Loc Ui_MoveDownText}">
+                    <Path
+                        Width="14"
+                        Height="14"
+                        Data="{x:Static controls:AppMenuGlyphs.MoveDown}"
+                        Stretch="Uniform"
+                        StrokeThickness="1.25"
+                        Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                        Focusable="False"
+                        IsHitTestVisible="False" />
+                    <i:Interaction.Behaviors>
+                        <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_MoveDownText}" />
+                    </i:Interaction.Behaviors>
+                </Button>
+                <Button Height="30" Command="{Binding RemoveOutputCycleDeviceCommand}" Content="{loc:Loc Ui_RemoveText}" />
+            </StackPanel>
+        </Grid>
+        <Border
+            AutomationProperties.LiveSetting="Polite"
+            AutomationProperties.Name="{loc:Loc Ui_OutputTestStatus}"
+            Margin="0,8,0,0"
+            Padding="8"
+            Background="{DynamicResource ControlBackgroundBrush}"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1"
+            CornerRadius="4"
+            Visibility="{Binding AudioTesting.IsOutputTestStatusVisible, Converter={StaticResource BoolToVisibilityConverter}}">
+            <DockPanel LastChildFill="True">
+                <Button
+                    AutomationProperties.Name="{loc:Loc Ui_StopOrDismissOutputTest}"
+                    DockPanel.Dock="Right"
+                    MinWidth="62"
+                    Margin="8,0,0,0"
+                    Command="{Binding AudioTesting.StopCommand}"
+                    Content="{loc:LocBinding AudioTesting.ActionText, Choice=True}" />
+                <StackPanel>
+                    <TextBlock FontWeight="SemiBold" Text="{Binding AudioTesting.EndpointName}" TextWrapping="Wrap" />
+                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="{loc:LocBinding AudioTesting.Status, Message=True}" TextWrapping="Wrap" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+        <Label Content="{loc:Loc Ui_Hotkey}" />
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox
+                AutomationProperties.Name="{loc:Loc Ui_OutputSwitchingHotkey}"
+                Grid.Column="0"
+                ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                IsEnabled="{Binding OutputHotkeysEnabled, Mode=TwoWay}"
+                Text="{Binding Hotkey.DisplayText, Mode=OneWay}">
+                <i:Interaction.Behaviors>
+                    <b:HotkeyPlaceholderBehavior />
+                    <b:HoverInfoPopupBehavior Text="{loc:LocBinding Hotkey.HoverText, Message=True}" WarningKind="{Binding Hotkey.WarningKind}" />
+                    <b:HotkeyCaptureBehavior Target="{Binding Hotkey}" />
+                    <b:HotkeyWarningBorderBehavior HasWarning="{Binding Hotkey.HasWarning}" WarningKind="{Binding Hotkey.WarningKind}" />
+                </i:Interaction.Behaviors>
+            </TextBox>
+            <CheckBox
+                Grid.Column="1"
+                AutomationProperties.Name="{loc:Loc Ui_EnableOutputSwitchingHotkey}"
+                Margin="8,0,0,0"
+                VerticalAlignment="Center"
+                Content="{loc:Loc Ui_Enabled}"
+                IsChecked="{Binding OutputHotkeysEnabled, Mode=TwoWay}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior
+                        Text="{loc:Loc Ui_EnableOrDisableSavedForwardAndReverseOutput}" />
+                </i:Interaction.Behaviors>
+            </CheckBox>
+        </Grid>
+    </StackPanel>
+</UserControl>

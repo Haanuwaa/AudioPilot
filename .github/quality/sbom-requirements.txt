@@ -1,0 +1,5 @@
+jsonschema==4.26.0
+rdflib==7.6.0
+pyshacl==0.40.2
+PyLD==3.3.0
+PyYAML==6.0.3

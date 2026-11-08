@@ -1,0 +1,37 @@
+version: 2
+updates:
+  - package-ecosystem: "gomod"
+    directory: "/AudioPilot.Updater/TufBridge"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      servicing:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      servicing:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      servicing:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "pip"
+    directory: "/.github/quality"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      servicing:
+        update-types: ["minor", "patch"]

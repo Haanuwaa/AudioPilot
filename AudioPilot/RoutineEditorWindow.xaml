@@ -1,0 +1,567 @@
+<Window
+    x:Class="AudioPilot.RoutineEditorWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:loc="clr-namespace:AudioPilot.Localization"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:h="clr-namespace:AudioPilot.Helpers"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:models="clr-namespace:AudioPilot.Models"
+    Title="{loc:Loc Ui_RoutineEditor}"
+    FontFamily="Segoe UI" FontSize="13" UseLayoutRounding="True"
+    Width="604"
+    Height="680"
+    MinWidth="440"
+    MinHeight="480"
+    Background="{DynamicResource WindowBackgroundBrush}"
+    Foreground="{DynamicResource TextBrush}"
+    FocusManager.FocusedElement="{Binding ElementName=RoutineNameTextBox}"
+    ResizeMode="CanResizeWithGrip"
+    WindowStartupLocation="Manual">
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Help" Executed="OpenHelp_Executed" />
+    </Window.CommandBindings>
+    <Window.InputBindings>
+        <KeyBinding Key="F1" Command="ApplicationCommands.Help" />
+    </Window.InputBindings>
+    <Window.Resources>
+
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/RoutineEditorResources.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <ContextMenu x:Key="HotkeyDeleteContextMenu" Style="{DynamicResource AppContextMenuStyle}">
+                <MenuItem
+                    Click="ClearHotkeyText_Click"
+                    Header="{loc:Loc Ui_Delete}"
+                    Icon="{StaticResource AppMenuDeleteIcon}"
+                    InputGestureText="Del"
+                    Style="{DynamicResource AppContextMenuItemStyle}" />
+            </ContextMenu>
+        </ResourceDictionary>
+    </Window.Resources>
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ScrollViewer
+            x:Name="RoutineEditorScrollViewer"
+            Grid.Row="0"
+            CanContentScroll="False"
+            HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto">
+            <i:Interaction.Behaviors>
+                <b:KeyboardFocusScrollBehavior />
+                <b:KeepScrollOnLanguageChangeBehavior />
+            </i:Interaction.Behaviors>
+            <StackPanel Margin="0,0,12,0">
+                <TextBlock
+                    Margin="0,0,0,8"
+                    HorizontalAlignment="Center"
+                    FontSize="20"
+                    FontWeight="Bold"
+                    Text="{loc:Loc Ui_RoutineEditor}" />
+
+                <TextBlock
+                    MaxWidth="450"
+                    Margin="0,0,0,12"
+                    HorizontalAlignment="Center"
+                    Foreground="{DynamicResource MutedTextBrush}"
+                    Text="{loc:Loc Ui_ChooseAudioActionsThenWhenThisRoutineShould}"
+                    TextWrapping="Wrap" />
+
+                <StackPanel MaxWidth="450" Margin="0,0,0,10" HorizontalAlignment="Stretch">
+                    <Grid Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <TextBlock Text="{loc:Loc Ui_RoutineName}" />
+                        <TextBlock Grid.Column="1" Foreground="{DynamicResource MutedTextBrush}" Text="{Binding RoutineNameCharactersRemainingText}" />
+                    </Grid>
+                    <TextBox
+                        x:Name="RoutineNameTextBox"
+                        MaxWidth="450"
+                        Height="32"
+                        AutomationProperties.Name="{loc:Loc Ui_RoutineName}"
+                        ContextMenu="{StaticResource EditableTextContextMenu}"
+                        MaxLength="{x:Static models:AudioRoutine.MaxNameLength}"
+                        Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </StackPanel>
+
+                <TextBlock MaxWidth="450" Margin="0,0,0,8" FontWeight="SemiBold" Text="{loc:Loc Ui_WhatChanges}" />
+                <StackPanel MaxWidth="450" Margin="0,0,0,10">
+                    <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_RouteDevicesFor}" />
+                    <ComboBox x:Name="RoutingScopeBox" h:AppHelp.Topic="ApplicationRouting" Height="32" AutomationProperties.Name="{loc:Loc Ui_DeviceRoutingScope}" SelectedIndex="{Binding RoutingScopeIndex, Mode=TwoWay}">
+                        <ComboBoxItem Content="{loc:Loc Ui_SystemDefaults}" />
+                        <ComboBoxItem x:Name="ApplicationRoutingOption" Content="{loc:Loc Ui_AnApplication}" IsEnabled="{Binding CanRoutePerApp}">
+                            <i:Interaction.Behaviors>
+                                <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_ClearCommunicationsTargetsBeforeChoosingApplicationRouting}" />
+                            </i:Interaction.Behaviors>
+                        </ComboBoxItem>
+                    </ComboBox>
+                    <TextBlock Margin="0,6,0,0" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                               Text="{loc:Loc Ui_DeviceRoutingAppliesToThisAppVolumeAnd}"
+                               Visibility="{Binding RouteToApplication, Converter={StaticResource BoolToVisibilityConverter}}" />
+                    <StackPanel Margin="0,8,0,0" Visibility="{Binding RouteToApplication, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_TargetApplicationExePathOrAUMID}" />
+                        <Grid>
+                            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+
+                            <TextBox Height="32" MinWidth="0" b:TextBoxPlaceholderBehavior.Text="{loc:Loc Ui_EGCAppsGameGameExe}" AutomationProperties.Name="{loc:Loc Ui_RoutingTargetApplication}" ContextMenu="{StaticResource EditableTextContextMenu}" Text="{Binding TargetAppPath, UpdateSourceTrigger=PropertyChanged}" />
+                            <StackPanel Grid.Row="1" Margin="0,6,0,0" HorizontalAlignment="Center" Orientation="Horizontal">
+                                <Button Height="32" Margin="0" Padding="12,0" Tag="Action" Content="{loc:Loc Ui_Browse}" Click="BrowseExecutable_Click" AutomationProperties.Name="{loc:Loc Ui_BrowseRoutingTargetApplication}" />
+                                <Button Height="32" Margin="8,0,0,0" Padding="12,0" Tag="Action" Content="{loc:Loc Ui_PickApp}" Click="PickPackagedApp_Click" AutomationProperties.Name="{loc:Loc Ui_PickPackagedRoutingTargetApplication}" />
+                            </StackPanel>
+                            <TextBlock x:Name="ResolvedRoutingApplicationText" Grid.Row="2" Margin="0,6,0,0" Foreground="{DynamicResource MutedTextBrush}" TextAlignment="Center" TextWrapping="Wrap"
+                                       Visibility="{Binding HasResolvedRoutingApplication, Converter={StaticResource BoolToVisibilityConverter}}"><Run Text="{loc:Loc Ui_ResolvedApp}" /><Run Text="{Binding ResolvedRoutingApplicationName, Mode=OneWay}" Foreground="{DynamicResource AccentTextBrush}" FontWeight="SemiBold" /></TextBlock>
+                        </Grid>
+                        <TextBlock Margin="0,6,0,0" Foreground="{DynamicResource MutedTextBrush}" Text="{loc:Loc Ui_TheAppMustBeRunning}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel MaxWidth="450" Margin="0,0,0,10" HorizontalAlignment="Stretch">
+                    <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_PlaybackTarget}" />
+                    <ComboBox
+                        MaxWidth="450"
+                        Height="32"
+                        AutomationProperties.Name="{loc:Loc Ui_OutputTarget}"
+                        ItemsSource="{Binding OutputDevices}"
+                        SelectedIndex="{Binding SelectedOutputIndex, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:LocBinding ChoiceLabel}" /></DataTemplate></ComboBox.ItemTemplate>
+                        </ComboBox>
+                    <TextBlock
+                        Margin="0,4,0,0"
+                        Foreground="{DynamicResource MutedTextBrush}"
+                        Text="{loc:Loc Ui_ThisDeviceIsUnavailableTheRoutineWillKeep}"
+                        TextWrapping="Wrap"
+                        Visibility="{Binding IsSelectedOutputUnavailable, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </StackPanel>
+
+                <StackPanel MaxWidth="450" Margin="0,0,0,10" HorizontalAlignment="Stretch">
+                    <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_MicrophoneTarget}" />
+                    <ComboBox
+                        MaxWidth="450"
+                        Height="32"
+                        AutomationProperties.Name="{loc:Loc Ui_InputTarget}"
+                        ItemsSource="{Binding InputDevices}"
+                        SelectedIndex="{Binding SelectedInputIndex, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:LocBinding ChoiceLabel}" /></DataTemplate></ComboBox.ItemTemplate>
+                        </ComboBox>
+                    <TextBlock
+                        Margin="0,4,0,0"
+                        Foreground="{DynamicResource MutedTextBrush}"
+                        Text="{loc:Loc Ui_ThisDeviceIsUnavailableTheRoutineWillKeep}"
+                        TextWrapping="Wrap"
+                        Visibility="{Binding IsSelectedInputUnavailable, Converter={StaticResource BoolToVisibilityConverter}}" />
+                </StackPanel>
+
+                <Expander x:Name="CommunicationsExpander" MaxWidth="450" Margin="0,0,0,10"
+                          AutomationProperties.Name="{loc:Loc Ui_CommunicationsDevices}" AutomationProperties.ItemStatus="{loc:LocBinding CommunicationsSummaryPresentation, Observe=CommunicationsSummary}"
+                          IsExpanded="{Binding IsCommunicationsExpanded, Mode=TwoWay}"
+                          IsEnabled="{Binding IsSystemRouting}"
+                          Style="{StaticResource AppExpanderStyle}">
+                    <i:Interaction.Behaviors>
+                        <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_CommunicationsTargetsRequireSystemDefaultsRouting}" />
+                    </i:Interaction.Behaviors>
+                    <Expander.Header><StackPanel>
+                            <TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_CommunicationsDevices}" />
+                            <TextBlock Text="{loc:LocBinding CommunicationsSummaryPresentation, Observe=CommunicationsSummary}" Style="{StaticResource RoutineSectionSummaryStyle}">
+                                <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{loc:LocBinding CommunicationsSummaryPresentation, Observe=CommunicationsSummary}" /></i:Interaction.Behaviors>
+                            </TextBlock>
+                        </StackPanel></Expander.Header>
+                    <StackPanel Margin="0,8,0,0">
+                        <TextBlock Margin="0,0,0,10" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                   Text="{loc:Loc Ui_OptionalDevicesForCallsLeaveUnchangedToKeep}">
+                            <i:Interaction.Behaviors>
+                                <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_ApplicationsMustFollowWindowsCommunicationsDefaultsToUse}" />
+                            </i:Interaction.Behaviors>
+                        </TextBlock>
+                        <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_CommunicationsPlayback}" />
+                        <ComboBox x:Name="CommunicationsOutputBox" Height="32"
+                                  AutomationProperties.Name="{loc:Loc Ui_CommunicationsPlaybackTarget}"
+                                  ItemsSource="{Binding CommunicationsOutputDevices}" SelectedIndex="{Binding SelectedCommunicationsOutputIndex, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:LocBinding ChoiceLabel}" /></DataTemplate></ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Margin="0,4,0,0" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                   Text="{loc:Loc Ui_ThisDeviceIsUnavailableTheRoutineWillKeep}"
+                                   Visibility="{Binding IsSelectedCommunicationsOutputUnavailable, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <TextBlock Margin="0,10,0,4" Text="{loc:Loc Ui_CommunicationsMicrophone}" />
+                        <ComboBox x:Name="CommunicationsInputBox" Height="32"
+                                  AutomationProperties.Name="{loc:Loc Ui_CommunicationsMicrophoneTarget}"
+                                  ItemsSource="{Binding CommunicationsInputDevices}" SelectedIndex="{Binding SelectedCommunicationsInputIndex, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:LocBinding ChoiceLabel}" /></DataTemplate></ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <TextBlock Margin="0,4,0,0" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                   Text="{loc:Loc Ui_ThisDeviceIsUnavailableTheRoutineWillKeep}"
+                                   Visibility="{Binding IsSelectedCommunicationsInputUnavailable, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <TextBlock Margin="0,8,0,0" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                   Text="{loc:Loc Ui_VolumeAndMuteBelowApplyToTheMain}">
+                            <i:Interaction.Behaviors>
+                                <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_CommunicationsDevicesRequireSystemDefaultsRoutingTheyDo}" />
+                            </i:Interaction.Behaviors>
+                        </TextBlock>
+                    </StackPanel>
+                </Expander>
+
+                <Expander x:Name="VolumeTargetsExpander"
+                    AutomationProperties.Name="{loc:Loc Ui_VolumeAndMute}" AutomationProperties.ItemStatus="{loc:LocBinding VolumeTargetsSummaryPresentation, Observe=VolumeTargetsSummary}"
+                    MaxWidth="450"
+                    Margin="0,0,0,10"
+                    IsExpanded="{Binding IsVolumeTargetsExpanded, Mode=TwoWay}"
+                    Style="{StaticResource AppExpanderStyle}">
+                    <Expander.Header>
+                        <StackPanel>
+                            <TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_VolumeAndMute}" />
+                            <TextBlock Text="{loc:LocBinding VolumeTargetsSummaryPresentation, Observe=VolumeTargetsSummary}" Style="{StaticResource RoutineSectionSummaryStyle}">
+                                <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{loc:LocBinding VolumeTargetsSummaryPresentation, Observe=VolumeTargetsSummary}" /></i:Interaction.Behaviors>
+                            </TextBlock>
+                        </StackPanel>
+                    </Expander.Header>
+
+                    <StackPanel
+                        MaxWidth="450"
+                        Margin="0,8,0,0"
+                        HorizontalAlignment="Stretch">
+                        <TextBlock
+                            Margin="0,0,0,10"
+                            Foreground="{DynamicResource MutedTextBrush}"
+                            Text="{loc:Loc Ui_DeviceWideVolumeAndMuteUseTheSelected}"
+                            TextWrapping="Wrap">
+                            <i:Interaction.Behaviors>
+                                <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_VolumeAndMuteAreIndependentTheseActionsAffect}" />
+                            </i:Interaction.Behaviors>
+                        </TextBlock>
+
+                        <StackPanel Margin="0,0,0,8" Orientation="Horizontal">
+                            <Label
+                                Width="150"
+                                VerticalAlignment="Center"
+                                Content="{loc:Loc Ui_MasterOutputLevel}" />
+                            <TextBox
+                                Width="80"
+                                Height="32"
+                                MinWidth="80"
+                                AutomationProperties.Name="{loc:Loc Ui_MasterOutputLevelPercent}"
+                                Padding="6,0"
+                                VerticalContentAlignment="Center"
+                                b:TextBoxPlaceholderBehavior.Text="50"
+                                ContextMenu="{StaticResource EditableTextContextMenu}"
+                                InputScope="Number"
+                                Text="{Binding MasterVolumePercentText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <i:Interaction.Behaviors>
+                                    <b:IntegerOnlyBehavior />
+                                </i:Interaction.Behaviors>
+                            </TextBox>
+                            <TextBlock
+                                Margin="8,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="%" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal">
+                            <Label
+                                Width="150"
+                                VerticalAlignment="Center"
+                                Content="{loc:Loc Ui_MicrophoneInputLevel}" />
+                            <TextBox
+                                Width="80"
+                                Height="32"
+                                MinWidth="80"
+                                AutomationProperties.Name="{loc:Loc Ui_MicrophoneInputLevelPercent}"
+                                Padding="6,0"
+                                VerticalContentAlignment="Center"
+                                b:TextBoxPlaceholderBehavior.Text="50"
+                                ContextMenu="{StaticResource EditableTextContextMenu}"
+                                InputScope="Number"
+                                Text="{Binding MicVolumePercentText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                                <i:Interaction.Behaviors>
+                                    <b:IntegerOnlyBehavior />
+                                </i:Interaction.Behaviors>
+                            </TextBox>
+                            <TextBlock
+                                Margin="8,0,0,0"
+                                VerticalAlignment="Center"
+                                Text="%" />
+                        </StackPanel>
+                        <Grid Margin="0,12,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Label Content="{loc:Loc Ui_OutputMute}" Target="{Binding ElementName=OutputMuteActionBox}" VerticalAlignment="Center" />
+                            <ComboBox x:Name="OutputMuteActionBox" Grid.Column="1" Height="32"
+                                AutomationProperties.Name="{loc:Loc Ui_RoutineOutputMuteAction}"
+                                ItemsSource="{Binding MuteActions}" SelectedValuePath="Key"
+                                SelectedValue="{Binding OutputMuteAction, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:LocBinding Value, Choice=True}" /></DataTemplate></ComboBox.ItemTemplate>
+                        </ComboBox>
+                        </Grid>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="150" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Label Content="{loc:Loc Ui_MicrophoneMute}" Target="{Binding ElementName=InputMuteActionBox}" VerticalAlignment="Center" />
+                            <ComboBox x:Name="InputMuteActionBox" Grid.Column="1" Height="32"
+                                AutomationProperties.Name="{loc:Loc Ui_RoutineMicrophoneMuteAction}"
+                                ItemsSource="{Binding MuteActions}" SelectedValuePath="Key"
+                                SelectedValue="{Binding InputMuteAction, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:LocBinding Value, Choice=True}" /></DataTemplate></ComboBox.ItemTemplate>
+                        </ComboBox>
+                        </Grid>
+                        <TextBlock Margin="0,8,0,0" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                            Text="{loc:Loc Ui_MicrophoneMuteActionsAreSkippedWhilePushTo}" />
+                    </StackPanel>
+                </Expander>
+
+                <TextBlock MaxWidth="450" Margin="0,8,0,8" FontWeight="SemiBold" Text="{loc:Loc Ui_WhenItRuns}" />
+                <StackPanel x:Name="ManualShortcutsSection" MaxWidth="450" Margin="0,0,0,10">
+                    <TextBlock Margin="0,0,0,8" FontWeight="SemiBold" Text="{loc:Loc Ui_ManualShortcuts}" />
+                    <StackPanel Margin="0,0,0,10">
+                        <TextBlock
+                            MaxWidth="450"
+                            Margin="0,0,0,8"
+                            Foreground="{DynamicResource MutedTextBrush}"
+                            Text="{loc:Loc Ui_ManualRoutineControlsHelp}"
+                            TextWrapping="Wrap" />
+                        <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_RoutineHotkeyOptional}" />
+                        <TextBox
+                            MaxWidth="450"
+                            Height="32"
+                            AutomationProperties.Name="{loc:Loc Ui_RoutineHotkey}"
+                            ContextMenu="{StaticResource HotkeyDeleteContextMenu}"
+                            Text="{Binding EditorHotkey.DisplayText, Mode=OneWay}">
+                            <i:Interaction.Behaviors>
+                                <b:HotkeyPlaceholderBehavior />
+                                <b:HoverInfoPopupBehavior Text="{loc:LocBinding EditorHotkey.HoverText, Message=True}" WarningKind="{Binding EditorHotkey.WarningKind}" />
+                                <b:HotkeyCaptureBehavior Target="{Binding EditorHotkey}" />
+                                <b:HotkeyWarningBorderBehavior HasWarning="{Binding EditorHotkey.HasWarning}" WarningKind="{Binding EditorHotkey.WarningKind}" />
+                            </i:Interaction.Behaviors>
+                        </TextBox>
+                    </StackPanel>
+                    <CheckBox
+                        Margin="0,0,0,10"
+                        Content="{loc:Loc Ui_ShowThisRoutineInTheTrayMenu}"
+                        IsChecked="{Binding ShowInTrayMenu, Mode=TwoWay}" />
+                    <Expander x:Name="HotkeyCyclingExpander" Margin="0,0,0,10"
+                              AutomationProperties.Name="{loc:Loc Ui_CycleRoutinesWithOneHotkey}" AutomationProperties.ItemStatus="{loc:LocBinding HotkeyCyclingSummaryPresentation, Observe=HotkeyCyclingSummary}"
+                              IsExpanded="{Binding IsHotkeyCyclingExpanded, Mode=TwoWay}" Style="{StaticResource AppExpanderStyle}">
+                        <Expander.Header>
+                            <StackPanel>
+                                <TextBlock Text="{loc:Loc Ui_CycleRoutinesWithOneHotkey}" FontWeight="SemiBold" />
+                                <TextBlock Text="{loc:LocBinding HotkeyCyclingSummaryPresentation, Observe=HotkeyCyclingSummary}" Style="{StaticResource RoutineSectionSummaryStyle}">
+                                    <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{loc:LocBinding HotkeyCyclingSummaryPresentation, Observe=HotkeyCyclingSummary}" /></i:Interaction.Behaviors>
+                                </TextBlock>
+                            </StackPanel>
+                        </Expander.Header>
+                        <StackPanel Margin="0,8,0,0">
+                        <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_HotkeyCycleGroupOptional}" />
+                        <TextBox Height="32" Margin="0,0,0,6" AutomationProperties.Name="{loc:Loc Ui_HotkeyCycleGroup}"
+                                 b:TextBoxPlaceholderBehavior.Text="{loc:Loc Ui_EGDeskSetups}" MaxLength="40"
+                                 Visibility="{Binding HasHotkeyCycleGroups, Converter={StaticResource InverseBoolToVisibilityConverter}}"
+                                 Text="{Binding HotkeyCycleGroup, UpdateSourceTrigger=PropertyChanged}" />
+                        <ComboBox Height="32" Margin="0,0,0,6" IsEditable="True" IsTextSearchEnabled="False"
+                                  b:TextBoxPlaceholderBehavior.Text="{loc:Loc Ui_TypeAGroupNameOrSelectOne}"
+                                  Visibility="{Binding HasHotkeyCycleGroups, Converter={StaticResource BoolToVisibilityConverter}}"
+                                  AutomationProperties.Name="{loc:Loc Ui_HotkeyCycleGroup}" ItemsSource="{Binding HotkeyCycleGroups}"
+                                  Text="{Binding HotkeyCycleGroup, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Margin="0,0,0,10" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
+                                   Text="{loc:Loc Ui_UseTheSameGroupNameAndHotkeyOn}"
+                                  >
+                            <i:Interaction.Behaviors>
+                                <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_RoutinesCycleInSavedOrderSkippingDisabledRoutines}" />
+                            </i:Interaction.Behaviors>
+                        </TextBlock>
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+
+                <Border x:Name="AutomaticTriggersSection"
+                    MaxWidth="476"
+                    Margin="0,0,0,10"
+                    Padding="12"
+                    Background="{DynamicResource ControlBackgroundBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                    <StackPanel MaxWidth="450" HorizontalAlignment="Stretch">
+                        <TextBlock
+                            Margin="0,0,0,8"
+                            FontWeight="SemiBold"
+                            Text="{loc:Loc Ui_AutomaticTriggers}" />
+
+                        <TextBlock
+                            Margin="0,0,0,8"
+                            Foreground="{DynamicResource MutedTextBrush}"
+                            Text="{loc:Loc Ui_AnyTriggerCanStartTheRoutineManualShortcuts}"
+                            TextWrapping="Wrap" />
+                        <ItemsControl x:Name="AutomaticTriggersItems" ItemsSource="{Binding TriggerEntries}" IsEnabled="{Binding CanSaveRoutine}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,0,8" Padding="8" BorderThickness="1" CornerRadius="4"
+                                            BorderBrush="{DynamicResource BorderBrush}" Background="{DynamicResource WindowBackgroundBrush}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                                            <TextBlock Text="{loc:LocBinding SummaryPresentation, Observe=Summary}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,8,0" />
+                                            <Button Grid.Column="1" Content="{loc:Loc Ui_EditText}" Padding="8,4" Click="EditTrigger_Click" AutomationProperties.Name="{loc:Loc Ui_EditTrigger}" AutomationProperties.HelpText="{loc:LocBinding SummaryPresentation, Observe=Summary}" />
+                                            <Button Grid.Column="2" Content="{loc:Loc Ui_RemoveText}" Margin="6,0,0,0" Padding="8,4" Click="RemoveTrigger_Click" AutomationProperties.Name="{loc:Loc Ui_RemoveTrigger}" AutomationProperties.HelpText="{loc:LocBinding SummaryPresentation, Observe=Summary}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <TextBlock Margin="0,0,0,8" Text="{loc:Loc Ui_OptionalAddATriggerToRunThisRoutine}" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource MutedTextBrush}"
+                                   Visibility="{Binding ShowTriggerEmptyState, Converter={StaticResource BoolToVisibilityConverter}}" />
+                        <Button x:Name="NewTriggerButton" Content="{loc:Loc Ui_AddTrigger}" HorizontalAlignment="Left" Margin="0,0,0,10"
+                                IsEnabled="{Binding CanAddAutomaticTrigger}" Padding="10,4" Click="AddTrigger_Click" />
+                        <StackPanel Margin="0,0,0,10" Visibility="{Binding IsStatefulTriggerSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <CheckBox IsChecked="{Binding RestorePreviousAudioOnDeactivate, Mode=TwoWay}">
+                                <TextBlock Text="{loc:Loc Ui_RestorePreviousAudioWhenThisRoutineDeactivates}" TextWrapping="Wrap" />
+                                <i:Interaction.Behaviors>
+                                    <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_RestoresAffectedDefaultDevicesEndpointLevelsAndMute}" />
+                                </i:Interaction.Behaviors>
+                            </CheckBox>
+                        </StackPanel>
+
+
+                    </StackPanel>
+                </Border>
+                <CheckBox MaxWidth="450" Margin="0,0,0,12"
+                          IsChecked="{Binding NotifyOnAutomaticFailure, Mode=TwoWay}">
+                    <TextBlock Text="{loc:Loc Ui_ShowWindowsNotificationOnAutomaticActionFailure}" TextWrapping="Wrap" />
+                    <i:Interaction.Behaviors>
+                        <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_OptionalWindowsNotificationWhileAudioPilotIsHiddenOnce}" />
+                    </i:Interaction.Behaviors>
+                </CheckBox>
+                <Expander x:Name="ConditionsExpander" h:AppHelp.Topic="RoutineConditions" MaxWidth="450" Margin="0,0,0,12"
+                          AutomationProperties.Name="{loc:Loc Ui_OnlyWhenAllMustPass}" AutomationProperties.ItemStatus="{loc:LocBinding ConditionsSummaryPresentation, Observe=ConditionsSummary}"
+                          IsExpanded="{Binding IsConditionsExpanded, Mode=TwoWay}" Style="{StaticResource AppExpanderStyle}">
+                        <Expander.Header>
+                            <StackPanel>
+                                <TextBlock Text="{loc:Loc Ui_OnlyWhenAllMustPass}" FontWeight="SemiBold" />
+                                <TextBlock Text="{loc:LocBinding ConditionsSummaryPresentation, Observe=ConditionsSummary}" Style="{StaticResource RoutineSectionSummaryStyle}">
+                                    <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{loc:LocBinding ConditionsSummaryPresentation, Observe=ConditionsSummary}" /></i:Interaction.Behaviors>
+                                </TextBlock>
+                            </StackPanel>
+                        </Expander.Header>
+                    <StackPanel Margin="0,8,0,0">
+                        <TextBlock Margin="0,0,0,10" Foreground="{DynamicResource MutedTextBrush}" Text="{loc:Loc Ui_CheckedWhenTheRoutineRunsIncludingManualRuns}" TextWrapping="Wrap" />
+                        <CheckBox x:Name="RequireTimeWindowBox" Margin="0,0,0,6" Content="{loc:Loc Ui_RequireDayAndTime}" IsChecked="{Binding RequireTimeWindow}" />
+                        <StackPanel Margin="0,0,0,12" Visibility="{Binding RequireTimeWindow, Converter={StaticResource BoolToVisibilityConverter}}">
+                            <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_DaysLeaveBlankForEveryDay}" />
+                            <UniformGrid Columns="4">
+                                <CheckBox Content="{loc:Loc Ui_Sun}" Margin="0,0,8,4" IsChecked="{Binding ConditionSunday}" />
+                                <CheckBox Content="{loc:Loc Ui_Mon}" Margin="0,0,8,4" IsChecked="{Binding ConditionMonday}" />
+                                <CheckBox Content="{loc:Loc Ui_Tue}" Margin="0,0,8,4" IsChecked="{Binding ConditionTuesday}" />
+                                <CheckBox Content="{loc:Loc Ui_Wed}" Margin="0,0,8,4" IsChecked="{Binding ConditionWednesday}" />
+                                <CheckBox Content="{loc:Loc Ui_Thu}" Margin="0,0,8,4" IsChecked="{Binding ConditionThursday}" />
+                                <CheckBox Content="{loc:Loc Ui_Fri}" Margin="0,0,8,4" IsChecked="{Binding ConditionFriday}" />
+                                <CheckBox Content="{loc:Loc Ui_Sat}" Margin="0,0,8,4" IsChecked="{Binding ConditionSaturday}" />
+                                <CheckBox Content="{loc:Loc Ui_AllDay}" Margin="0,0,0,4" IsChecked="{Binding ConditionAllDay}">
+                                    <i:Interaction.Behaviors>
+                                        <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_AllowAnyTimeOnTheSelectedDays}" />
+                                    </i:Interaction.Behaviors>
+                                </CheckBox>
+                            </UniformGrid>
+                            <Grid Visibility="{Binding ConditionAllDay, Converter={StaticResource InverseBoolToVisibilityConverter}}">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                                <StackPanel Margin="0,0,6,0"><TextBlock Text="{loc:Loc Ui_FromInclusive}" Margin="0,0,0,4" />
+                                    <TextBox Height="32" AutomationProperties.Name="{loc:Loc Ui_ConditionStartTime}" Text="{Binding ConditionStart, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                                <StackPanel Grid.Column="1" Margin="6,0,0,0"><TextBlock Text="{loc:Loc Ui_UntilExclusive}" Margin="0,0,0,4" />
+                                    <TextBox Height="32" AutomationProperties.Name="{loc:Loc Ui_ConditionEndTime}" Text="{Binding ConditionEnd, UpdateSourceTrigger=PropertyChanged}" /></StackPanel>
+                            </Grid>
+                            <TextBlock Margin="0,6,0,0" Foreground="{DynamicResource MutedTextBrush}" Text="{loc:Loc Ui_Use0900Or900AMOvernight}" TextWrapping="Wrap" />
+                            <TextBlock Margin="0,4,0,0" Foreground="{DynamicResource MutedTextBrush}" Text="{Binding ConditionTimeZone}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <CheckBox Margin="0,0,0,6" Content="{loc:Loc Ui_RequireAudioDeviceState}" IsChecked="{Binding RequireDevice}" />
+                        <ComboBox Height="32" Margin="0,0,0,10" b:TextBoxPlaceholderBehavior.Text="{loc:Loc Ui_SelectAnAudioDevice}" AutomationProperties.Name="{loc:Loc Ui_RequiredAudioDevice}"
+                                  ItemsSource="{Binding RoutineDeviceChoices}" IsEnabled="{Binding RequireDevice}"
+                                  SelectedItem="{Binding SelectedRequiredDevice, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:LocBinding DisplayLabel}" /></DataTemplate></ComboBox.ItemTemplate>
+                                <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{loc:LocBinding SelectedRequiredDevice.DisplayLabel}" /></i:Interaction.Behaviors>
+                            </ComboBox>
+                        <ComboBox Height="32" Margin="0,0,0,10" AutomationProperties.Name="{loc:Loc Ui_RequiredDeviceState}"
+                                  ItemsSource="{Binding DeviceRequirementStates}" SelectedIndex="{Binding RequiredDeviceStateIndex}"
+                                  IsEnabled="{Binding RequireDevice}">
+                            <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:LocBinding ., Choice=True}" /></DataTemplate></ComboBox.ItemTemplate>
+                            <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{loc:Loc Ui_CurrentDefaultUsesAudioPilotSOutputInputDetection}" /></i:Interaction.Behaviors>
+                        </ComboBox>
+                        <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_ApplicationStateOptional}" />
+                        <ComboBox Height="32" Margin="0,0,0,8" AutomationProperties.Name="{loc:Loc Ui_RequiredApplicationState}"
+                                  ItemsSource="{Binding ApplicationRequirementStates}" SelectedIndex="{Binding RequiredApplicationStateIndex}">
+                            <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:LocBinding ., Choice=True}" /></DataTemplate></ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Grid Margin="0,0,0,10">
+                            <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+
+                            <TextBox x:Name="RequiredApplicationTextBox" Height="32" b:TextBoxPlaceholderBehavior.Text="{loc:Loc Ui_EGCAppsExamplePlayerExe}" AutomationProperties.Name="{loc:Loc Ui_RequiredApplication}" ContextMenu="{StaticResource EditableTextContextMenu}" Text="{Binding RequiredApplicationPath, UpdateSourceTrigger=PropertyChanged}" />
+                            <StackPanel Grid.Row="1" Margin="0,12,0,0" HorizontalAlignment="Center" Orientation="Horizontal">
+                                <Button Height="32" Margin="0" Padding="10,4" Content="{loc:Loc Ui_Browse}" Tag="Condition" Click="BrowseExecutable_Click" />
+                                <Button Height="32" Margin="8,0,0,0" Padding="10,4" Content="{loc:Loc Ui_PickApp}" Tag="Condition" Click="PickPackagedApp_Click" />
+                            </StackPanel>
+                            <TextBlock x:Name="ResolvedRequiredApplicationText" Grid.Row="2" Margin="0,6,0,0" Foreground="{DynamicResource MutedTextBrush}" TextAlignment="Center" TextWrapping="Wrap"
+                                       Visibility="{Binding HasResolvedRequiredApplication, Converter={StaticResource BoolToVisibilityConverter}}"><Run Text="{loc:Loc Ui_ResolvedApp}" /><Run x:Name="ResolvedRequiredApplicationName" Text="{Binding ResolvedRequiredApplicationName, Mode=OneWay}" Foreground="{DynamicResource AccentTextBrush}" FontWeight="SemiBold" /></TextBlock>
+                        </Grid>
+                        <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_NetworkStateOptional}" />
+                        <ComboBox Height="32" Margin="0,0,0,8" AutomationProperties.Name="{loc:Loc Ui_RequiredNetworkState}"
+                                  ItemsSource="{Binding NetworkRequirementStates}" SelectedIndex="{Binding RequiredNetworkStateIndex}">
+                            <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{loc:LocBinding ., Choice=True}" /></DataTemplate></ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Grid>
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <ComboBox x:Name="RequiredNetworkBox" b:TextBoxPlaceholderBehavior.Text="{loc:Loc Ui_SelectOrTypeANetworkName}" Height="32" IsEditable="True" AutomationProperties.Name="{loc:Loc Ui_RequiredNetwork}"
+                                      DropDownOpened="NetworkPicker_DropDownOpened"
+                                      ItemsSource="{Binding AvailableNetworkNames}"
+                                      SelectedItem="{Binding SelectedRequiredNetworkName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                      Text="{Binding RequiredNetworkName, UpdateSourceTrigger=PropertyChanged}">
+                                <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{loc:Loc Ui_SelectOrTypeANetworkNameSuchAs}" /></i:Interaction.Behaviors>
+                            </ComboBox>
+                            <Button x:Name="ConditionNetworkRefreshButton" Grid.Column="1" AutomationProperties.Name="{loc:Loc Ui_RefreshNetworks}" Style="{StaticResource NetworkRefreshButtonStyle}">
+                                <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{loc:Loc Ui_RefreshNetworks}" /></i:Interaction.Behaviors>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+                </Expander>
+                <TextBlock x:Name="NetworkDiscoveryWarningText" Text="{loc:LocBinding NetworkDiscoveryWarning, Message=True}" TextWrapping="Wrap" MaxWidth="450" Margin="0,0,0,10" Foreground="{DynamicResource MutedTextBrush}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding NetworkDiscoveryWarning}" Value=""><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="1" Margin="0,12,0,0" Padding="0,10,0,0" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource BorderBrush}">
+            <StackPanel x:Name="EditorFooter">
+                <TextBlock x:Name="RoutineSummaryText" Focusable="True" KeyboardNavigation.IsTabStop="True" FocusVisualStyle="{DynamicResource AppFocusVisualStyle}" Text="{loc:LocBinding EditorSummaryPresentation, Observe=EditorSummary}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis"
+                           MaxHeight="36" LineHeight="18" LineStackingStrategy="BlockLineHeight" Foreground="{DynamicResource MutedTextBrush}"
+                           AutomationProperties.Name="{loc:Loc Ui_RoutineSummary}">
+                    <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{loc:LocBinding EditorSummaryPresentation, Observe=EditorSummary}" /></i:Interaction.Behaviors>
+                </TextBlock>
+                <ScrollViewer x:Name="ReadinessPanel" MaxHeight="90" Margin="0,8,0,0" Visibility="Collapsed"
+                              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <TextBlock x:Name="ReadinessText" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+                        <TextBlock x:Name="ReadinessCheckedText" TextWrapping="Wrap" Margin="0,4,0,0" Foreground="{DynamicResource MutedTextBrush}" Visibility="Collapsed" FontSize="12" />
+                    </StackPanel>
+                </ScrollViewer>
+                <Grid Margin="0,10,0,0">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                    <Button x:Name="CheckRoutineButton" Content="{loc:Loc Ui_CheckRoutine}" Click="CheckRoutine_Click"
+                            AutomationProperties.HelpText="{loc:Loc Ui_CheckCurrentRequirementsAndTargetsWithoutSavingOr}">
+                        <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{loc:Loc Ui_CheckCurrentRequirementsAndTargetsWithoutSavingOr}" /></i:Interaction.Behaviors>
+                    </Button>
+                    <StackPanel x:Name="RoutineActions" Grid.Column="1" HorizontalAlignment="Right" Orientation="Horizontal" Margin="8,0,0,0">
+                        <Button MinWidth="80" Margin="0,0,8,0" Content="{loc:Loc Ui_Cancel}" IsCancel="True" />
+                        <Button x:Name="SaveRoutineButton" Style="{StaticResource AppPrimaryButtonStyle}" MinWidth="120" Padding="12,4" Click="Save_Click" Content="{loc:LocBinding PrimaryActionLabel, Choice=True}"
+                                IsEnabled="{Binding CanSaveRoutine}" IsDefault="True" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>
