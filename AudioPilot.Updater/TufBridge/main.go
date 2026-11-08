@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"audiopilot.local/tufbridge/internal/pathguard"
+
 	"github.com/theupdateframework/go-tuf/v2/metadata"
 	"github.com/theupdateframework/go-tuf/v2/metadata/config"
 	"github.com/theupdateframework/go-tuf/v2/metadata/updater"
@@ -105,31 +107,10 @@ func run(input io.Reader, output io.Writer) error {
 }
 
 func safePath(path string) (string, error) {
-	if !filepath.IsAbs(path) {
-		return "", errors.New("TUF paths must be absolute")
+	if err := pathguard.Check(path); err != nil {
+		return "", err
 	}
-	path = filepath.Clean(path)
-	for current := path; ; current = filepath.Dir(current) {
-		info, err := os.Lstat(current)
-		if err == nil {
-			if info.Mode()&os.ModeSymlink != 0 {
-				return "", errors.New("redirected TUF path")
-			}
-			real, err := filepath.EvalSymlinks(current)
-			if err != nil {
-				return "", err
-			}
-			if !strings.EqualFold(filepath.Clean(real), current) {
-				return "", errors.New("redirected TUF ancestor")
-			}
-		} else if !os.IsNotExist(err) {
-			return "", err
-		}
-		if filepath.Dir(current) == current {
-			break
-		}
-	}
-	return path, nil
+	return filepath.Clean(path), nil
 }
 func boundedRead(path string, max int64) ([]byte, error) {
 	if _, err := safePath(path); err != nil {

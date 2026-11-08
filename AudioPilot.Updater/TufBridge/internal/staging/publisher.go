@@ -20,6 +20,8 @@ import (
 	"strings"
 	"time"
 
+	"audiopilot.local/tufbridge/internal/pathguard"
+
 	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/theupdateframework/go-tuf/v2/metadata"
 )
@@ -125,23 +127,7 @@ func Execute(req Request) (Result, error) {
 }
 
 func cleanPath(path string) error {
-	for current := filepath.Clean(path); ; current = filepath.Dir(current) {
-		info, err := os.Lstat(current)
-		if err == nil {
-			if info.Mode()&os.ModeSymlink != 0 {
-				return errors.New("redirected path")
-			}
-			real, err := filepath.EvalSymlinks(current)
-			if err != nil || !strings.EqualFold(real, current) {
-				return errors.New("redirected path")
-			}
-		} else if !os.IsNotExist(err) {
-			return err
-		}
-		if filepath.Dir(current) == current {
-			return nil
-		}
-	}
+	return pathguard.Check(path)
 }
 
 func initialize(repo string) (Result, error) {

@@ -229,7 +229,7 @@ try {
         if ($null -eq $function) { throw "Packaging function was not found: $functionName" }
         Invoke-Expression $function.Extent.Text
     }
-    foreach ($project in @('AudioPilot', 'AudioPilot.CliHost', 'AudioPilot.Installer', 'AudioPilot.Tests')) {
+    foreach ($project in @('AudioPilot', 'AudioPilot.CliHost', 'AudioPilot.Installer', 'AudioPilot.Tests', 'AudioPilot.UpdateProtocol')) {
         $directory = Join-Path $testRoot $project
         New-Item -ItemType Directory -Path $directory -Force | Out-Null
         Set-Content -LiteralPath (Join-Path $directory 'packages.lock.json') -Value '{"dependencies":{"net10.0":{"CurrentDependency":{"type":"Direct","resolved":"1.2.3"}}}}'
@@ -240,7 +240,7 @@ try {
         Set-Content -LiteralPath (Join-Path $directory 'packages.lock.json') -Value '{"dependencies":{"net10.0":{"ObsoleteDependency":{"type":"Direct","resolved":"0.1.0"}}}}'
     }
     $inventory = @(Get-LockFileDependencyInventory -RepoRoot $testRoot)
-    if ($inventory.Count -ne 1 -or $inventory[0].name -ne 'CurrentDependency' -or $inventory[0].projects.Count -ne 4) {
+    if ($inventory.Count -ne 1 -or $inventory[0].name -ne 'CurrentDependency' -or $inventory[0].projects.Count -ne 5) {
         throw 'Release dependency inventory included probe lockfiles or omitted a project lockfile.'
     }
     foreach ($script in @('package-release.ps1', 'build-local-release-artifacts.ps1')) {

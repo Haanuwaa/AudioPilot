@@ -34,7 +34,7 @@ jobs:
         run: |
           mkdir -p ../../artifacts
           go mod verify
-          go test -count=1 ./internal/staging ./cmd/staging-publisher
+          go test -count=1 ./internal/... ./cmd/staging-publisher
           go build -mod=readonly -trimpath -o ../../artifacts/staging-publisher ./cmd/staging-publisher
       - name: Renew approved staging metadata
         shell: pwsh

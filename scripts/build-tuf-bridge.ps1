@@ -15,7 +15,7 @@ for ($current = $output; $current; $current = [IO.Path]::GetDirectoryName($curre
 }
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 $oldEnvironment = @{}
-foreach ($name in @('GOOS', 'GOARCH', 'CGO_ENABLED')) { $oldEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
+foreach ($name in @('GOOS', 'GOARCH', 'CGO_ENABLED', 'TEMP', 'TMP')) { $oldEnvironment[$name] = [Environment]::GetEnvironmentVariable($name, 'Process') }
 Push-Location $module
 try {
     $format = @(& gofmt -l .)
@@ -25,6 +25,10 @@ try {
     $env:CGO_ENABLED = '0'
     $env:GOOS = 'windows'
     $env:GOARCH = 'amd64'
+    $testTemp = Join-Path $output 'test-temp'
+    [IO.Directory]::CreateDirectory($testTemp) | Out-Null
+    $env:TEMP = $testTemp
+    $env:TMP = $testTemp
     & go test -count=1 ./...
     if ($LASTEXITCODE -ne 0) { throw 'TUF adapter tests failed.' }
     $builds = @()
