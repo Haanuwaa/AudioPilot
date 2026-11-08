@@ -1,0 +1,145 @@
+<Window x:Class="AudioPilot.ListManagerWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    Width="800" Height="560" MinWidth="540" MinHeight="410" ShowInTaskbar="False"
+    WindowStartupLocation="Manual" ResizeMode="CanResizeWithGrip" UseLayoutRounding="True"
+    FontFamily="{DynamicResource AppFontFamily}" FontSize="{DynamicResource AppBodyFontSize}"
+    Background="{DynamicResource WindowBackgroundBrush}" Foreground="{DynamicResource TextBrush}"
+    FocusManager.FocusedElement="{Binding ElementName=SearchBox}">
+    <Window.InputBindings>
+        <KeyBinding Key="F" Modifiers="Control" Command="ApplicationCommands.Find" />
+        <KeyBinding Key="F5" Command="NavigationCommands.Refresh" />
+    </Window.InputBindings>
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Find" Executed="FocusSearch_Executed" />
+        <CommandBinding Command="NavigationCommands.Refresh" Executed="RefreshStatus_Executed" CanExecute="RefreshStatus_CanExecute" />
+    </Window.CommandBindings>
+    <Grid Margin="20,16,20,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <StackPanel Margin="0,0,0,12">
+            <TextBlock Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}" FontSize="18" FontWeight="SemiBold" />
+            <TextBlock x:Name="IntroText" Margin="0,4,0,0" TextWrapping="Wrap" Style="{StaticResource AppSecondaryTextStyle}" />
+        </StackPanel>
+        <Grid Grid.Row="1" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <DockPanel>
+                <Label Content="Search" Target="{Binding ElementName=SearchBox}" Padding="0,0,6,0" VerticalAlignment="Center" />
+                <TextBox x:Name="SearchBox" MinWidth="108" VerticalAlignment="Center" AutomationProperties.Name="Search list"
+                    TextChanged="SearchBox_TextChanged" PreviewKeyDown="SearchBox_PreviewKeyDown" />
+            </DockPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,0,0">
+                <Label Content="_View" Target="{Binding ElementName=FilterBox}" VerticalAlignment="Center" />
+                <ComboBox x:Name="FilterBox" MinWidth="103" AutomationProperties.Name="Filter list" SelectionChanged="View_SelectionChanged" />
+            </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="8,0,0,0">
+                <Label Content="_Sort" Target="{Binding ElementName=SortBox}" VerticalAlignment="Center" />
+                <ComboBox x:Name="SortBox" MinWidth="118" AutomationProperties.Name="Sort list" SelectionChanged="View_SelectionChanged">
+                    <ComboBoxItem Content="Configured order" />
+                    <ComboBoxItem Content="Name" />
+                    <ComboBoxItem Content="Status" />
+                </ComboBox>
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*" />
+                <ColumnDefinition Width="2*" MinWidth="174" />
+            </Grid.ColumnDefinitions>
+            <Grid Margin="0,0,10,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <DockPanel Margin="0,0,0,6">
+                    <Button x:Name="RefreshStatusButton" DockPanel.Dock="Right" Content="Refresh status" Padding="6,2" MinHeight="24"
+                            Command="NavigationCommands.Refresh" Margin="6,0,0,0" Visibility="Collapsed" />
+                    <TextBlock x:Name="CountText" VerticalAlignment="Center" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" Style="{StaticResource AppSecondaryTextStyle}" />
+                </DockPanel>
+                <ListBox x:Name="Rows" Grid.Row="1" Padding="3" SelectionMode="Extended" SelectionChanged="Rows_SelectionChanged"
+                    PreviewKeyDown="Rows_PreviewKeyDown" MouseDoubleClick="Rows_MouseDoubleClick"
+                    ScrollViewer.CanContentScroll="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem" BasedOn="{StaticResource {x:Type ListBoxItem}}">
+                            <Setter Property="AutomationProperties.Name" Value="{Binding Title}" />
+                            <Setter Property="AutomationProperties.ItemStatus" Value="{Binding Status}" />
+                            <Setter Property="AutomationProperties.HelpText" Value="{Binding Subtitle}" />
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="1,1,1,2">
+                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis">
+                                    <i:Interaction.Behaviors><b:TrimmedTextPopupBehavior /></i:Interaction.Behaviors>
+                                </TextBlock>
+                                <TextBlock Text="{Binding RowSummary}" FontSize="12" TextTrimming="CharacterEllipsis">
+                                    <i:Interaction.Behaviors><b:TrimmedTextPopupBehavior /></i:Interaction.Behaviors>
+                                </TextBlock>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                    <i:Interaction.Behaviors><b:ListBoxReorderBehavior /></i:Interaction.Behaviors>
+                </ListBox>
+                <TextBlock x:Name="EmptyText" Grid.Row="1" Margin="12" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    TextWrapping="Wrap" TextAlignment="Center" IsHitTestVisible="False" Style="{StaticResource AppSecondaryTextStyle}" />
+                <WrapPanel Grid.Row="2" Margin="0,8,0,0">
+                    <Button x:Name="AddButton" Content="_Add" Margin="0,0,6,4" Click="Add_Click" />
+                    <Button x:Name="RemoveButton" Content="_Remove" Margin="0,0,6,4" Click="Remove_Click" />
+                    <Button x:Name="MoveButton" Content="_Move ▾" AutomationProperties.Name="Move selected entries"
+                            Margin="0,0,6,4" Click="MoveMenu_Click">
+                        <Button.ContextMenu>
+                            <ContextMenu Placement="Bottom" Style="{DynamicResource AppContextMenuStyle}">
+                                <MenuItem x:Name="MoveUpMenuItem" Header="Move _up" Click="MoveUp_Click" Style="{DynamicResource AppContextMenuItemStyle}" />
+                                <MenuItem x:Name="MoveDownMenuItem" Header="Move _down" Click="MoveDown_Click" Style="{DynamicResource AppContextMenuItemStyle}" />
+                                <Separator Style="{DynamicResource AppContextMenuSeparatorStyle}" />
+                                <MenuItem x:Name="MoveTopMenuItem" Header="Move to _top" Click="MoveTop_Click" Style="{DynamicResource AppContextMenuItemStyle}" />
+                                <MenuItem x:Name="MoveBottomMenuItem" Header="Move to _bottom" Click="MoveBottom_Click" Style="{DynamicResource AppContextMenuItemStyle}" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                </WrapPanel>
+            </Grid>
+            <Border Grid.Column="1" Background="{DynamicResource PanelBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1" CornerRadius="6">
+                <ScrollViewer Margin="12" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <TextBlock x:Name="DetailTitle" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" />
+                        <TextBlock x:Name="DetailStatus" Margin="0,4,0,0" TextWrapping="Wrap" Style="{StaticResource AppSecondaryTextStyle}" />
+                        <WrapPanel x:Name="RoutineActions" Margin="0,8,0,0" Visibility="Collapsed">
+                            <Button x:Name="EditButton" Content="_Edit" Margin="0,0,6,4" Click="Edit_Click" />
+                            <Button x:Name="EnabledButton" Content="_Enable" Margin="0,0,6,4" Click="SetEnabled_Click" />
+                        </WrapPanel>
+                        <ItemsControl x:Name="Details">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,10,0,0">
+                                        <TextBlock Text="{Binding Label}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding Text}" Margin="0,2,0,0" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+        <DockPanel Grid.Row="3" Margin="0,8,0,0" LastChildFill="True">
+            <Button DockPanel.Dock="Right" Content="_Close" IsCancel="True" MinWidth="72" Margin="6,0,0,0" VerticalAlignment="Bottom" />
+            <Button x:Name="SaveButton" DockPanel.Dock="Right" Margin="6,0,0,0" VerticalAlignment="Bottom" Style="{StaticResource AppPrimaryButtonStyle}">
+                <i:Interaction.Behaviors><b:DeferredDisabledAppearanceBehavior /></i:Interaction.Behaviors>
+            </Button>
+            <TextBlock x:Name="FooterText" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.LiveSetting="Polite" Style="{StaticResource AppSecondaryTextStyle}" />
+        </DockPanel>
+    </Grid>
+</Window>
