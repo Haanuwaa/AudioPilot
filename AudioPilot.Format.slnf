@@ -1,0 +1,13 @@
+{
+  "solution": {
+    "path": "AudioPilot.sln",
+    "projects": [
+      "AudioPilot\\AudioPilot.csproj",
+      "AudioPilot.Tests\\AudioPilot.Tests.csproj",
+      "AudioPilot.CliHost\\AudioPilot.CliHost.csproj",
+      "AudioPilot.Updater\\Protocol\\AudioPilot.UpdateProtocol.csproj",
+      "AudioPilot.Updater\\AudioPilot.Updater.csproj",
+      "AudioPilot.Updater\\Ui\\AudioPilot.Updater.Ui.csproj"
+    ]
+  }
+}

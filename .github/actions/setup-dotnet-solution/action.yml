@@ -1,0 +1,60 @@
+name: 'Setup .NET Solution'
+description: 'Sets up .NET, restores the requested dependency graph, and optionally builds the solution'
+
+inputs:
+  configuration:
+    description: 'Build configuration (Debug/Release)'
+    required: false
+    default: 'Release'
+  build:
+    description: 'Whether to run dotnet build after restore'
+    required: false
+    default: 'false'
+  restore-project:
+    description: 'Solution or project whose dependency graph requires locked restore'
+    required: false
+    default: 'AudioPilot.sln'
+  package-cache-scope:
+    description: 'Optional measured workload cache, isolated in runner temporary storage'
+    required: false
+    default: ''
+
+runs:
+  using: composite
+  steps:
+    - name: Configure workload package cache
+      if: inputs.package-cache-scope != ''
+      shell: pwsh
+      env:
+        PACKAGE_CACHE_SCOPE: ${{ inputs.package-cache-scope }}
+        PACKAGE_CACHE_ARCHITECTURE: ${{ runner.arch }}
+      run: |
+        if ($env:PACKAGE_CACHE_SCOPE -cnotmatch '^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$') { throw 'Invalid package cache scope.' }
+        $packages = Join-Path $env:RUNNER_TEMP "AudioPilot-NuGet-$env:PACKAGE_CACHE_SCOPE"
+        "NUGET_PACKAGES=$packages" | Add-Content -LiteralPath $env:GITHUB_ENV -Encoding utf8
+        New-Item -ItemType Directory -Path artifacts -Force | Out-Null
+        "$env:PACKAGE_CACHE_SCOPE-$env:PACKAGE_CACHE_ARCHITECTURE-v1" | Set-Content -LiteralPath artifacts/nuget-cache-scope.txt -Encoding utf8
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6.1.0
+      with:
+        dotnet-version: 11.0.x
+        cache: true
+        cache-dependency-path: |
+          **/packages.lock.json
+          Directory.Packages.props
+          global.json
+          artifacts/nuget-cache-scope.txt
+
+    - name: Restore
+      shell: pwsh
+      env:
+        RESTORE_PROJECT: ${{ inputs.restore-project }}
+      run: dotnet restore "$env:RESTORE_PROJECT" --locked-mode
+
+    - name: Build
+      if: inputs.build == 'true'
+      shell: pwsh
+      env:
+        BUILD_CONFIGURATION: ${{ inputs.configuration }}
+      run: dotnet build AudioPilot.sln --configuration $env:BUILD_CONFIGURATION --no-restore
