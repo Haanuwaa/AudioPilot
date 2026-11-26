@@ -1,0 +1,159 @@
+<UserControl
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:h="clr-namespace:AudioPilot.Helpers"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:loc="clr-namespace:AudioPilot.Localization"
+    xmlns:updates="clr-namespace:AudioPilot.Services.Updates;assembly=AudioPilot.Core"
+    xmlns:views="clr-namespace:AudioPilot.Views"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="AudioPilot.Views.SettingsSystemPanel"
+    AutomationProperties.Name="{loc:Loc Settings_Startup}">
+    <UserControl.Resources>
+        <Style x:Key="ResetButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource ResetButtonBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightTextBrushKey}}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="10,5" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border
+                            Padding="{TemplateBinding Padding}"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource ResetButtonHoverBrush}" />
+                </Trigger>
+                <Trigger Property="IsPressed" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource ResetButtonPressedBrush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+    <StackPanel>
+        <TextBlock Style="{DynamicResource SettingsSectionHeaderStyle}" Text="{loc:Loc Settings_Startup}" />
+        <CheckBox x:Name="SettingsRunAtStartupCheckBox" Margin="11,0,0,8"
+            IsChecked="{Binding RunAtStartup, Mode=TwoWay}" AutomationProperties.Name="{loc:Loc Ui_RunAtStartup}"
+            AutomationProperties.HelpText="{loc:Loc Ui_AppliesImmediatelyThisChoiceIsSavedIndependentlyOf}">
+            <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{loc:Loc Ui_AppliesImmediatelyThisChoiceIsSavedIndependentlyOf}" /></i:Interaction.Behaviors>
+            <TextBlock Text="{loc:Loc Ui_RunAtStartup}" TextWrapping="Wrap" />
+        </CheckBox>
+        <CheckBox
+            Margin="11,0,0,8"
+            AutomationProperties.HelpText="{loc:Loc Settings_SchedulerHelp}"
+            IsChecked="{Binding SettingsUseScheduledStartupDraft, Mode=TwoWay}"
+            IsEnabled="{Binding RunAtStartup}"
+            AutomationProperties.Name="{loc:Loc Settings_Scheduler}">
+            <i:Interaction.Behaviors>
+                <b:HoverInfoPopupBehavior
+                    Text="{loc:Loc Settings_SchedulerHelp}" />
+            </i:Interaction.Behaviors>
+            <TextBlock Text="{loc:Loc Settings_Scheduler}" TextWrapping="Wrap" />
+        </CheckBox>
+        <TextBlock Style="{DynamicResource SettingsSectionHeaderStyle}" Text="{loc:Loc Ui_Updates}" />
+        <CheckBox IsChecked="{Binding SettingsCheckForUpdatesDraft, Mode=TwoWay}"
+            AutomationProperties.Name="{loc:Loc Ui_CheckAutomatically}" Margin="0,0,0,8"
+            AutomationProperties.HelpText="{loc:Loc Ui_CheckForStableReleasesAfterStartupAndDaily}">
+            <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{loc:Loc Ui_ChecksAfterStartupAndOnceADayShows}" /></i:Interaction.Behaviors>
+            <TextBlock Text="{loc:Loc Ui_CheckAutomatically}" />
+        </CheckBox>
+        <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+            <Button x:Name="CheckNowButton" h:AppHelp.Topic="Updates" Content="{loc:Loc Ui_CheckNow}" Command="{Binding Updates.CheckNowCommand}" VerticalAlignment="Center" AutomationProperties.Name="{loc:Loc Ui_CheckForUpdatesNow}">
+                <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{loc:LocBinding Updates.CheckHelpLabel}" /></i:Interaction.Behaviors>
+            </Button>
+            <TextBlock x:Name="UpdateCheckStatus" Grid.Column="1" Margin="10,0,0,0" Text="{loc:LocBinding Updates.CheckStatusLabel}"
+                VerticalAlignment="Center" TextWrapping="Wrap" Style="{StaticResource AppSecondaryTextStyle}" AutomationProperties.LiveSetting="Polite" />
+        </Grid>
+        <WrapPanel Margin="0,0,0,4" VerticalAlignment="Center">
+            <Button x:Name="UpdaterPilotButton" h:AppHelp.Topic="Updates" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,12,4" Click="OpenUpdaterPilot_Click"
+                AutomationProperties.Name="{loc:Loc Ui_OpenUpdater}"
+                Visibility="{Binding Source={x:Static updates:AppUpdateLauncher.IsAvailable}, Converter={StaticResource BoolToVisibilityConverter}}"
+                AutomationProperties.HelpText="{loc:Loc Ui_ReviewVerifiedPackageAvailabilityAndUpdateProgressUpdate}">
+                <Button.Style>
+                    <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                        <Setter Property="Content" Value="{loc:Loc Ui_OpenUpdater}" />
+                        <Style.Triggers>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Content" Value="{loc:Loc Ui_Opening}" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+            <TextBlock x:Name="UpdateNotice"
+                VerticalAlignment="Center"
+                Margin="0,0,0,4"
+                AutomationProperties.LiveSetting="Polite"
+                TextWrapping="Wrap">
+                <Hyperlink
+                    AutomationProperties.Name="{loc:LocBinding Updates.ReleaseLinkLabel}"
+                    AutomationProperties.HelpText="{loc:Loc Ui_OpensTheReleasePageInYourBrowserDownload}"
+                    Focusable="True"
+                    NavigateUri="{Binding Updates.ReleaseUrl}"
+                    PreviewKeyDown="ProjectLink_PreviewKeyDown"
+                    RequestNavigate="ProjectLink_RequestNavigate"
+                    Style="{DynamicResource SettingsUpdateLinkStyle}">
+                    <Run Text="{loc:LocBinding Updates.ReleaseLinkLabel}" />
+                </Hyperlink>
+            </TextBlock>
+        </WrapPanel>
+        <TextBlock Text="{loc:LocBinding ., Source={x:Static updates:AppUpdateLauncher.AvailabilityLabel}}" TextWrapping="Wrap" Margin="0,0,0,14" Style="{StaticResource AppSecondaryTextStyle}" />
+        <views:SettingsLoggingPanel />
+        <StackPanel>
+            <TextBlock Style="{DynamicResource SettingsSectionHeaderStyle}" Text="{loc:Loc Ui_Maintenance}" />
+            <WrapPanel>
+                <Button Width="{DynamicResource SettingsFieldWidth}" Margin="0,0,12,8"
+                    VerticalAlignment="Center"
+                    Content="{loc:Loc Ui_DiagnosticsText}"
+                    Command="{Binding OpenDiagnosticsCommand}"
+                    AutomationProperties.HelpText="{loc:Loc Ui_ViewAppVersionBuildInformationRuntimeHealthRecent}" />
+                <TextBlock Width="224" Margin="0,0,0,8" VerticalAlignment="Center"
+                    Style="{StaticResource AppSecondaryTextStyle}" TextWrapping="Wrap"
+                    Text="{loc:Loc Ui_AppAndBuildDetailsRuntimeHealthAndSupport}" />
+            </WrapPanel>
+            <WrapPanel>
+                <Button Width="{DynamicResource SettingsFieldWidth}" Margin="0,0,12,8" Content="{loc:Loc Settings_ResetWindow}" Command="{Binding ResetWindowLayoutCommand}"
+                    VerticalAlignment="Center"
+                    AutomationProperties.HelpText="{loc:Loc Ui_RestoreTheDefaultMainWindowSizeAndCenter}">
+                    <i:Interaction.Behaviors><b:DeferredDisabledAppearanceBehavior /></i:Interaction.Behaviors>
+                </Button>
+                <TextBlock Width="224" Margin="0,0,0,8" VerticalAlignment="Center"
+                    Style="{StaticResource AppSecondaryTextStyle}" TextWrapping="Wrap"
+                    Text="{loc:Loc Ui_RestoreTheDefaultWindowSizeAndPosition}" />
+            </WrapPanel>
+            <WrapPanel>
+                <Button Width="{DynamicResource SettingsFieldWidth}" Margin="0,0,12,8"
+                    VerticalAlignment="Center"
+                    Content="{loc:Loc Settings_ResetAppAudio}"
+                    Command="{Binding ResetPerAppAudioRoutingCommand}">
+                    <i:Interaction.Behaviors><b:DeferredDisabledAppearanceBehavior /></i:Interaction.Behaviors>
+                </Button>
+                <TextBlock Width="224" Margin="0,0,0,8" VerticalAlignment="Center"
+                    Style="{StaticResource AppSecondaryTextStyle}" TextWrapping="Wrap"
+                    Text="{loc:Loc Ui_ClearWindowsSavedAudioDeviceAssignmentsForApps}" />
+            </WrapPanel>
+            <WrapPanel>
+                <Button Width="{DynamicResource SettingsFieldWidth}" Margin="0,0,12,8" MinHeight="30"
+                    VerticalAlignment="Center"
+                    Command="{Binding ResetToDefaultsCommand}"
+                    Content="{loc:Loc Ui_ResetAppSettings}"
+                    Style="{StaticResource ResetButtonStyle}"
+                    AutomationProperties.HelpText="{loc:Loc Ui_ResetAudioPilotSettingsHotkeysRoutinesAndStartupOptions}" />
+                <TextBlock Width="224" Margin="0,0,0,8" VerticalAlignment="Center"
+                    Style="{StaticResource AppSecondaryTextStyle}" TextWrapping="Wrap"
+                    Text="{loc:Loc Ui_RestoreAudioPilotDefaultsIncludingHotkeysRoutinesAndStartup}" />
+            </WrapPanel>
+        </StackPanel>
+    </StackPanel>
+</UserControl>
