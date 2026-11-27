@@ -1,0 +1,183 @@
+<UserControl
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:loc="clr-namespace:AudioPilot.Localization"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="AudioPilot.Views.SettingsGeneralPanel"
+    AutomationProperties.Name="{loc:Loc Settings_PanelName}">
+
+    <StackPanel>
+        <TextBlock Style="{DynamicResource SettingsSectionHeaderStyle}" Text="{loc:Loc Settings_AppBehavior}" />
+        <Grid Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <CheckBox VerticalAlignment="Top" Grid.Row="0" Grid.Column="0"
+                Margin="0,0,8,0"
+                IsChecked="{Binding SettingsAutoSaveEnabledDraft, Mode=TwoWay}"
+                AutomationProperties.Name="{loc:Loc Settings_AutoSave}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior
+                        Text="{loc:Loc Settings_AutoSaveHelp}" />
+                </i:Interaction.Behaviors>
+                <TextBlock Text="{loc:Loc Settings_AutoSave}" TextWrapping="Wrap" />
+            </CheckBox>
+            <CheckBox VerticalAlignment="Top" Grid.Row="0" Grid.Column="1"
+                Margin="8,0,0,0"
+                AutomationProperties.HelpText="{loc:Loc Settings_SoundsAccessibleHelp}"
+                AutomationProperties.Name="{loc:Loc Settings_Sounds}"
+                IsChecked="{Binding SettingsPlayAppSoundsDraft, Mode=TwoWay}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior
+                        Text="{loc:Loc Settings_SoundsHelp}" />
+                </i:Interaction.Behaviors>
+                <TextBlock Text="{loc:Loc Settings_Sounds}" TextWrapping="Wrap" />
+            </CheckBox>
+            <CheckBox Grid.Row="1" Grid.Column="0"
+                Margin="0,8,8,0"
+                VerticalAlignment="Top"
+                IsChecked="{Binding SettingsAutoScrollToMixerOnRestoreDraft, Mode=TwoWay}"
+                AutomationProperties.Name="{loc:Loc Settings_AutoScroll}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Settings_AutoScrollHelp}" />
+                </i:Interaction.Behaviors>
+                <TextBlock Text="{loc:Loc Settings_AutoScroll}" TextWrapping="Wrap" />
+            </CheckBox>
+        </Grid>
+        <TextBlock Margin="0,4,0,6" FontWeight="SemiBold" Text="{loc:Loc Settings_WindowAndTray}" />
+        <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+            <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Settings_CloseButtonLabel}" Target="{Binding ElementName=SettingsCloseButtonComboBox}" />
+            <ComboBox x:Name="SettingsCloseButtonComboBox" VerticalAlignment="Center"
+                Width="{DynamicResource SettingsFieldWidth}"
+                AutomationProperties.Name="{loc:Loc Settings_CloseButtonName}"
+                AutomationProperties.HelpText="{loc:Loc Settings_CloseButtonHelp}"
+                ItemsSource="{Binding AvailableCloseButtonBehaviors}"
+                SelectedItem="{Binding SettingsCloseButtonBehaviorDraft, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{loc:LocBinding .}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Settings_CloseButtonHelp}" />
+                </i:Interaction.Behaviors>
+            </ComboBox>
+        </StackPanel>
+        <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+            <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Settings_MinimizeButtonLabel}" Target="{Binding ElementName=SettingsMinimizeButtonComboBox}" />
+            <ComboBox x:Name="SettingsMinimizeButtonComboBox" VerticalAlignment="Center"
+                Width="{DynamicResource SettingsFieldWidth}"
+                AutomationProperties.Name="{loc:Loc Settings_MinimizeButtonName}"
+                AutomationProperties.HelpText="{loc:Loc Settings_MinimizeButtonHelp}"
+                ItemsSource="{Binding AvailableMinimizeButtonBehaviors}"
+                SelectedItem="{Binding SettingsMinimizeButtonBehaviorDraft, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{loc:LocBinding .}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Settings_MinimizeButtonHelp}" />
+                </i:Interaction.Behaviors>
+            </ComboBox>
+        </StackPanel>
+        <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+            <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Settings_TrayLeftClickLabel}" Target="{Binding ElementName=SettingsTrayLeftClickComboBox}" />
+            <ComboBox x:Name="SettingsTrayLeftClickComboBox" VerticalAlignment="Center"
+                Width="{DynamicResource SettingsFieldWidth}"
+                AutomationProperties.Name="{loc:Loc Settings_TrayLeftClickName}"
+                AutomationProperties.HelpText="{loc:Loc Settings_TrayLeftClickHelp}"
+                ItemsSource="{Binding AvailableTrayLeftClickActions}"
+                SelectedItem="{Binding SettingsTrayLeftClickActionDraft, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{loc:LocBinding .}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Settings_TrayLeftClickHelp}" />
+                </i:Interaction.Behaviors>
+            </ComboBox>
+        </StackPanel>
+        <TextBlock Style="{DynamicResource SettingsSectionHeaderStyle}" Text="{loc:Loc Settings_Overlay}" />
+        <StackPanel Margin="0,0,0,8" Orientation="Horizontal">
+            <CheckBox IsChecked="{Binding SettingsOverlayEnabledDraft, Mode=TwoWay}" AutomationProperties.Name="{loc:Loc Settings_EnableOverlay}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Settings_OverlayHelp}" />
+                </i:Interaction.Behaviors>
+                <TextBlock Text="{loc:Loc Settings_EnableOverlay}" TextWrapping="Wrap" />
+            </CheckBox>
+        </StackPanel>
+        <CheckBox Margin="11,0,0,10"
+            IsChecked="{Binding SettingsOverlayHotplugEnabledDraft, Mode=TwoWay}"
+            IsEnabled="{Binding SettingsOverlayEnabledDraft, Mode=OneWay}"
+            AutomationProperties.Name="{loc:Loc Settings_OverlayHotplug}"
+            AutomationProperties.HelpText="{loc:Loc Settings_OverlayHotplugHelp}">
+            <i:Interaction.Behaviors>
+                <b:HoverInfoPopupBehavior Text="{loc:Loc Settings_OverlayHotplugHelp}" />
+            </i:Interaction.Behaviors>
+            <TextBlock Text="{loc:Loc Settings_OverlayHotplug}" TextWrapping="Wrap" />
+        </CheckBox>
+        <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+            <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Settings_PositionLabel}" />
+            <ComboBox VerticalAlignment="Center"
+                Width="{DynamicResource SettingsFieldWidth}"
+                AutomationProperties.Name="{loc:Loc Settings_PositionName}"
+                IsEnabled="{Binding SettingsOverlayEnabledDraft, Mode=OneWay}"
+                ItemsSource="{Binding AvailableOverlayPositions}"
+                SelectedItem="{Binding SettingsOverlayPositionDraft, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{loc:LocBinding .}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Settings_PositionHelp}" />
+                </i:Interaction.Behaviors>
+            </ComboBox>
+        </StackPanel>
+        <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+            <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Settings_OverlayMonitorLabel}" Target="{Binding ElementName=SettingsOverlayMonitorComboBox}" />
+            <ComboBox x:Name="SettingsOverlayMonitorComboBox" VerticalAlignment="Center"
+                Width="{DynamicResource SettingsFieldWidth}"
+                AutomationProperties.Name="{loc:Loc Settings_OverlayMonitorName}"
+                AutomationProperties.HelpText="{loc:Loc Settings_OverlayMonitorHelp}"
+                IsEnabled="{Binding SettingsOverlayEnabledDraft, Mode=OneWay}"
+                ItemsSource="{Binding AvailableOverlayMonitorModes}"
+                SelectedItem="{Binding SettingsOverlayMonitorModeDraft, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{loc:LocBinding .}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Settings_OverlayMonitorHelp}" />
+                </i:Interaction.Behaviors>
+            </ComboBox>
+        </StackPanel>
+        <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+            <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Settings_DurationLabel}" />
+            <TextBox VerticalAlignment="Center"
+                Width="80"
+                AutomationProperties.Name="{loc:Loc Settings_DurationName}"
+                b:TextBoxPlaceholderBehavior.Text="3.0"
+                ContextMenu="{DynamicResource EditableTextContextMenu}"
+                InputScope="Number"
+                IsEnabled="{Binding SettingsOverlayEnabledDraft, Mode=OneWay}"
+                Text="{Binding SettingsOverlayDurationSecondsDraft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior
+                        Text="{loc:LocBinding SettingsFieldGuidance[SettingsOverlayDurationSecondsDraft]}" />
+                    <b:NumericOnlyBehavior />
+                </i:Interaction.Behaviors>
+            </TextBox>
+            <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Foreground="{DynamicResource MutedTextBrush}" Text="{loc:Loc Settings_DurationRange}" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

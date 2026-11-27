@@ -1,0 +1,213 @@
+<UserControl
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:controls="clr-namespace:AudioPilot.Controls"
+    xmlns:h="clr-namespace:AudioPilot.Helpers"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:loc="clr-namespace:AudioPilot.Localization"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="AudioPilot.Views.SettingsShortcutsPanel"
+    AutomationProperties.Name="{loc:Loc Ui_GlobalHotkeys}">
+    <StackPanel>
+        <TextBlock Style="{DynamicResource SettingsSectionHeaderStyle}" Text="{loc:Loc Ui_GlobalHotkeys}" />
+        <TextBlock
+            Margin="0,0,0,10"
+            Foreground="{DynamicResource MutedTextBrush}"
+            Text="{loc:Loc Ui_LeaveAShortcutBlankToDisableIt}" />
+        <Expander x:Name="AppShortcutsExpander" AutomationProperties.Name="{loc:Loc Ui_App}" IsExpanded="{Binding SettingsAppShortcutsExpanded, Mode=TwoWay}" Style="{DynamicResource SettingsExpanderStyle}">
+            <Expander.Header><TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_App}" /></Expander.Header>
+            <StackPanel>
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_ShowHideApp}" FieldName="{loc:Loc Ui_ShowOrHideAppHotkey}" Hotkey="{Binding SettingsToggleAppVisibilityHotkeyDraftCapture}" />
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_ShowAudioStatus}" FieldName="{loc:Loc Ui_ShowAudioStatusHotkey}" Hotkey="{Binding SettingsShowAudioStatusHotkeyDraftCapture}" />
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_DevicePicker}" FieldName="{loc:Loc Ui_QuickDevicePickerHotkey}" Hotkey="{Binding SettingsQuickDevicePickerHotkeyDraftCapture}" />
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_QuickMixerLabel}" FieldName="{loc:Loc Ui_VolumeMixerHotkey}" Hotkey="{Binding SettingsVolumeMixerHotkeyDraftCapture}" />
+            </StackPanel>
+        </Expander>
+        <Expander x:Name="MediaShortcutsExpander" AutomationProperties.Name="{loc:Loc Ui_Media}" IsExpanded="{Binding SettingsMediaShortcutsExpanded, Mode=TwoWay}" Style="{DynamicResource SettingsExpanderStyle}">
+            <Expander.Header><TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_Media}" /></Expander.Header>
+            <StackPanel>
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_ShowCurrentTrack}" FieldName="{loc:Loc Ui_ShowCurrentTrackHotkey}" Hotkey="{Binding SettingsShowCurrentTrackHotkeyDraftCapture}" />
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_PlayPause}" FieldName="{loc:Loc Ui_PlayOrPauseHotkey}" Hotkey="{Binding SettingsPlayPauseHotkeyDraftCapture}" />
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_NextTrack}" FieldName="{loc:Loc Ui_NextTrackHotkey}" Hotkey="{Binding SettingsNextTrackHotkeyDraftCapture}" />
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_PreviousTrack}" FieldName="{loc:Loc Ui_PreviousTrackHotkey}" Hotkey="{Binding SettingsPreviousTrackHotkeyDraftCapture}" />
+            </StackPanel>
+        </Expander>
+        <Expander
+            AutomationProperties.Name="{loc:Loc Ui_SeekControls}"
+            IsExpanded="{Binding SettingsSeekControlsExpanded, Mode=TwoWay}"
+            Style="{DynamicResource SettingsExpanderStyle}">
+            <Expander.Header>
+                <TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_Seek}" />
+            </Expander.Header>
+            <StackPanel>
+                <TextBlock
+                    Margin="0,0,0,10"
+                    Foreground="{DynamicResource MutedTextBrush}"
+                    TextWrapping="Wrap"
+                    Text="{loc:Loc Ui_SkipForwardOrBackwardByTheChosenDuration}" />
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_SeekForward}" FieldName="{loc:Loc Ui_SeekForwardHotkey}" Hotkey="{Binding SettingsSeekForwardHotkeyDraftCapture}" />
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_SeekBackward}" FieldName="{loc:Loc Ui_SeekBackwardHotkey}" Hotkey="{Binding SettingsSeekBackwardHotkeyDraftCapture}" />
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_SeekStep}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="110"
+                        AutomationProperties.Name="{loc:Loc Ui_MediaSeekStepDuration}"
+                        ContextMenu="{DynamicResource EditableTextContextMenu}"
+                        Text="{Binding SettingsSeekStepSecondsDraft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}">
+                        <i:Interaction.Behaviors>
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsFieldGuidance[SettingsSeekStepSecondsDraft]}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+        <Expander x:Name="MuteShortcutsExpander" AutomationProperties.Name="{loc:Loc Ui_MuteControls}" IsExpanded="{Binding SettingsMuteShortcutsExpanded, Mode=TwoWay}" Style="{DynamicResource SettingsExpanderStyle}">
+            <Expander.Header><TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_MuteControls}" /></Expander.Header>
+            <StackPanel>
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_MicrophoneMute}" FieldName="{loc:Loc Ui_ToggleMicrophoneMuteHotkey}" Hotkey="{Binding SettingsMuteMicHotkeyDraftCapture}" />
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_OutputMute}" FieldName="{loc:Loc Ui_ToggleSoundMuteHotkey}" Hotkey="{Binding SettingsMuteSoundHotkeyDraftCapture}" />
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_Deafen}" FieldName="{loc:Loc Ui_ToggleDeafenHotkey}" Hotkey="{Binding SettingsDeafenHotkeyDraftCapture}" />
+            </StackPanel>
+        </Expander>
+        <Expander
+            AutomationProperties.Name="{loc:Loc Ui_WhileHoldingAKey}"
+            IsExpanded="{Binding SettingsMicrophoneHoldControlsExpanded, Mode=TwoWay}"
+            h:AppHelp.Topic="MicrophoneHolds"
+            Style="{DynamicResource SettingsExpanderStyle}">
+            <Expander.Header>
+                <TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_WhileHoldingAKey}" />
+            </Expander.Header>
+            <StackPanel>
+                <TextBlock
+                    Margin="0,0,0,10"
+                    Foreground="{DynamicResource MutedTextBrush}"
+                    TextWrapping="Wrap"
+                    Text="{loc:Loc Ui_PushToTalkKeepsYourMicrophoneMutedExcept}" />
+                <CheckBox
+                    Margin="0,0,0,8"
+                    Content="{loc:Loc Ui_EnablePushToTalk}"
+                    IsChecked="{Binding SettingsPushToTalkEnabledDraft}"
+                    AutomationProperties.Name="{loc:Loc Ui_EnablePushToTalk}">
+                    <i:Interaction.Behaviors>
+                        <b:HoverInfoPopupBehavior
+                            Text="{loc:Loc Ui_KeepsTheDefaultMicrophonesMutedExceptWhileYou}" />
+                    </i:Interaction.Behaviors>
+                </CheckBox>
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_PushToTalk}" FieldName="{loc:Loc Ui_PushToTalkHotkey}" Hotkey="{Binding SettingsPushToTalkHotkeyDraftCapture}" />
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_HoldToMute}" FieldName="{loc:Loc Ui_HoldToMuteHotkey}" Hotkey="{Binding SettingsHoldToMuteHotkeyDraftCapture}" />
+            </StackPanel>
+        </Expander>
+        <Expander
+            AutomationProperties.Name="{loc:Loc Ui_OutputVolume}"
+            IsExpanded="{Binding SettingsMasterVolumeControlsExpanded, Mode=TwoWay}"
+            Style="{DynamicResource SettingsExpanderStyle}">
+            <Expander.Header>
+                <TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_OutputVolume}" />
+            </Expander.Header>
+            <StackPanel>
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_OutputVolumeUp}" FieldName="{loc:Loc Ui_MasterVolumeUpHotkey}" Hotkey="{Binding SettingsMasterVolumeUpHotkeyDraftCapture}" />
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_OutputVolumeDown}" FieldName="{loc:Loc Ui_MasterVolumeDownHotkey}" Hotkey="{Binding SettingsMasterVolumeDownHotkeyDraftCapture}" />
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_OutputStep}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="80"
+                        AutomationProperties.Name="{loc:Loc Ui_MasterVolumeStepPercent}"
+                        b:TextBoxPlaceholderBehavior.Text="5"
+                        ContextMenu="{DynamicResource EditableTextContextMenu}"
+                        InputScope="Number"
+                        Text="{Binding SettingsMasterVolumeStepPercentDraft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}">
+                        <i:Interaction.Behaviors>
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsFieldGuidance[SettingsMasterVolumeStepPercentDraft]}" />
+                            <b:IntegerOnlyBehavior />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                    <TextBlock
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Center"
+                        Foreground="{DynamicResource MutedTextBrush}"
+                        Text="{loc:Loc Ui_VolumeStepRange}" />
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+        <Expander
+            AutomationProperties.Name="{loc:Loc Ui_MicrophoneVolume}"
+            AutomationProperties.HelpText="{loc:Loc Ui_InputVolumeHelp}"
+            IsExpanded="{Binding SettingsMicVolumeControlsExpanded, Mode=TwoWay}"
+            Style="{DynamicResource SettingsExpanderStyle}">
+            <Expander.Header>
+                <TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_MicrophoneVolume}">
+                    <i:Interaction.Behaviors>
+                        <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_InputVolumeHelp}" />
+                    </i:Interaction.Behaviors>
+                </TextBlock>
+            </Expander.Header>
+            <StackPanel>
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_MicrophoneUp}" FieldName="{loc:Loc Ui_MicrophoneVolumeUpHotkey}" Hotkey="{Binding SettingsMicVolumeUpHotkeyDraftCapture}" />
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_MicrophoneDown}" FieldName="{loc:Loc Ui_MicrophoneVolumeDownHotkey}" Hotkey="{Binding SettingsMicVolumeDownHotkeyDraftCapture}" />
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_MicrophoneStep}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="80"
+                        AutomationProperties.Name="{loc:Loc Ui_MicrophoneVolumeStepPercent}"
+                        b:TextBoxPlaceholderBehavior.Text="5"
+                        ContextMenu="{DynamicResource EditableTextContextMenu}"
+                        InputScope="Number"
+                        Text="{Binding SettingsMicVolumeStepPercentDraft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}">
+                        <i:Interaction.Behaviors>
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsFieldGuidance[SettingsMicVolumeStepPercentDraft]}" />
+                            <b:IntegerOnlyBehavior />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                    <TextBlock
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Center"
+                        Foreground="{DynamicResource MutedTextBrush}"
+                        Text="{loc:Loc Ui_VolumeStepRange}" />
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+        <Expander
+            AutomationProperties.Name="{loc:Loc Ui_ForegroundApp}"
+            h:AppHelp.Topic="ForegroundAudio"
+            IsExpanded="{Binding SettingsForegroundVolumeControlsExpanded, Mode=TwoWay}"
+            Style="{DynamicResource SettingsExpanderStyle}">
+            <Expander.Header>
+                <TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_ForegroundApp}" />
+            </Expander.Header>
+            <StackPanel>
+                <TextBlock
+                    Margin="0,0,0,10"
+                    Foreground="{DynamicResource MutedTextBrush}"
+                    TextWrapping="Wrap"
+                    Text="{loc:Loc Ui_ControlsTheAppYouReUsingBrowsersMay}" />
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_VolumeUp}" FieldName="{loc:Loc Ui_ForegroundAppVolumeUpHotkey}" Hotkey="{Binding SettingsForegroundVolumeUpHotkeyDraftCapture}" />
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_VolumeDown}" FieldName="{loc:Loc Ui_ForegroundAppVolumeDownHotkey}" Hotkey="{Binding SettingsForegroundVolumeDownHotkeyDraftCapture}" />
+                <controls:SettingsHotkeyRow Label="{loc:Loc Ui_ToggleMute}" FieldName="{loc:Loc Ui_ForegroundAppMuteHotkey}" Hotkey="{Binding SettingsForegroundMuteHotkeyDraftCapture}" />
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_Step}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="80"
+                        AutomationProperties.Name="{loc:Loc Ui_ForegroundAppVolumeStepPercent}"
+                        b:TextBoxPlaceholderBehavior.Text="5"
+                        ContextMenu="{DynamicResource EditableTextContextMenu}"
+                        InputScope="Number"
+                        Text="{Binding SettingsForegroundVolumeStepPercentDraft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}">
+                        <i:Interaction.Behaviors>
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsFieldGuidance[SettingsForegroundVolumeStepPercentDraft]}" />
+                            <b:IntegerOnlyBehavior />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                    <TextBlock
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Center"
+                        Foreground="{DynamicResource MutedTextBrush}"
+                        Text="{loc:Loc Ui_VolumeStepRange}" />
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+    </StackPanel>
+</UserControl>

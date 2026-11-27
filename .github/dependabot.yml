@@ -1,0 +1,49 @@
+version: 2
+updates:
+  - package-ecosystem: "gomod"
+    directory: "/AudioPilot.Updater/TufBridge"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      servicing:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "Microsoft.Windows.SDK.Contracts"
+        versions: [">= 10.0.19042"]
+    groups:
+      servicing:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "nuget"
+    directory: "/AudioPilot.Benchmarks"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 2
+    groups:
+      servicing:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      servicing:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "pip"
+    directory: "/.github/quality"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 3
+    groups:
+      servicing:
+        update-types: ["minor", "patch"]

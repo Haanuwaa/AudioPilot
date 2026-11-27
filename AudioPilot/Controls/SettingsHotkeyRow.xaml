@@ -1,0 +1,20 @@
+<UserControl
+    x:Class="AudioPilot.Controls.SettingsHotkeyRow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:AudioPilot.Controls"
+    Focusable="False"
+    IsTabStop="False">
+    <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+        <Label
+            Style="{DynamicResource SettingsFormLabelStyle}"
+            Content="{Binding Label, RelativeSource={RelativeSource AncestorType=controls:SettingsHotkeyRow}}" />
+        <controls:HotkeyCaptureBox
+            x:Name="CaptureBox"
+            Width="{DynamicResource SettingsFieldWidth}"
+            VerticalAlignment="Center"
+            FieldName="{Binding FieldName, RelativeSource={RelativeSource AncestorType=controls:SettingsHotkeyRow}}"
+            Hotkey="{Binding Hotkey, RelativeSource={RelativeSource AncestorType=controls:SettingsHotkeyRow}}"
+            IsEnabled="{Binding IsFieldEnabled, RelativeSource={RelativeSource AncestorType=controls:SettingsHotkeyRow}}" />
+    </StackPanel>
+</UserControl>

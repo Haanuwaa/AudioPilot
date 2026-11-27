@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <AssemblyName>AudioPilot.Updater.Core</AssemblyName>
+    <TargetFramework>net11.0-windows10.0.19041.0</TargetFramework>
+    <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+    <IsPackable>false</IsPackable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefaultItemExcludes>$(DefaultItemExcludes);Ui\**;Protocol\**;TufBridge\**</DefaultItemExcludes>
+    <_AudioPilotUpdaterEngineeringEnabled Condition="'$(AudioPilotUpdaterEngineering)' == 'true' Or ('$(AudioPilotUpdaterEngineering)' == '' And '$(AudioPilotUpdatePolicy)' == '')">true</_AudioPilotUpdaterEngineeringEnabled>
+    <DefineConstants Condition="'$(_AudioPilotUpdaterEngineeringEnabled)' == 'true'">$(DefineConstants);AUDIOPILOT_UPDATE_ENGINEERING</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(_AudioPilotUpdaterEngineeringEnabled)' != 'true'">
+    <Compile Remove="Program.Validation.cs;Validation\*Smoke.cs;Validation\HttpsFeedServer.cs;Validation\LocalFixtureJobRuntime.cs;Validation\LocalUiFixture.cs;Validation\FeedTestSetup.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Protocol\AudioPilot.UpdateProtocol.csproj" />
+    <InternalsVisibleTo Include="AudioPilot.Tests" />
+    <InternalsVisibleTo Include="AudioPilot.Updater" />
+  </ItemGroup>
+</Project>
