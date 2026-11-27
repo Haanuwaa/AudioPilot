@@ -1,0 +1,614 @@
+<UserControl
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:h="clr-namespace:AudioPilot.Helpers"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:loc="clr-namespace:AudioPilot.Localization"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="AudioPilot.Views.SettingsShortcutsPanel"
+    AutomationProperties.Name="{loc:Loc Ui_GlobalHotkeys}">
+    <StackPanel>
+        <TextBlock Style="{DynamicResource SettingsSectionHeaderStyle}" Text="{loc:Loc Ui_GlobalHotkeys}" />
+        <TextBlock
+            Margin="0,0,0,10"
+            Foreground="{DynamicResource MutedTextBrush}"
+            Text="{loc:Loc Ui_LeaveAShortcutBlankToDisableIt}" />
+        <Expander x:Name="AppShortcutsExpander" AutomationProperties.Name="{loc:Loc Ui_App}" IsExpanded="{Binding SettingsAppShortcutsExpanded, Mode=TwoWay}" Style="{DynamicResource SettingsExpanderStyle}">
+            <Expander.Header><TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_App}" /></Expander.Header>
+            <StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_ShowHideApp}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_ShowOrHideAppHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsToggleAppVisibilityHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsToggleAppVisibilityHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsToggleAppVisibilityHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior Target="{Binding SettingsToggleAppVisibilityHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsToggleAppVisibilityHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsToggleAppVisibilityHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_ShowAudioStatus}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_ShowAudioStatusHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsShowAudioStatusHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsShowAudioStatusHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsShowAudioStatusHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior Target="{Binding SettingsShowAudioStatusHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsShowAudioStatusHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsShowAudioStatusHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_DevicePicker}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_QuickDevicePickerHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsQuickDevicePickerHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsQuickDevicePickerHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsQuickDevicePickerHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior Target="{Binding SettingsQuickDevicePickerHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsQuickDevicePickerHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsQuickDevicePickerHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_QuickMixerLabel}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_VolumeMixerHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsVolumeMixerHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsVolumeMixerHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsVolumeMixerHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior Target="{Binding SettingsVolumeMixerHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsVolumeMixerHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsVolumeMixerHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+        <Expander x:Name="MediaShortcutsExpander" AutomationProperties.Name="{loc:Loc Ui_Media}" IsExpanded="{Binding SettingsMediaShortcutsExpanded, Mode=TwoWay}" Style="{DynamicResource SettingsExpanderStyle}">
+            <Expander.Header><TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_Media}" /></Expander.Header>
+            <StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_ShowCurrentTrack}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_ShowCurrentTrackHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsShowCurrentTrackHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsShowCurrentTrackHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsShowCurrentTrackHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior Target="{Binding SettingsShowCurrentTrackHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsShowCurrentTrackHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsShowCurrentTrackHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_PlayPause}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_PlayOrPauseHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsPlayPauseHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsPlayPauseHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsPlayPauseHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior Target="{Binding SettingsPlayPauseHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsPlayPauseHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsPlayPauseHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_NextTrack}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_NextTrackHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsNextTrackHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsNextTrackHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsNextTrackHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior Target="{Binding SettingsNextTrackHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsNextTrackHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsNextTrackHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_PreviousTrack}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_PreviousTrackHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsPreviousTrackHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsPreviousTrackHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsPreviousTrackHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior Target="{Binding SettingsPreviousTrackHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsPreviousTrackHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsPreviousTrackHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+        <Expander
+            AutomationProperties.Name="{loc:Loc Ui_SeekControls}"
+            IsExpanded="{Binding SettingsSeekControlsExpanded, Mode=TwoWay}"
+            Style="{DynamicResource SettingsExpanderStyle}">
+            <Expander.Header>
+                <TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_Seek}" />
+            </Expander.Header>
+            <StackPanel>
+                <TextBlock
+                    Margin="0,0,0,10"
+                    Foreground="{DynamicResource MutedTextBrush}"
+                    TextWrapping="Wrap"
+                    Text="{loc:Loc Ui_SkipForwardOrBackwardByTheChosenDuration}" />
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_SeekForward}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_SeekForwardHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsSeekForwardHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsSeekForwardHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsSeekForwardHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior Target="{Binding SettingsSeekForwardHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsSeekForwardHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsSeekForwardHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_SeekBackward}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_SeekBackwardHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsSeekBackwardHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsSeekBackwardHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsSeekBackwardHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior Target="{Binding SettingsSeekBackwardHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsSeekBackwardHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsSeekBackwardHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_SeekStep}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="110"
+                        AutomationProperties.Name="{loc:Loc Ui_MediaSeekStepDuration}"
+                        ContextMenu="{DynamicResource EditableTextContextMenu}"
+                        Text="{Binding SettingsSeekStepSecondsDraft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}">
+                        <i:Interaction.Behaviors>
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsFieldGuidance[SettingsSeekStepSecondsDraft]}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+        <Expander x:Name="MuteShortcutsExpander" AutomationProperties.Name="{loc:Loc Ui_MuteControls}" IsExpanded="{Binding SettingsMuteShortcutsExpanded, Mode=TwoWay}" Style="{DynamicResource SettingsExpanderStyle}">
+            <Expander.Header><TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_MuteControls}" /></Expander.Header>
+            <StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_MicrophoneMute}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_ToggleMicrophoneMuteHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsMuteMicHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsMuteMicHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsMuteMicHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior Target="{Binding SettingsMuteMicHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsMuteMicHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsMuteMicHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_OutputMute}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_ToggleSoundMuteHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsMuteSoundHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsMuteSoundHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsMuteSoundHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior Target="{Binding SettingsMuteSoundHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsMuteSoundHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsMuteSoundHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_Deafen}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_ToggleDeafenHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsDeafenHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsDeafenHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsDeafenHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior Target="{Binding SettingsDeafenHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsDeafenHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsDeafenHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+        <Expander
+            AutomationProperties.Name="{loc:Loc Ui_WhileHoldingAKey}"
+            IsExpanded="{Binding SettingsMicrophoneHoldControlsExpanded, Mode=TwoWay}"
+            h:AppHelp.Topic="MicrophoneHolds"
+            Style="{DynamicResource SettingsExpanderStyle}">
+            <Expander.Header>
+                <TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_WhileHoldingAKey}" />
+            </Expander.Header>
+            <StackPanel>
+                <TextBlock
+                    Margin="0,0,0,10"
+                    Foreground="{DynamicResource MutedTextBrush}"
+                    TextWrapping="Wrap"
+                    Text="{loc:Loc Ui_PushToTalkKeepsYourMicrophoneMutedExcept}" />
+                <CheckBox
+                    Margin="0,0,0,8"
+                    Content="{loc:Loc Ui_EnablePushToTalk}"
+                    IsChecked="{Binding SettingsPushToTalkEnabledDraft}"
+                    AutomationProperties.Name="{loc:Loc Ui_EnablePushToTalk}">
+                    <i:Interaction.Behaviors>
+                        <b:HoverInfoPopupBehavior
+                            Text="{loc:Loc Ui_KeepsTheDefaultMicrophonesMutedExceptWhileYou}" />
+                    </i:Interaction.Behaviors>
+                </CheckBox>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_PushToTalk}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_PushToTalkHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsPushToTalkHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsPushToTalkHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsPushToTalkHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior Target="{Binding SettingsPushToTalkHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsPushToTalkHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsPushToTalkHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_HoldToMute}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_HoldToMuteHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsHoldToMuteHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsHoldToMuteHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsHoldToMuteHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior Target="{Binding SettingsHoldToMuteHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsHoldToMuteHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsHoldToMuteHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+        <Expander
+            AutomationProperties.Name="{loc:Loc Ui_OutputVolume}"
+            IsExpanded="{Binding SettingsMasterVolumeControlsExpanded, Mode=TwoWay}"
+            Style="{DynamicResource SettingsExpanderStyle}">
+            <Expander.Header>
+                <TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_OutputVolume}" />
+            </Expander.Header>
+            <StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_OutputVolumeUp}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_MasterVolumeUpHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsMasterVolumeUpHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsMasterVolumeUpHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsMasterVolumeUpHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior
+                                Target="{Binding SettingsMasterVolumeUpHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsMasterVolumeUpHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsMasterVolumeUpHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_OutputVolumeDown}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_MasterVolumeDownHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsMasterVolumeDownHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsMasterVolumeDownHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsMasterVolumeDownHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior
+                                Target="{Binding SettingsMasterVolumeDownHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsMasterVolumeDownHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsMasterVolumeDownHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_OutputStep}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="80"
+                        AutomationProperties.Name="{loc:Loc Ui_MasterVolumeStepPercent}"
+                        b:TextBoxPlaceholderBehavior.Text="5"
+                        ContextMenu="{DynamicResource EditableTextContextMenu}"
+                        InputScope="Number"
+                        Text="{Binding SettingsMasterVolumeStepPercentDraft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}">
+                        <i:Interaction.Behaviors>
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsFieldGuidance[SettingsMasterVolumeStepPercentDraft]}" />
+                            <b:IntegerOnlyBehavior />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                    <TextBlock
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Center"
+                        Foreground="{DynamicResource MutedTextBrush}"
+                        Text="{loc:Loc Ui_VolumeStepRange}" />
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+        <Expander
+            AutomationProperties.Name="{loc:Loc Ui_MicrophoneVolume}"
+            AutomationProperties.HelpText="{loc:Loc Ui_InputVolumeHelp}"
+            IsExpanded="{Binding SettingsMicVolumeControlsExpanded, Mode=TwoWay}"
+            Style="{DynamicResource SettingsExpanderStyle}">
+            <Expander.Header>
+                <TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_MicrophoneVolume}">
+                    <i:Interaction.Behaviors>
+                        <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_InputVolumeHelp}" />
+                    </i:Interaction.Behaviors>
+                </TextBlock>
+            </Expander.Header>
+            <StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_MicrophoneUp}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_MicrophoneVolumeUpHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsMicVolumeUpHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsMicVolumeUpHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsMicVolumeUpHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior Target="{Binding SettingsMicVolumeUpHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsMicVolumeUpHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsMicVolumeUpHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_MicrophoneDown}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_MicrophoneVolumeDownHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsMicVolumeDownHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsMicVolumeDownHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsMicVolumeDownHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior
+                                Target="{Binding SettingsMicVolumeDownHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsMicVolumeDownHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsMicVolumeDownHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_MicrophoneStep}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="80"
+                        AutomationProperties.Name="{loc:Loc Ui_MicrophoneVolumeStepPercent}"
+                        b:TextBoxPlaceholderBehavior.Text="5"
+                        ContextMenu="{DynamicResource EditableTextContextMenu}"
+                        InputScope="Number"
+                        Text="{Binding SettingsMicVolumeStepPercentDraft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}">
+                        <i:Interaction.Behaviors>
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsFieldGuidance[SettingsMicVolumeStepPercentDraft]}" />
+                            <b:IntegerOnlyBehavior />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                    <TextBlock
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Center"
+                        Foreground="{DynamicResource MutedTextBrush}"
+                        Text="{loc:Loc Ui_VolumeStepRange}" />
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+        <Expander
+            AutomationProperties.Name="{loc:Loc Ui_ForegroundApp}"
+            h:AppHelp.Topic="ForegroundAudio"
+            IsExpanded="{Binding SettingsForegroundVolumeControlsExpanded, Mode=TwoWay}"
+            Style="{DynamicResource SettingsExpanderStyle}">
+            <Expander.Header>
+                <TextBlock FontWeight="SemiBold" Text="{loc:Loc Ui_ForegroundApp}" />
+            </Expander.Header>
+            <StackPanel>
+                <TextBlock
+                    Margin="0,0,0,10"
+                    Foreground="{DynamicResource MutedTextBrush}"
+                    TextWrapping="Wrap"
+                    Text="{loc:Loc Ui_ControlsTheAppYouReUsingBrowsersMay}" />
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_VolumeUp}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_ForegroundAppVolumeUpHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsForegroundVolumeUpHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsForegroundVolumeUpHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsForegroundVolumeUpHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior
+                                Target="{Binding SettingsForegroundVolumeUpHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsForegroundVolumeUpHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsForegroundVolumeUpHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_VolumeDown}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_ForegroundAppVolumeDownHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsForegroundVolumeDownHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsForegroundVolumeDownHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsForegroundVolumeDownHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior
+                                Target="{Binding SettingsForegroundVolumeDownHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsForegroundVolumeDownHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsForegroundVolumeDownHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_ToggleMute}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="{DynamicResource SettingsFieldWidth}"
+                        AutomationProperties.Name="{loc:Loc Ui_ForegroundAppMuteHotkey}"
+                        ContextMenu="{DynamicResource HotkeyDeleteContextMenu}"
+                        Text="{Binding SettingsForegroundMuteHotkeyDraftCapture.DisplayText, Mode=OneWay}">
+                        <i:Interaction.Behaviors>
+                            <b:HotkeyPlaceholderBehavior />
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsForegroundMuteHotkeyDraftCapture.HoverText, Message=True}"
+                                WarningKind="{Binding SettingsForegroundMuteHotkeyDraftCapture.WarningKind}" />
+                            <b:HotkeyCaptureBehavior
+                                Target="{Binding SettingsForegroundMuteHotkeyDraftCapture}" />
+                            <b:HotkeyWarningBorderBehavior
+                                HasWarning="{Binding SettingsForegroundMuteHotkeyDraftCapture.HasWarning}"
+                                WarningKind="{Binding SettingsForegroundMuteHotkeyDraftCapture.WarningKind}" />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                </StackPanel>
+                <StackPanel Style="{DynamicResource SettingsFormRowStyle}">
+                    <Label Style="{DynamicResource SettingsFormLabelStyle}" Content="{loc:Loc Ui_Step}" />
+                    <TextBox VerticalAlignment="Center"
+                        Width="80"
+                        AutomationProperties.Name="{loc:Loc Ui_ForegroundAppVolumeStepPercent}"
+                        b:TextBoxPlaceholderBehavior.Text="5"
+                        ContextMenu="{DynamicResource EditableTextContextMenu}"
+                        InputScope="Number"
+                        Text="{Binding SettingsForegroundVolumeStepPercentDraft, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, ValidatesOnNotifyDataErrors=True}">
+                        <i:Interaction.Behaviors>
+                            <b:HoverInfoPopupBehavior
+                                Text="{loc:LocBinding SettingsFieldGuidance[SettingsForegroundVolumeStepPercentDraft]}" />
+                            <b:IntegerOnlyBehavior />
+                        </i:Interaction.Behaviors>
+                    </TextBox>
+                    <TextBlock
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Center"
+                        Foreground="{DynamicResource MutedTextBrush}"
+                        Text="{loc:Loc Ui_VolumeStepRange}" />
+                </StackPanel>
+            </StackPanel>
+        </Expander>
+    </StackPanel>
+</UserControl>

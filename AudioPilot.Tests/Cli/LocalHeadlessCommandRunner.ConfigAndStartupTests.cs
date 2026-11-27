@@ -1,0 +1,391 @@
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using AudioPilot.Cli;
+using AudioPilot.CliHost;
+using AudioPilot.Logging;
+using AudioPilot.Models;
+using AudioPilot.Tests.Helpers;
+using AudioPilot.Tests.TestDoubles;
+
+namespace AudioPilot.Tests.Cli;
+
+public sealed partial class LocalHeadlessCommandRunnerTests
+{
+    [Fact]
+    public async Task SafeConfigQueryDoesNotRepairSettingsDuringDeploymentRecovery()
+    {
+        using var workspace = new TestSettingsWorkspace(nameof(SafeConfigQueryDoesNotRepairSettingsDuringDeploymentRecovery));
+        string path = Path.Combine(workspace.PrimaryDir, "settings.json");
+        const string incomplete = "{incomplete";
+        File.WriteAllText(path, incomplete);
+        var tracker = new RuntimeServiceCreationTracker(workspace);
+        using var runner = tracker.CreateRunner();
+        var result = await runner.ExecuteAsync(new() { Action = CliAction.ConfigGet, Key = "theme", JsonOutput = true });
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(incomplete, File.ReadAllText(path));
+        Assert.Equal(0, tracker.AudioCreated);
+        Assert.Equal(0, tracker.StartupCreated);
+    }
+
+
+    [Fact]
+    public void SetConfig_ExplainsNewerSchemaWithoutCreatingAudioServices()
+    {
+        using var workspace = new TestSettingsWorkspace(nameof(LocalHeadlessCommandRunnerTests));
+        string settingsPath = Path.Combine(workspace.PrimaryDir, "settings.json");
+        const string newerJson = """{"SchemaVersion":"99.0.0","DeviceSwitching":{"FutureOption":true}}""";
+        File.WriteAllText(settingsPath, newerJson);
+        var tracker = new RuntimeServiceCreationTracker(workspace);
+        using var runner = tracker.CreateRunner();
+
+        (bool updated, string? error) = runner.SetConfig("theme", "Dark");
+
+        Assert.False(updated);
+        Assert.Contains("Update AudioPilot", error, StringComparison.Ordinal);
+        Assert.Equal(newerJson, File.ReadAllText(settingsPath));
+        Assert.Equal(0, tracker.AudioCreated);
+        Assert.Equal(0, tracker.StartupCreated);
+        Assert.Equal(0, tracker.BluetoothCreated);
+    }
+
+    [Fact]
+    public void SetStartupEnabled_PersistsSettingsAndTargetsTheGuiExecutable()
+    {
+        using var workspace = new TestSettingsWorkspace(nameof(LocalHeadlessCommandRunnerTests));
+        var settingsService = new SettingsService(workspace.PrimaryDir, workspace.FallbackDir);
+        settingsService.SaveSettings(new Settings { Startup = new() { Enabled = false } });
+
+        const string registryPath = @"SOFTWARE\AudioPilot.Tests\HeadlessStartup";
+        const string registryValueName = "AudioPilotHeadlessStartup";
+        var registry = new InMemoryUserRegistryAccessor();
+        var tasks = new InMemoryStartupTaskStore();
+        string guiExecutablePath = Path.Combine(AppContext.BaseDirectory, "AudioPilot.exe");
+        var startupService = new StartupService(
+            registryPath,
+            registryValueName,
+            Logger.Instance,
+            registry,
+            guiExecutablePath,
+            tasks);
+        AppRuntimeServiceBundle bundle = AppRuntimeServiceBundle.Create(
+            settingsService,
+            startupService,
+            new AudioDeviceService(new FakeInputListenPropertyWriter()),
+            new Lazy<BluetoothReconnectCoordinator>(() => new BluetoothReconnectCoordinator(new BluetoothReconnectService(), Logger.Instance), LazyThreadSafetyMode.ExecutionAndPublication));
+        using var runner = new LocalHeadlessCommandRunner(bundle);
+
+        bool enabled = runner.SetStartupEnabled(enabled: true);
+
+        Assert.True(enabled);
+        Assert.True(settingsService.LoadSettings().Startup.Enabled);
+        Assert.Equal($"\"{guiExecutablePath}\" -startup", registry.GetValue(registryPath, registryValueName));
+
+        tasks.FailNextWrite = true;
+        Assert.False(runner.SetConfig("use-scheduled-startup", "true").Updated);
+        Assert.False(settingsService.LoadSettings().Startup.UseTaskScheduler);
+        Assert.NotNull(registry.GetValue(registryPath, registryValueName));
+        Assert.Null(tasks.Xml);
+
+        Assert.True(runner.SetConfig("use-scheduled-startup", "true").Updated);
+        Assert.True(settingsService.LoadSettings().Startup.UseTaskScheduler);
+        Assert.Null(registry.GetValue(registryPath, registryValueName));
+        Assert.True(startupService.IsInStartupWithValidPath(useScheduledTask: true));
+
+        bool disabled = runner.SetStartupEnabled(enabled: false);
+
+        Assert.True(disabled);
+        Assert.False(settingsService.LoadSettings().Startup.Enabled);
+        Assert.True(settingsService.LoadSettings().Startup.UseTaskScheduler);
+        Assert.Null(tasks.Xml);
+        Assert.Null(registry.GetValue(registryPath, registryValueName));
+        Assert.True(runner.SetStartupEnabled(enabled: true));
+        Assert.NotNull(tasks.Xml);
+        Assert.Null(registry.GetValue(registryPath, registryValueName));
+    }
+
+
+    [Fact]
+    public void ExportConfig_ZipArchive_UsesSettingsTransferService()
+    {
+        using var workspace = new TestSettingsWorkspace(nameof(LocalHeadlessCommandRunnerTests));
+        var settingsService = new SettingsService(workspace.PrimaryDir, workspace.FallbackDir);
+        settingsService.SaveSettings(new Settings
+        {
+            App = new() { Theme = AppTheme.Dark },
+            Startup = new() { Enabled = true }
+        });
+
+        AppRuntimeServiceBundle bundle = AppRuntimeServiceBundle.Create(
+            settingsService,
+            AudioPilot.Tests.TestDoubles.InMemoryStartupTaskStore.CreateStartupService(),
+            new AudioDeviceService(new FakeInputListenPropertyWriter()),
+            new Lazy<BluetoothReconnectCoordinator>(() => new BluetoothReconnectCoordinator(new BluetoothReconnectService(), Logger.Instance), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication));
+
+        using var runner = new LocalHeadlessCommandRunner(bundle);
+        string exportPath = Path.Combine(workspace.Root, "config-export.zip");
+
+        var (success, output) = runner.ExportConfig(exportPath, allowAnyPath: true, jsonOutput: false, redactOutput: false);
+
+        Assert.True(success);
+        Assert.Contains("config-export-success", output, StringComparison.Ordinal);
+        Assert.True(File.Exists(exportPath));
+
+        string importJson = SettingsTransferService.ReadImportText(exportPath);
+        Settings exported = JsonSerializer.Deserialize<Settings>(importJson) ?? throw new InvalidOperationException("Failed to deserialize exported settings.");
+        Assert.Equal(AppTheme.Dark, exported.App.Theme);
+        Assert.True(exported.Startup.Enabled);
+    }
+
+
+    [Fact]
+    public void ImportConfig_ZipReplace_UsesSettingsTransferService()
+    {
+        using var workspace = new TestSettingsWorkspace(nameof(LocalHeadlessCommandRunnerTests));
+        var settingsService = new SettingsService(workspace.PrimaryDir, workspace.FallbackDir);
+        settingsService.SaveSettings(new Settings
+        {
+            DeviceSwitching = new DeviceSwitchingSettings
+            {
+                Output = new DeviceSwitchingOutputSettings
+                {
+                    SwitchHotkey = "Ctrl+Alt+1",
+                }
+            },
+            App = new() { Theme = AppTheme.Dark },
+            Startup = new() { Enabled = true }
+        });
+
+        string importPath = Path.Combine(workspace.Root, "config-import.zip");
+        SettingsTransferService.ExportSettings(new Settings
+        {
+            SchemaVersion = Settings.CurrentSchemaVersion,
+            DeviceSwitching = new DeviceSwitchingSettings
+            {
+                Output = new DeviceSwitchingOutputSettings
+                {
+                    SwitchHotkey = string.Empty,
+                }
+            },
+            App = new() { Theme = AppTheme.Light },
+            Startup = new() { Enabled = false }
+        }, importPath);
+
+        AppRuntimeServiceBundle bundle = AppRuntimeServiceBundle.Create(
+            settingsService,
+            AudioPilot.Tests.TestDoubles.InMemoryStartupTaskStore.CreateStartupService(),
+            new AudioDeviceService(new FakeInputListenPropertyWriter()),
+            new Lazy<BluetoothReconnectCoordinator>(() => new BluetoothReconnectCoordinator(new BluetoothReconnectService(), Logger.Instance), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication));
+
+        using var runner = new LocalHeadlessCommandRunner(bundle);
+
+        var (success, output) = runner.ImportConfig(importPath, replaceImport: true, allowAnyPath: true, jsonOutput: false, redactOutput: false);
+
+        Assert.True(success);
+        Assert.Contains("config-import-success", output, StringComparison.Ordinal);
+
+        Settings imported = settingsService.LoadSettings();
+        Assert.Equal(AppTheme.Light, imported.App.Theme);
+        Assert.False(imported.Startup.Enabled);
+        Assert.Equal(string.Empty, imported.DeviceSwitching.Output.SwitchHotkey);
+    }
+
+
+    [Fact]
+    public void ImportConfig_Replace_RejectsOlderSchemaVersion()
+    {
+        using var workspace = new TestSettingsWorkspace(nameof(LocalHeadlessCommandRunnerTests));
+        var settingsService = new SettingsService(workspace.PrimaryDir, workspace.FallbackDir);
+        settingsService.SaveSettings(new Settings
+        {
+            SchemaVersion = Settings.CurrentSchemaVersion,
+            App = new() { Theme = AppTheme.Dark },
+            Startup = new() { Enabled = false }
+        });
+
+        string importPath = Path.Combine(workspace.Root, "config-import-old-schema.json");
+        File.WriteAllText(importPath, """
+        {
+          "SchemaVersion": "0.9.0",
+          "App": {
+            "Theme": "Light"
+          },
+          "Startup": {
+            "Enabled": true
+          }
+        }
+        """);
+
+        AppRuntimeServiceBundle bundle = AppRuntimeServiceBundle.Create(
+            settingsService,
+            AudioPilot.Tests.TestDoubles.InMemoryStartupTaskStore.CreateStartupService(),
+            new AudioDeviceService(new FakeInputListenPropertyWriter()),
+            new Lazy<BluetoothReconnectCoordinator>(() => new BluetoothReconnectCoordinator(new BluetoothReconnectService(), Logger.Instance), System.Threading.LazyThreadSafetyMode.ExecutionAndPublication));
+
+        using var runner = new LocalHeadlessCommandRunner(bundle);
+
+        var (success, output) = runner.ImportConfig(importPath, replaceImport: true, allowAnyPath: true, jsonOutput: false, redactOutput: false);
+
+        Assert.False(success);
+        Assert.Contains("config-import-invalid-data", output, StringComparison.Ordinal);
+        Assert.Contains("unsupported schema version", output, StringComparison.OrdinalIgnoreCase);
+
+        Settings imported = settingsService.LoadSettings();
+        Assert.Equal(Settings.CurrentSchemaVersion, imported.SchemaVersion);
+        Assert.Equal(AppTheme.Dark, imported.App.Theme);
+        Assert.False(imported.Startup.Enabled);
+    }
+
+
+    [Fact]
+    public async Task ExecuteAsync_ConfigListJson_ReturnsKnownKeys()
+    {
+        using var runner = new LocalHeadlessCommandRunner();
+
+        CliExecutionResult result = await runner.ExecuteAsync(new CliCommand
+        {
+            Action = CliAction.ConfigList,
+            JsonOutput = true,
+        });
+
+        Assert.Equal(0, result.ExitCode);
+        JsonObject parsed = JsonNode.Parse(result.Output!)!.AsObject();
+        Assert.Equal("config", parsed["data"]?["kind"]?.GetValue<string>());
+        Assert.Contains("theme", parsed["data"]?["keys"]?.AsArray().Select(static value => value!.GetValue<string>()) ?? []);
+        Assert.Contains("redact-log-content", parsed["data"]?["keys"]?.AsArray().Select(static value => value!.GetValue<string>()) ?? []);
+        Assert.Contains("overlay-position", parsed["data"]?["keys"]?.AsArray().Select(static value => value!.GetValue<string>()) ?? []);
+        JsonNode? steamDetail = parsed["data"]?["details"]?.AsArray()?
+            .FirstOrDefault(detail => detail?["key"]?.GetValue<string>() == "steam-big-picture-monitor-debounce-ms");
+        Assert.NotNull(steamDetail);
+        Assert.Equal("integer", steamDetail["valueType"]?.GetValue<string>());
+        Assert.Equal("25..2000", steamDetail["range"]?.GetValue<string>());
+        Assert.Equal("150", steamDetail["defaultValue"]?.GetValue<string>());
+    }
+
+
+    [Fact]
+    public async Task ExecuteAsync_RuntimeList_ReturnsKnownKeys()
+    {
+        using var runner = new LocalHeadlessCommandRunner();
+
+        CliExecutionResult result = await runner.ExecuteAsync(new CliCommand
+        {
+            Action = CliAction.RuntimeList,
+        });
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("Supported runtime keys:", result.Output, StringComparison.Ordinal);
+        Assert.Contains("hotplug-refresh-debounce-ms", result.Output, StringComparison.Ordinal);
+        Assert.Contains("mixer-session-refresh-debounce-ms", result.Output, StringComparison.Ordinal);
+        Assert.Contains("runtime-only", result.Output, StringComparison.Ordinal);
+        Assert.Contains("runtime override; persisted via config", result.Output, StringComparison.Ordinal);
+        Assert.Contains("range 25..2000", result.Output, StringComparison.Ordinal);
+    }
+
+
+    [Fact]
+    public async Task ExecuteAsync_ConfigGet_UnknownKey_ReturnsSuggestion()
+    {
+        using var scope = new HeadlessRunnerScope(new Settings());
+
+        CliExecutionResult result = await scope.Runner.ExecuteAsync(new CliCommand
+        {
+            Action = CliAction.ConfigGet,
+            Key = "them",
+        });
+
+        Assert.Equal(5, result.ExitCode);
+        Assert.Contains("Did you mean 'theme'", result.Output, StringComparison.Ordinal);
+    }
+
+
+    [Fact]
+    public async Task ExecuteAsync_RuntimeGet_UnknownKey_ReturnsSuggestion()
+    {
+        using var scope = new HeadlessRunnerScope(new Settings());
+
+        CliExecutionResult result = await scope.Runner.ExecuteAsync(new CliCommand
+        {
+            Action = CliAction.RuntimeGet,
+            Key = "hotplug-refresh-debounc-ms",
+        });
+
+        Assert.Equal(5, result.ExitCode);
+        Assert.Contains("Did you mean 'hotplug-refresh-debounce-ms'", result.Output, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void SetConfig_RejectsDuplicateHotkeyAndEmptyPushToTalkHotkey()
+    {
+        var initial = new Settings();
+        initial.Hotkeys.Mute.Mic = "Ctrl+Alt+M";
+        using var scope = new HeadlessRunnerScope(initial);
+
+        var (dupUpdated, dupError) = scope.Runner.SetConfig("mute-sound-hotkey", "Ctrl+Alt+M");
+        Assert.False(dupUpdated);
+        Assert.Contains("Duplicate hotkey", dupError, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal((true, string.Empty, (string?)null), scope.Runner.GetConfig("mute-sound-hotkey"));
+
+        var (pttUpdated, pttError) = scope.Runner.SetConfig("push-to-talk-enabled", "true");
+        Assert.False(pttUpdated);
+        Assert.NotNull(pttError);
+        Assert.Equal((true, "false", (string?)null), scope.Runner.GetConfig("push-to-talk-enabled"));
+    }
+
+    [Fact]
+    public void SetConfig_AllowsResolvingThreeWayDuplicateHotkeyConflictOneKeyAtATime()
+    {
+        var initial = new Settings();
+        initial.Hotkeys.Mute.Mic = "Ctrl+Alt+M";
+        initial.Hotkeys.Mute.Sound = "Ctrl+Alt+M";
+        initial.Hotkeys.Mute.Deafen = "Ctrl+Alt+M";
+        using var scope = new HeadlessRunnerScope(initial);
+
+        var (updated, error) = scope.Runner.SetConfig("mute-sound-hotkey", "");
+
+        Assert.True(updated, error);
+        Assert.Null(error);
+        Assert.Equal((true, string.Empty, (string?)null), scope.Runner.GetConfig("mute-sound-hotkey"));
+    }
+
+    [Fact]
+    public void SetRoutineEnabled_RejectsEnablingRoutineWithConflictingHotkey()
+    {
+        var initial = new Settings();
+        initial.Hotkeys.Mute.Mic = "Ctrl+Alt+M";
+        initial.Routines.Items.Add(new AudioRoutine
+        {
+            Id = "conflict-routine",
+            Name = "Conflict Routine",
+            Enabled = false,
+            Hotkey = "Ctrl+Alt+M",
+            MasterVolumePercent = 50,
+        });
+        using var scope = new HeadlessRunnerScope(initial);
+
+        CliExecutionResult result = scope.Runner.SetRoutineEnabled("Conflict Routine", enabled: true, jsonOutput: true, redactOutput: false);
+
+        Assert.Equal(5, result.ExitCode);
+        Assert.Contains("routine-invalid", result.Output, StringComparison.Ordinal);
+        Assert.False(scope.Runner.GetRoutinesSnapshot().Single().Enabled);
+    }
+
+    [Theory]
+    [InlineData(CliAction.CycleTestOutput, false, false)]
+    [InlineData(CliAction.CycleTestInput, false, false)]
+    [InlineData(CliAction.RoutineNext, false, false)]
+    [InlineData(CliAction.ConfigExport, false, false)]
+    [InlineData(CliAction.RoutineExport, false, false)]
+    [InlineData(CliAction.SwitchOutput, true, false)]
+    [InlineData(CliAction.SwitchInput, true, false)]
+    [InlineData(CliAction.SwitchOutputToDevice, true, false)]
+    [InlineData(CliAction.SwitchInputToDevice, true, false)]
+    [InlineData(CliAction.SwitchOutput, false, true)]
+    [InlineData(CliAction.ConfigSet, false, true)]
+    public void RequiresMutationLease_ClassifiesReadOnlyDryRunAndExportCommands(CliAction action, bool dryRun, bool expected)
+    {
+        bool actual = CliHostRuntime.RequiresMutationLease(new CliCommand { Action = action, DryRun = dryRun });
+
+        Assert.Equal(expected, actual);
+    }
+
+}

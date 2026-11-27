@@ -1,0 +1,93 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net11.0-windows10.0.19041.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<UseWPF>true</UseWPF>
+		<NeutralLanguage>en</NeutralLanguage>
+		<RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+		<ApplicationIcon>Images\audiopilot.ico</ApplicationIcon>
+		<AppManifestTemplate>app.manifest</AppManifestTemplate>
+		<GeneratedApplicationManifestRoot Condition="'$(BaseIntermediateOutputPath)' != '' and $([System.IO.Path]::IsPathRooted('$(BaseIntermediateOutputPath)'))">$(BaseIntermediateOutputPath)</GeneratedApplicationManifestRoot>
+		<GeneratedApplicationManifestRoot Condition="'$(GeneratedApplicationManifestRoot)' == '' and '$(BaseIntermediateOutputPath)' != ''">$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)</GeneratedApplicationManifestRoot>
+		<GeneratedApplicationManifestRoot Condition="'$(GeneratedApplicationManifestRoot)' == ''">$(MSBuildProjectDirectory)\obj\</GeneratedApplicationManifestRoot>
+		<GeneratedApplicationManifest>$(GeneratedApplicationManifestRoot)AudioPilot.$(AssemblyVersion).generated.manifest</GeneratedApplicationManifest>
+		<ApplicationManifest>$(GeneratedApplicationManifest)</ApplicationManifest>
+		<Description>AudioPilot</Description>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="Images\audiopilot.ico" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<AssemblyMetadata Include="DeploymentType" Value="Self-contained" Condition="'$(SelfContained)' == 'true'" />
+		<AssemblyMetadata Include="DeploymentType" Value="Framework-dependent" Condition="'$(SelfContained)' != 'true'" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)' == 'Release' or '$(IncludePublishReferenceFiles)' == 'true'">
+		<Content Include="..\LICENSE" Link="licenses\LICENSE" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+		<Content Include="..\THIRD-PARTY-NOTICES.txt" Link="licenses\THIRD-PARTY-NOTICES.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+		<Content Include="$(IntermediateOutputPath)ABOUT.txt" Link="ABOUT.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\AudioPilot.Core\AudioPilot.Core.csproj" />
+		<ProjectReference Include="..\AudioPilot.Updater\Protocol\AudioPilot.UpdateProtocol.csproj" />
+		<PackageReference Include="H.NotifyIcon.Wpf" />
+		<PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Resource Include="Images\audiopilot.ico" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<PublishCliHostNoRestore Condition="'$(PublishCliHostNoRestore)' == ''">false</PublishCliHostNoRestore>
+		<PublishCliHostNoRestoreArgument Condition="'$(PublishCliHostNoRestore)' == 'true'">--no-restore</PublishCliHostNoRestoreArgument>
+		<CliHostBuildIsolationKey Condition="'$(CliHostBuildIsolationKey)' == '' and '$(BuildIsolationKey)' != ''">$(BuildIsolationKey)</CliHostBuildIsolationKey>
+		<CliHostBuildIsolationArgument Condition="'$(CliHostBuildIsolationKey)' != ''">-p:BuildIsolationKey=$(CliHostBuildIsolationKey)</CliHostBuildIsolationArgument>
+		<CliHostRestoreLockedModeArgument Condition="'$(RestoreLockedMode)' != ''">-p:RestoreLockedMode=$(RestoreLockedMode)</CliHostRestoreLockedModeArgument>
+		<UpdatePolicyArgument Condition="'$(AudioPilotUpdatePolicy)' != ''">-p:AudioPilotUpdatePolicy=&quot;$(AudioPilotUpdatePolicy)&quot;</UpdatePolicyArgument>
+	</PropertyGroup>
+
+	<Target Name="PublishCliHostAlongsideApp" AfterTargets="Publish"
+		Condition="'$(AudioPilotPortableProfile)' != 'true' or '$(AudioPilotPayloadOnly)' == 'true'">
+		<Exec
+			WorkingDirectory="$(MSBuildProjectDirectory)"
+			Command="dotnet publish ..\AudioPilot.CliHost\AudioPilot.CliHost.csproj -c $(Configuration) -r $(RuntimeIdentifier) --self-contained $(SelfContained) $(PublishCliHostNoRestoreArgument) $(CliHostRestoreLockedModeArgument) $(UpdatePolicyArgument) -p:PublishSingleFile=false -p:PublishReadyToRun=$(PublishReadyToRun) $(CliHostBuildIsolationArgument) -p:Version=$(Version) -p:AssemblyVersion=$(AssemblyVersion) -p:FileVersion=$(FileVersion) -p:InformationalVersion=$(InformationalVersion) -p:IncludeSourceRevisionInInformationalVersion=false -p:DebugSymbols=$(DebugSymbols) -p:DebugType=$(DebugType) -p:PublishDir=&quot;$(PublishDir)&quot;" />
+	</Target>
+
+	<Target Name="PrepareVersionedAppManifest" BeforeTargets="BeforeBuild" Inputs="$(AppManifestTemplate);$(MSBuildProjectFullPath)" Outputs="$(GeneratedApplicationManifest)">
+		<MakeDir Directories="$(GeneratedApplicationManifestRoot)" />
+		<Copy SourceFiles="$(AppManifestTemplate)" DestinationFiles="$(GeneratedApplicationManifest)" />
+		<XmlPoke
+			XmlInputPath="$(GeneratedApplicationManifest)"
+			Query="/asmv1:assembly/asmv1:assemblyIdentity/@version"
+			Namespaces="&lt;Namespace Prefix='asmv1' Uri='urn:schemas-microsoft-com:asm.v1' /&gt;"
+			Value="$(AssemblyVersion)" />
+	</Target>
+
+	<Target Name="GenerateAboutText" BeforeTargets="PrepareForBuild" Condition="'$(Configuration)' == 'Release' or '$(IncludePublishReferenceFiles)' == 'true'">
+		<PropertyGroup>
+			<_AudioPilotAboutTemplatePath>$(MSBuildProjectDirectory)\..\packaging\ABOUT.template.txt</_AudioPilotAboutTemplatePath>
+			<_AudioPilotAboutRuntimeIdentifier Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)</_AudioPilotAboutRuntimeIdentifier>
+			<_AudioPilotAboutRuntimeIdentifier Condition="'$(_AudioPilotAboutRuntimeIdentifier)' == ''">Not specified</_AudioPilotAboutRuntimeIdentifier>
+			<_AudioPilotAboutDeployment Condition="'$(SelfContained)' == 'true'">Self-contained</_AudioPilotAboutDeployment>
+			<_AudioPilotAboutDeployment Condition="'$(_AudioPilotAboutDeployment)' == ''">Framework-dependent</_AudioPilotAboutDeployment>
+			<_AudioPilotAboutReadyToRun Condition="'$(PublishReadyToRun)' == 'true'">Application assemblies</_AudioPilotAboutReadyToRun>
+			<_AudioPilotAboutReadyToRun Condition="'$(_AudioPilotAboutReadyToRun)' == ''">Disabled</_AudioPilotAboutReadyToRun>
+			<_AudioPilotAboutIntegratedUpdater Condition="'$(AudioPilotUpdatePolicy)' != ''">packaged (availability follows this build's update policy)</_AudioPilotAboutIntegratedUpdater>
+			<_AudioPilotAboutIntegratedUpdater Condition="'$(AudioPilotUpdatePolicy)' == ''">not included (use the manual release link)</_AudioPilotAboutIntegratedUpdater>
+			<_AudioPilotAboutUpdaterNoticesBlock Condition="'$(AudioPilotUpdatePolicy)' != ''">%0APackaged updater dependencies: see licenses/UPDATER-NOTICES.txt.%0A</_AudioPilotAboutUpdaterNoticesBlock>
+			<_AudioPilotAboutUpdaterNoticesBlock Condition="'$(AudioPilotUpdatePolicy)' == ''"></_AudioPilotAboutUpdaterNoticesBlock>
+			<_AudioPilotAboutSigningWarning Condition="'$(AudioPilotUpdatePolicy)' == ''">AudioPilot app binaries and MSI installers are currently unsigned. Windows may show an unknown-publisher or SmartScreen warning.</_AudioPilotAboutSigningWarning>
+			<_AudioPilotAboutSigningWarning Condition="'$(AudioPilotUpdatePolicy)' != ''">This build uses a pinned, self-signed publisher. It does not establish public Windows publisher trust%3B Windows may still show an unknown-publisher or SmartScreen warning.</_AudioPilotAboutSigningWarning>
+			<_AudioPilotAboutText>$([System.IO.File]::ReadAllText('$(_AudioPilotAboutTemplatePath)').Replace('{{VERSION}}', '$(Version)').Replace('{{RELEASE_DATE}}', '$(AudioPilotReleaseDate)').Replace('{{CONFIGURATION}}', '$(Configuration)').Replace('{{INTEGRATED_UPDATER}}', '$(_AudioPilotAboutIntegratedUpdater)').Replace('{{TARGET_FRAMEWORK}}', '$(TargetFramework)').Replace('{{RUNTIME_IDENTIFIER}}', '$(_AudioPilotAboutRuntimeIdentifier)').Replace('{{DEPLOYMENT}}', '$(_AudioPilotAboutDeployment)').Replace('{{READY_TO_RUN}}', '$(_AudioPilotAboutReadyToRun)').Replace('{{REPOSITORY_URL}}', '$(RepositoryUrl)').Replace('{{UPDATER_NOTICES_BLOCK}}', '$(_AudioPilotAboutUpdaterNoticesBlock)').Replace('{{SIGNING_WARNING}}', '$(_AudioPilotAboutSigningWarning)').Replace('%0D%0A', '%0A').TrimEnd().Replace('%0A', '$([System.Environment]::NewLine)'))</_AudioPilotAboutText>
+		</PropertyGroup>
+		<MakeDir Directories="$(IntermediateOutputPath)" />
+		<WriteLinesToFile File="$(IntermediateOutputPath)ABOUT.txt" Lines="$([MSBuild]::Escape($(_AudioPilotAboutText)))" Overwrite="true" WriteOnlyWhenDifferent="true" Encoding="UTF-8" />
+	</Target>
+</Project>

@@ -1,0 +1,138 @@
+AudioPilot
+==========
+
+Windows audio controls and automation for gaming, calls, and everyday use.
+
+- Adjust the game or browser you are using with volume and mute hotkeys, leaving other apps unchanged.
+- Use push-to-talk to speak while holding a key, or hold-to-mute for a temporary pause.
+- Apply devices, volume levels, and mute states automatically with routines.
+
+Build information
+-----------------
+Version: {{VERSION}}
+Release date: {{RELEASE_DATE}}
+Build configuration: {{CONFIGURATION}}
+Integrated updater: {{INTEGRATED_UPDATER}}
+Target framework: {{TARGET_FRAMEWORK}}
+Runtime identifier: {{RUNTIME_IDENTIFIER}}
+Deployment: {{DEPLOYMENT}}
+ReadyToRun: {{READY_TO_RUN}}
+Minimum compatible OS: Windows 10 version 2004 or later, including Windows 11
+CPU: .NET 11 baseline (x86/x64 requires SSE4.2 and POPCNT; older CPUs such as Intel Core 2 are not supported)
+Repository: {{REPOSITORY_URL}}
+License: MIT (see licenses/LICENSE)
+
+Third-party libraries, runtime, installer components, and Unicode data: see licenses/THIRD-PARTY-NOTICES.txt.
+{{UPDATER_NOTICES_BLOCK}}
+Windows download warnings
+-------------------------
+{{SIGNING_WARNING}}
+After verifying the download source, open the downloaded ZIP or MSI Properties and select Unblock if shown. Unblock ZIPs before extracting. This does not sign the app or override every Windows security policy.
+Download help: {{REPOSITORY_URL}}/blob/main/docs/USER_GUIDE.md#unsigned-downloads-and-windows-warnings
+
+Getting started
+---------------
+Choose English or Spanish with Language in Settings. The interface changes immediately without discarding unsaved edits or interrupting active operations; save the preference with your other settings.
+Under Settings > Global shortcuts, assign app-volume shortcuts in Volume controls > Foreground app or microphone hold shortcuts in Mute controls > While holding a key. Use Apply settings to save. These shortcuts start unassigned.
+Push-to-talk also requires Enable push-to-talk. Applying it mutes the default microphones until its key is held. Hold-to-mute restores the prior mute state on release.
+Browser volume shortcuts can affect tabs and windows that share audio sessions. They do not control individual tabs.
+Use Routines for automatic audio actions. To cycle devices, add them on Output or Input, assign a switch hotkey, and save. Minimize to tray to keep your controls available.
+
+Output and Input device context menus offer speaker/headphone and microphone tests without changing Windows defaults.
+
+Configurable global hotkeys
+---------------------------
+These work while AudioPilot is in the tray. Assign device-switch hotkeys on the Output and Input tabs, and other global hotkeys in Settings.
+Unassigned actions are available but do not have a default key combination.
+
+- Show or hide AudioPilot: Ctrl+Alt+H
+- Show audio status: Unassigned
+- Device picker: Unassigned (choose from saved switch orders or all available devices)
+- Quick mixer: Unassigned (also available from the taskbar Jump List)
+- Switch to next output device: Unassigned
+- Switch to previous output device: Unassigned
+- Switch to next input device: Unassigned
+- Switch to previous input device: Unassigned
+- Show current track: Unassigned
+- Play or pause media: Unassigned
+- Next track: Unassigned
+- Previous track: Unassigned
+- Seek forward or backward: Unassigned (shared step defaults to 10 seconds)
+- Mute or unmute microphone: Unassigned
+- Mute or unmute output: Unassigned
+- Deafen or undeafen: Unassigned
+- Toggle Listen to this device: Unassigned
+- Raise master output volume: Unassigned
+- Lower master output volume: Unassigned
+- Raise microphone volume: Unassigned
+- Lower microphone volume: Unassigned
+- Raise or lower foreground app volume: Unassigned (step defaults to 5 percentage points)
+- Mute or unmute foreground app: Unassigned
+- Push-to-talk: Off and unassigned (mute between presses when enabled)
+- Hold-to-mute: Unassigned (restore the previous microphone mute state on release)
+- Run a routine: Optional individual hotkey, or a shared hotkey for a named cycle group
+
+In-window keyboard shortcuts
+----------------------------
+- F1: Open the online guide for the current task, with ABOUT.txt as a fallback if the browser cannot be launched.
+- Ctrl+1, Ctrl+2, Ctrl+3, or Ctrl+4: Open the Output, Input, Routines, or Settings tab.
+- Esc: Hide the main window to the tray. During a microphone test, stop the test instead.
+- Ctrl+Tab: Move to the next main tab.
+- Ctrl+Shift+Tab: Move to the previous main tab.
+- Ctrl+S: Save or apply the current tab.
+- Ctrl+N: Create a routine.
+- Enter on the focused routine list: Edit the single selected routine.
+- Ctrl+F in a searchable picker: Focus its search box and select the current query.
+- Quick device picker: Up/Down selects, Enter switches, Ctrl+Tab changes Output/Input, typing searches, and Esc closes. Opens with the next selectable device selected. Show all available devices is optional and remembered.
+- In Quick mixer, adjust Output or Input volume and mute, and view live activity. Ctrl+P keeps either the mixer or the device picker open while you switch apps.
+- F5: Refresh audio devices.
+- Ctrl+A: Select all rows in a focused output, input, or routine list.
+- Ctrl+W: Remove the selected rows from a focused output, input, or routine list.
+- Alt+Up or Alt+Down: Move the selected device or routine in its ordered list.
+- Left or Right: Adjust a focused mixer volume slider. Up and Down work too. Each press changes 0.1 percentage points; holding accelerates and releasing resets to fine control.
+- Page Up or Page Down: Adjust a focused mixer slider by 5 percentage points. Home or End: Set minimum or maximum volume.
+- Space: Mute or unmute the session for a focused mixer volume slider.
+- Delete: Clear a focused hotkey field.
+- Shift+F10 or the Menu key: Open the focused item's context menu.
+- Enter or Esc in an editor or picker: Confirm or cancel when the dialog permits it.
+
+Hotkey notes
+------------
+Keyboard, supported mouse-button, mouse-wheel, media-key, and per-routine hotkeys are configurable.
+Display labels use familiar key names such as Num *, Num +, Enter, Page Up, Backspace, Print Screen, and Next Track. Runtime punctuation, number-row, international-key, and numpad-decimal labels follow the active Windows keyboard layout; saved and CLI values remain canonical.
+Bindings shown here are release defaults. Your saved settings may differ.
+
+Routines
+--------
+Choose audio actions, then when the routine runs. Normal and communications device targets, volume levels, and mute actions are independent; unspecified actions leave audio unchanged.
+Any configured automatic trigger can start a routine. Optional conditions must all pass for automatic and manual runs, including device state, a running app, a connected network, and day/time windows.
+Run now and CLI commands can run routines without a hotkey, tray entry, or automatic trigger. Optional hotkeys and tray entries also run routines manually. A named hotkey cycle group runs eligible routines in saved order.
+Stateful automatic triggers can restore previous audio when the last active trigger ends, respecting newer audio changes. Manual runs apply actions once without starting a restoration lifetime.
+Unlock/resume triggers require AudioPilot to be running and do not wake the computer.
+
+Optional update checks
+----------------------
+Settings > Updates > Check automatically is off by default. When enabled, AudioPilot checks public GitHub release metadata after startup and daily while running.
+Check now checks release information even when automatic checks are off. Checking does not download or install a package; the manual release link remains available.
+Official stable packages also offer Open updater. Update and restart asks for approval before downloading, verifying, installing and restarting. AudioPilot stays running until replacement is ready.
+Pause or close stops progression toward installation; continuing requires fresh approval. Once installation is armed, it must finish or recover. Unsaved edits and microphone ownership can defer replacement.
+GitHub receives your IP address and an AudioPilot user-agent. Settings, device names, and logs are not sent. CLI: config set check-for-updates true.
+
+Help and support
+----------------
+- CLI help: AudioPilot.Cli.exe --help
+- List configurable keys: AudioPilot.Cli.exe config list
+- Settings / Maintenance / Diagnostics shows current-session health and recent operations, and can save a redacted support bundle.
+- Create a redacted support bundle: AudioPilot.Cli.exe diagnostics export-bundle support-bundle.zip --json
+- Export support bundles before restarting AudioPilot to include current-session history. Exports stay on your computer until you share them.
+- Config and routine exports are backups containing original settings, even with --redact. Use a diagnostic bundle for support.
+- Configured hotkeys and enabled overlays work before opening the main window. Turning off Enable overlays in Settings removes visual feedback without disabling hotkeys or routines.
+- Run at Startup uses the Windows Run entry by default. Settings > Startup > Task Scheduler for startup optionally uses a per-user logon task with no configured delay or elevation. Windows still controls when startup completes.
+- Media details depend on the player exposing a Windows media session.
+- Emoji use Windows Segoe UI Emoji. Available glyphs depend on the Windows font version; AudioPilot does not bundle a font.
+- User guide: {{REPOSITORY_URL}}/blob/main/docs/USER_GUIDE.md
+- Installed data: settings and settings backups use the MSI's chosen data folder (default %AppData%/AudioPilot). Logs, log backups, DEVICES.txt, and window placement use %LocalAppData%/AudioPilot.
+- Portable data: managed updater packages keep data under the extracted folder's data directory, outside versions. Flat portable or source builds use the app folder. An unwritable data folder falls back to %AppData%/AudioPilot.
+- Open the current settings or log folder from Diagnostics. Updater logs and recovery snapshots are separate; see the user guide before removing updater state.
+- Optional DEVICES.txt lists endpoint IDs, device names, and stable IDs when Windows supplies them. Hashed mode hides IDs but keeps device names; hashed IDs cannot be used as CLI device selectors. Editing this file does not change settings.
+- ABOUT.txt contains build and reference information only. It does not include user, device, application, or settings data.
