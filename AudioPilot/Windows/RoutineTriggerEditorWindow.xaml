@@ -1,0 +1,76 @@
+<Window
+    x:Class="AudioPilot.RoutineTriggerEditorWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:controls="clr-namespace:AudioPilot.Controls"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:loc="clr-namespace:AudioPilot.Localization"
+    Title="{loc:LocBinding TriggerEditorHeading, Choice=True}"
+    Width="520"
+    Height="620"
+    MinWidth="400"
+    MinHeight="420"
+    Background="{DynamicResource WindowBackgroundBrush}"
+    FontFamily="Segoe UI"
+    FontSize="13"
+    Foreground="{DynamicResource TextBrush}"
+    ResizeMode="CanResizeWithGrip"
+    ShowInTaskbar="False"
+    UseLayoutRounding="True"
+    WindowStartupLocation="Manual">
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Help" Executed="OpenHelp_Executed" />
+    </Window.CommandBindings>
+    <Window.InputBindings>
+        <KeyBinding Key="F1" Command="ApplicationCommands.Help" />
+    </Window.InputBindings>
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <ScrollViewer
+            x:Name="TriggerEditorScrollViewer"
+            Grid.Row="0"
+            CanContentScroll="False"
+            HorizontalScrollBarVisibility="Disabled"
+            VerticalScrollBarVisibility="Auto">
+            <i:Interaction.Behaviors>
+                <b:KeyboardFocusScrollBehavior />
+                <b:KeepScrollOnLanguageChangeBehavior />
+            </i:Interaction.Behaviors>
+            <controls:RoutineTriggerEditorPanel
+                x:Name="TriggerEditorPanel"
+                MaxWidth="450"
+                Margin="0,0,12,0"
+                BrowseApplicationRequested="TriggerApp_BrowseRequested"
+                NetworkDropDownOpened="NetworkPicker_DropDownOpened"
+                PackagedApplicationRequested="TriggerApp_PackagedAppRequested"
+                RunningApplicationRequested="TriggerApp_RunningAppRequested"
+                ShowActionButtons="False" />
+        </ScrollViewer>
+        <Border
+            Grid.Row="1"
+            Margin="0,12,0,0"
+            Padding="0,10,0,0"
+            BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="0,1,0,0">
+            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                <Button
+                    x:Name="CancelTriggerButton"
+                    MinWidth="80"
+                    Margin="0,0,8,0"
+                    Content="{loc:Loc Ui_Cancel}"
+                    IsCancel="True" />
+                <Button
+                    x:Name="ConfirmTriggerButton"
+                    MinWidth="112"
+                    Click="ConfirmTrigger_Click"
+                    Content="{loc:LocBinding TriggerEditorConfirmText, Choice=True}"
+                    IsDefault="True"
+                    Style="{StaticResource AppPrimaryButtonStyle}" />
+            </StackPanel>
+        </Border>
+    </Grid>
+</Window>

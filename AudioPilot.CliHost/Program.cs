@@ -1,0 +1,56 @@
+using AudioPilot.Logging;
+
+namespace AudioPilot.CliHost
+{
+    internal static class Program
+    {
+        private const string ForceHeadlessFailureEnvVar = "AUDIOPILOT_TEST_FORCE_HEADLESS_FAILURE";
+
+        private static int Main(string[] args)
+        {
+            Environment.SetEnvironmentVariable("AUDIOPILOT_DISABLE_CONSOLE_LOGGING", "1");
+            try
+            {
+                return CliHostProcessBoundary.Execute(
+                    args,
+                    Console.Error,
+                    () => ExecuteCore(args),
+                    metadata =>
+                    {
+                        Logger logger = Logger.Instance;
+                        CliHostRuntime.ApplyReadOnlyLogPolicy(logger);
+                        logger.Error("CliHost", metadata, nameof(Main));
+                    },
+                    Console.Out);
+            }
+            finally
+            {
+                Logger.DisposeInstanceIfCreated();
+            }
+        }
+
+        private static int ExecuteCore(string[] args)
+        {
+            if (CliDocsMaintenance.TryHandle(args, Console.Out, Console.Error, out int maintenanceExitCode))
+            {
+                return maintenanceExitCode;
+            }
+
+            return CliHostRuntime.Execute(
+                args,
+                new CliHostRuntimeDependencies(
+                    () => new SingleInstanceHelperAdapter(),
+                    () => new LocalHeadlessCommandRunnerAdapter(),
+                    ShouldForceHeadlessFailure,
+                    Console.Out,
+                    Console.Error));
+        }
+
+        private static bool ShouldForceHeadlessFailure()
+        {
+            string? value = Environment.GetEnvironmentVariable(ForceHeadlessFailureEnvVar);
+            return string.Equals(value, "1", StringComparison.Ordinal);
+        }
+
+    }
+}

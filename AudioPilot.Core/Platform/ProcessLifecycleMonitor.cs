@@ -1,0 +1,1116 @@
+using System.Diagnostics;
+using System.Management;
+using System.Security.Principal;
+using AudioPilot.Constants;
+using AudioPilot.Logging;
+
+namespace AudioPilot.Platform;
+
+internal readonly record struct ProcessLifecycleMonitorStartResult(bool Success, string Status, string? FailureReason = null);
+
+internal readonly record struct ProcessLifecycleMonitorStatus(string Mode, string? FallbackReason);
+
+internal readonly record struct ProcessLifecycleMonitorTransition(
+    IReadOnlyList<int> StartedProcessIds,
+    IReadOnlyList<int> StoppedProcessIds);
+
+internal interface IProcessLifecycleMonitor : IDisposable
+{
+    event Action<int>? ProcessStarted;
+    event Action<int>? ProcessStopped;
+
+    bool IsRunning { get; }
+
+    ProcessLifecycleMonitorStartResult Start();
+    void Stop();
+}
+
+internal interface IRawProcessLifecycleEventSource : IDisposable
+{
+    event Action<int>? ProcessStarted;
+    event Action<int>? ProcessStopped;
+
+    bool IsRunning { get; }
+
+    void Start();
+    void Stop();
+}
+
+internal static class ProcessLifecycleMonitorFactory
+{
+    internal static IProcessLifecycleMonitor Create(Logger logger)
+    {
+        return new FallbackProcessLifecycleMonitor(
+            logger,
+            primaryFactory: () => new EventDrivenProcessLifecycleMonitor(logger),
+            fallbackFactory: () => new PollingProcessLifecycleMonitor(logger),
+            preferFallbackInitially: !IsCurrentProcessElevated(),
+            initialFallbackReason: "not-elevated");
+    }
+
+    private static bool IsCurrentProcessElevated()
+    {
+        try
+        {
+            using WindowsIdentity identity = WindowsIdentity.GetCurrent();
+            return new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+}
+
+internal interface IProcessLifecycleFailureSource
+{
+    event Action<string>? MonitoringFailed;
+}
+
+internal interface IProcessLifecycleSnapshotProvider
+{
+    HashSet<int> GetKnownProcessIds();
+}
+
+internal sealed class FallbackProcessLifecycleMonitor(
+    Logger logger,
+    Func<IProcessLifecycleMonitor> primaryFactory,
+    Func<IProcessLifecycleMonitor> fallbackFactory,
+    bool preferFallbackInitially = false,
+    string? initialFallbackReason = null) : IProcessLifecycleMonitor
+{
+    private readonly Logger _logger = logger;
+    private readonly Func<IProcessLifecycleMonitor> _primaryFactory = primaryFactory;
+    private readonly Func<IProcessLifecycleMonitor> _fallbackFactory = fallbackFactory;
+    private readonly Lock _sync = new();
+    private IProcessLifecycleMonitor? _activeMonitor;
+    private bool _preferFallback = preferFallbackInitially;
+    private bool _disposed;
+    private bool _requestedRunning;
+    private string? _fallbackReason = preferFallbackInitially ? initialFallbackReason : null;
+    private long _generation;
+    private Action<string>? _failureHandler;
+    private Action<int>? _processStartedHandler;
+    private Action<int>? _processStoppedHandler;
+
+    public event Action<int>? ProcessStarted;
+    public event Action<int>? ProcessStopped;
+
+    public bool IsRunning
+    {
+        get
+        {
+            lock (_sync)
+            {
+                return _activeMonitor?.IsRunning == true;
+            }
+        }
+    }
+
+    internal ProcessLifecycleMonitorStatus GetStatus()
+    {
+        lock (_sync)
+        {
+            return new(_activeMonitor?.IsRunning == true ? (_preferFallback ? "polling" : "event-driven") : "inactive", _fallbackReason);
+        }
+    }
+
+    internal string Mode => GetStatus().Mode;
+
+    /// <summary>
+    /// Starts the active process lifecycle monitor, preferring the event-driven implementation and degrading to polling
+    /// when the primary monitor cannot be activated.
+    /// </summary>
+    /// <remarks>
+    /// Repeated calls are idempotent while the current monitor is healthy. If the primary monitor fails to start, this
+    /// method tears it down under the same lock, records that fallback is now preferred, and then attempts to promote
+    /// the polling monitor instead. Once fallback is selected, later calls preserve that mode until the instance is
+    /// rebuilt.
+    /// </remarks>
+    public ProcessLifecycleMonitorStartResult Start()
+    {
+        ProcessLifecycleMonitorStartResult result;
+        ProcessLifecycleMonitorTransition? transition;
+        IProcessLifecycleMonitor? monitor;
+        long generation;
+        List<IProcessLifecycleMonitor>? detachedMonitors;
+        lock (_sync)
+        {
+            result = StartUnderLock(out transition, out detachedMonitors);
+            monitor = _activeMonitor;
+            generation = _generation;
+        }
+        StopAndDisposeDetachedMonitors(detachedMonitors);
+        PublishRecoveryTransition(transition, monitor, generation);
+        return result;
+    }
+
+    private ProcessLifecycleMonitorStartResult StartUnderLock(
+        out ProcessLifecycleMonitorTransition? transition,
+        out List<IProcessLifecycleMonitor>? detachedMonitors,
+        string? interruptionReason = null)
+    {
+        transition = null;
+        detachedMonitors = null;
+        HashSet<int>? previous = null;
+        string primaryFailureReason = _fallbackReason ?? "not-attempted";
+        double primaryStartMs = 0;
+
+        if (_disposed)
+        {
+            return new ProcessLifecycleMonitorStartResult(false, "inactive", "monitor-disposed");
+        }
+
+        bool wasRunning = _requestedRunning;
+        if (!_requestedRunning) Interlocked.Increment(ref _generation);
+        _requestedRunning = true;
+
+        if (_activeMonitor != null)
+        {
+            ProcessLifecycleMonitorStartResult existingResult = interruptionReason != null && !_preferFallback
+                ? new(false, "inactive", interruptionReason) : _activeMonitor.Start();
+            if (existingResult.Success || _preferFallback)
+            {
+                return existingResult;
+            }
+
+            if (wasRunning && !_preferFallback) previous = (_activeMonitor as IProcessLifecycleSnapshotProvider)?.GetKnownProcessIds();
+            primaryFailureReason = existingResult.FailureReason ?? existingResult.Status;
+            _fallbackReason = primaryFailureReason;
+            (detachedMonitors ??= []).Add(DetachMonitorUnderLock(_activeMonitor));
+            _activeMonitor = null;
+            _preferFallback = true;
+        }
+
+        if (!_preferFallback)
+        {
+            IProcessLifecycleMonitor primaryMonitor = _primaryFactory();
+            AttachMonitor(primaryMonitor);
+            Stopwatch primaryStartStopwatch = Stopwatch.StartNew();
+            ProcessLifecycleMonitorStartResult primaryResult = primaryMonitor.Start();
+            primaryStartMs = primaryStartStopwatch.Elapsed.TotalMilliseconds;
+            if (primaryResult.Success)
+            {
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.Debug(
+                        "FallbackProcessLifecycleMonitor",
+                        () => $"{AppConstants.Audio.LogEvents.Diagnostics.ProcessLifecycleMonitorFallback} | mode=event-driven result=primary-active primaryStartMs={primaryStartMs:F1}");
+                }
+
+                _activeMonitor = primaryMonitor;
+                return primaryResult;
+            }
+
+            (detachedMonitors ??= []).Add(DetachMonitorUnderLock(primaryMonitor));
+            _preferFallback = true;
+            primaryFailureReason = primaryResult.FailureReason ?? primaryResult.Status;
+            _fallbackReason = primaryFailureReason;
+        }
+
+        IProcessLifecycleMonitor fallbackMonitor = _fallbackFactory();
+        AttachMonitor(fallbackMonitor);
+        Stopwatch fallbackStartStopwatch = Stopwatch.StartNew();
+        ProcessLifecycleMonitorStartResult fallbackResult = fallbackMonitor.Start();
+        double fallbackStartMs = fallbackStartStopwatch.Elapsed.TotalMilliseconds;
+        if (fallbackResult.Success)
+        {
+            _logger.Info(
+                "FallbackProcessLifecycleMonitor",
+                () => $"{AppConstants.Audio.LogEvents.Diagnostics.ProcessLifecycleMonitorFallback} | mode=polling result=fallback-active reason={primaryFailureReason} primaryStartMs={primaryStartMs:F1} fallbackStartMs={fallbackStartMs:F1}");
+            _activeMonitor = fallbackMonitor;
+            if (previous != null && fallbackMonitor is IProcessLifecycleSnapshotProvider snapshots)
+                transition = PollingProcessLifecycleMonitor.CalculateTransition(previous, snapshots.GetKnownProcessIds());
+            return fallbackResult;
+        }
+
+        (detachedMonitors ??= []).Add(DetachMonitorUnderLock(fallbackMonitor));
+        _logger.Warning(
+            "FallbackProcessLifecycleMonitor",
+            () => $"{AppConstants.Audio.LogEvents.Diagnostics.ProcessLifecycleMonitorFallback} | mode=polling result=fallback-failed reason={primaryFailureReason} primaryStartMs={primaryStartMs:F1} fallbackFailureReason={fallbackResult.FailureReason ?? fallbackResult.Status} fallbackStartMs={fallbackStartMs:F1}");
+        return fallbackResult;
+    }
+
+    public void Stop()
+    {
+        IProcessLifecycleMonitor? activeMonitor;
+        lock (_sync)
+        {
+            _requestedRunning = false;
+            Interlocked.Increment(ref _generation);
+            activeMonitor = _activeMonitor;
+        }
+
+        // Stop outside _sync to avoid lock-ordering deadlocks with monitor callbacks acquiring _sync.
+        activeMonitor?.Stop();
+    }
+
+    public void Dispose()
+    {
+        IProcessLifecycleMonitor? detachedMonitor = null;
+        lock (_sync)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            _requestedRunning = false;
+            Interlocked.Increment(ref _generation);
+            if (_activeMonitor != null)
+            {
+                detachedMonitor = DetachMonitorUnderLock(_activeMonitor);
+                _activeMonitor = null;
+            }
+        }
+
+        if (detachedMonitor != null)
+        {
+            StopAndDisposeMonitor(detachedMonitor);
+        }
+    }
+
+    private void AttachMonitor(IProcessLifecycleMonitor monitor)
+    {
+        _processStartedHandler = processId => OnProcessStarted(monitor, processId);
+        _processStoppedHandler = processId => OnProcessStopped(monitor, processId);
+        monitor.ProcessStarted += _processStartedHandler;
+        monitor.ProcessStopped += _processStoppedHandler;
+        if (monitor is IProcessLifecycleFailureSource failures)
+        {
+            _failureHandler = reason => QueueFailureRecovery(monitor, reason);
+            failures.MonitoringFailed += _failureHandler;
+        }
+    }
+
+    private IProcessLifecycleMonitor DetachMonitorUnderLock(IProcessLifecycleMonitor monitor)
+    {
+        monitor.ProcessStarted -= _processStartedHandler;
+        monitor.ProcessStopped -= _processStoppedHandler;
+        _processStartedHandler = null;
+        _processStoppedHandler = null;
+        if (monitor is IProcessLifecycleFailureSource failures && _failureHandler != null)
+        {
+            failures.MonitoringFailed -= _failureHandler;
+            _failureHandler = null;
+        }
+        return monitor;
+    }
+
+    private static void StopAndDisposeMonitor(IProcessLifecycleMonitor monitor)
+    {
+        monitor.Stop();
+        monitor.Dispose();
+    }
+
+    private static void StopAndDisposeDetachedMonitors(List<IProcessLifecycleMonitor>? detachedMonitors)
+    {
+        if (detachedMonitors == null) return;
+        foreach (IProcessLifecycleMonitor detached in detachedMonitors)
+        {
+            StopAndDisposeMonitor(detached);
+        }
+    }
+
+    private void QueueFailureRecovery(IProcessLifecycleMonitor monitor, string reason)
+    {
+        long generation = Volatile.Read(ref _generation);
+        ThreadPool.QueueUserWorkItem(_ => RecoverFailedMonitor(monitor, reason, generation));
+    }
+
+    private void RecoverFailedMonitor(IProcessLifecycleMonitor monitor, string reason, long generation)
+    {
+        try
+        {
+            ProcessLifecycleMonitorTransition? transition = null;
+            IProcessLifecycleMonitor? recoveryMonitor = null;
+            List<IProcessLifecycleMonitor>? detachedMonitors = null;
+            lock (_sync)
+            {
+                if (_disposed || !_requestedRunning || _preferFallback || generation != _generation || !ReferenceEquals(_activeMonitor, monitor)) return;
+                _logger.Warning("FallbackProcessLifecycleMonitor", () => $"process-lifecycle-monitor-interrupted | reason={reason} action=activate-polling");
+                StartUnderLock(out transition, out detachedMonitors, reason);
+                recoveryMonitor = _activeMonitor;
+            }
+            StopAndDisposeDetachedMonitors(detachedMonitors);
+            PublishRecoveryTransition(transition, recoveryMonitor, generation);
+        }
+        catch (Exception ex)
+        {
+            _logger.Warning("FallbackProcessLifecycleMonitor", "process-lifecycle-monitor-recovery-failed", nameof(RecoverFailedMonitor), ex);
+        }
+    }
+
+    private void PublishRecoveryTransition(ProcessLifecycleMonitorTransition? transition, IProcessLifecycleMonitor? monitor, long generation)
+    {
+        if (transition is not { } changes) return;
+        foreach (int processId in changes.StartedProcessIds) OnProcessStarted(monitor, processId, generation);
+        foreach (int processId in changes.StoppedProcessIds) OnProcessStopped(monitor, processId, generation);
+    }
+
+    private void OnProcessStarted(IProcessLifecycleMonitor? monitor, int processId, long? generation = null)
+    {
+        bool shouldRaise;
+        lock (_sync)
+        {
+            shouldRaise = !_disposed && _requestedRunning && ReferenceEquals(_activeMonitor, monitor) && _activeMonitor?.IsRunning == true && (!generation.HasValue || generation == _generation);
+        }
+
+        if (shouldRaise)
+        {
+            ProcessStarted?.Invoke(processId);
+        }
+    }
+
+    private void OnProcessStopped(IProcessLifecycleMonitor? monitor, int processId, long? generation = null)
+    {
+        bool shouldRaise;
+        lock (_sync)
+        {
+            shouldRaise = !_disposed && _requestedRunning && ReferenceEquals(_activeMonitor, monitor) && _activeMonitor?.IsRunning == true && (!generation.HasValue || generation == _generation);
+        }
+
+        if (shouldRaise)
+        {
+            ProcessStopped?.Invoke(processId);
+        }
+    }
+}
+
+internal sealed class EventDrivenProcessLifecycleMonitor(
+    Logger logger,
+    Func<IRawProcessLifecycleEventSource>? eventSourceFactory = null,
+    Func<HashSet<int>>? captureRunningProcessIds = null) : IProcessLifecycleMonitor, IProcessLifecycleFailureSource, IProcessLifecycleSnapshotProvider
+{
+    private readonly Logger _logger = logger;
+    private readonly Lock _sync = new();
+    private readonly Lock _lifecycleSync = new();
+    private readonly Func<IRawProcessLifecycleEventSource> _eventSourceFactory = eventSourceFactory ?? (() => new WmiProcessLifecycleEventSource());
+    private readonly Func<HashSet<int>> _captureRunningProcessIds = captureRunningProcessIds ?? PollingProcessLifecycleMonitor.CaptureRunningProcessIds;
+    private IRawProcessLifecycleEventSource? _eventSource;
+    private Action<string>? _eventFailureHandler;
+    private HashSet<int> _knownProcessIds = [];
+    private bool _started;
+    private bool _disposed;
+
+    public event Action<int>? ProcessStarted;
+    public event Action<int>? ProcessStopped;
+    public event Action<string>? MonitoringFailed;
+
+    public HashSet<int> GetKnownProcessIds()
+    {
+        lock (_sync) return [.. _knownProcessIds];
+    }
+
+    public bool IsRunning
+    {
+        get
+        {
+            lock (_sync)
+            {
+                return _started;
+            }
+        }
+    }
+
+    public ProcessLifecycleMonitorStartResult Start()
+    {
+        lock (_lifecycleSync)
+        {
+            IRawProcessLifecycleEventSource? source = null;
+            try
+            {
+                lock (_sync)
+                {
+                    if (_disposed)
+                    {
+                        return new ProcessLifecycleMonitorStartResult(false, "inactive", "monitor-disposed");
+                    }
+
+                    if (_started)
+                    {
+                        return new ProcessLifecycleMonitorStartResult(true, "active");
+                    }
+
+                    if (_eventSource != null)
+                    {
+                        return new ProcessLifecycleMonitorStartResult(false, "inactive", "monitor-interrupted");
+                    }
+
+                    _knownProcessIds = _captureRunningProcessIds();
+                    source = _eventSourceFactory();
+                    _eventSource = source;
+                    _started = true;
+                    source.ProcessStarted += OnRawProcessStarted;
+                    source.ProcessStopped += OnRawProcessStopped;
+                    if (source is IProcessLifecycleFailureSource failures)
+                    {
+                        IRawProcessLifecycleEventSource attachedSource = source;
+                        _eventFailureHandler = reason => OnMonitoringFailed(attachedSource, reason);
+                        failures.MonitoringFailed += _eventFailureHandler;
+                    }
+                }
+
+                // Start outside _sync so concurrent WMI callbacks acquiring _sync cannot deadlock with Start/Stop cleanup.
+                source.Start();
+
+                lock (_sync)
+                {
+                    if (!_started || _disposed || !ReferenceEquals(_eventSource, source))
+                    {
+                        throw new InvalidOperationException("Process event monitoring stopped during startup.");
+                    }
+                }
+
+                return new ProcessLifecycleMonitorStartResult(true, "active");
+            }
+            catch (Exception ex)
+            {
+                _logger.Info(
+                    "EventDrivenProcessLifecycleMonitor",
+                    () => $"event-driven-process-lifecycle-monitor-unavailable | reason={ex.GetType().Name} hresult=0x{ex.HResult:X8} managementStatus={(ex is ManagementException management ? management.ErrorCode.ToString() : "none")} fallbackEligible=true",
+                    nameof(Start));
+
+                IRawProcessLifecycleEventSource? detached = null;
+                lock (_sync)
+                {
+                    if (source != null && ReferenceEquals(_eventSource, source))
+                    {
+                        detached = DetachEventSourceUnderLock();
+                        _knownProcessIds.Clear();
+                    }
+                    else if (source == null)
+                    {
+                        _knownProcessIds.Clear();
+                    }
+                }
+
+                if (detached != null)
+                {
+                    StopAndDisposeEventSource(detached);
+                }
+
+                return new ProcessLifecycleMonitorStartResult(false, "inactive", ex is ManagementException management ? $"wmi-{management.ErrorCode}" : ex.GetType().Name);
+            }
+        }
+    }
+
+    public void Stop()
+    {
+        lock (_lifecycleSync)
+        {
+            IRawProcessLifecycleEventSource? detached;
+            lock (_sync)
+            {
+                detached = DetachEventSourceUnderLock();
+                _knownProcessIds.Clear();
+            }
+
+            if (detached != null)
+            {
+                StopAndDisposeEventSource(detached);
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        lock (_lifecycleSync)
+        {
+            IRawProcessLifecycleEventSource? detached;
+            lock (_sync)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _disposed = true;
+                detached = DetachEventSourceUnderLock();
+                _knownProcessIds.Clear();
+            }
+
+            if (detached != null)
+            {
+                StopAndDisposeEventSource(detached);
+            }
+        }
+    }
+
+    private IRawProcessLifecycleEventSource? DetachEventSourceUnderLock()
+    {
+        IRawProcessLifecycleEventSource? source = _eventSource;
+        _eventSource = null;
+        _started = false;
+        if (source == null)
+        {
+            return null;
+        }
+
+        source.ProcessStarted -= OnRawProcessStarted;
+        source.ProcessStopped -= OnRawProcessStopped;
+        if (source is IProcessLifecycleFailureSource failures && _eventFailureHandler != null)
+            failures.MonitoringFailed -= _eventFailureHandler;
+        _eventFailureHandler = null;
+        return source;
+    }
+
+    private void StopAndDisposeEventSource(IRawProcessLifecycleEventSource source)
+    {
+        try
+        {
+            source.Stop();
+        }
+        catch (Exception ex)
+        {
+            _logger.Warning("EventDrivenProcessLifecycleMonitor", "event-driven-process-lifecycle-cleanup-failed | stage=stop", nameof(StopAndDisposeEventSource), ex);
+        }
+
+        try
+        {
+            source.Dispose();
+        }
+        catch (Exception ex)
+        {
+            _logger.Warning("EventDrivenProcessLifecycleMonitor", "event-driven-process-lifecycle-cleanup-failed | stage=dispose", nameof(StopAndDisposeEventSource), ex);
+        }
+    }
+
+    private void OnMonitoringFailed(IRawProcessLifecycleEventSource source, string reason)
+    {
+        lock (_sync)
+        {
+            if (!_started || _disposed || !ReferenceEquals(source, _eventSource)) return;
+            _started = false;
+        }
+        MonitoringFailed?.Invoke(reason);
+    }
+
+    private void OnRawProcessStarted(int processId)
+    {
+        bool shouldRaise;
+        lock (_sync)
+        {
+            shouldRaise = _started && !_disposed && processId > 0 && _knownProcessIds.Add(processId);
+        }
+
+        if (shouldRaise)
+        {
+            ProcessStarted?.Invoke(processId);
+        }
+    }
+
+    private void OnRawProcessStopped(int processId)
+    {
+        bool shouldRaise;
+        lock (_sync)
+        {
+            shouldRaise = _started && !_disposed && processId > 0 && _knownProcessIds.Remove(processId);
+        }
+
+        if (shouldRaise)
+        {
+            ProcessStopped?.Invoke(processId);
+        }
+    }
+}
+
+internal sealed class WmiProcessLifecycleEventSource : IRawProcessLifecycleEventSource, IProcessLifecycleFailureSource
+{
+    private const string ProcessIdPropertyName = "ProcessID";
+    internal const string ProcessStartTraceQueryText = "SELECT * FROM Win32_ProcessStartTrace";
+    internal const string ProcessStopTraceQueryText = "SELECT * FROM Win32_ProcessStopTrace";
+
+    private readonly Lock _sync = new();
+    private ManagementEventWatcher? _startWatcher;
+    private ManagementEventWatcher? _stopWatcher;
+    private bool _running;
+    private bool _disposed;
+
+    public event Action<int>? ProcessStarted;
+    public event Action<int>? ProcessStopped;
+    public event Action<string>? MonitoringFailed;
+
+    public bool IsRunning
+    {
+        get
+        {
+            lock (_sync)
+            {
+                return _running;
+            }
+        }
+    }
+
+    public void Start()
+    {
+        ManagementEventWatcher? failedStart = null;
+        ManagementEventWatcher? failedStop = null;
+        Exception? failure = null;
+        lock (_sync)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+
+            if (_running)
+            {
+                return;
+            }
+
+            _startWatcher = CreateWatcher(ProcessStartTraceQueryText);
+            _stopWatcher = CreateWatcher(ProcessStopTraceQueryText);
+            _startWatcher.EventArrived += OnStartEventArrived;
+            _stopWatcher.EventArrived += OnStopEventArrived;
+            _startWatcher.Stopped += OnWatcherStopped;
+            _stopWatcher.Stopped += OnWatcherStopped;
+
+            try
+            {
+                _running = true;
+                _startWatcher.Start();
+                _stopWatcher.Start();
+                if (!_running) throw new InvalidOperationException("WMI process subscription stopped during startup.");
+            }
+            catch (Exception ex)
+            {
+                (failedStart, failedStop) = DetachWatchersUnderLock();
+                failure = ex;
+            }
+        }
+
+        if (failure != null)
+        {
+            DisposeDetachedWatchers(failedStart, failedStop);
+            System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw(failure);
+        }
+    }
+
+    public void Stop()
+    {
+        ManagementEventWatcher? startWatcher;
+        ManagementEventWatcher? stopWatcher;
+        lock (_sync)
+        {
+            (startWatcher, stopWatcher) = DetachWatchersUnderLock();
+        }
+
+        // Stop/Dispose outside _sync so in-flight WMI sink callbacks waiting on _sync cannot deadlock.
+        DisposeDetachedWatchers(startWatcher, stopWatcher);
+    }
+
+    public void Dispose()
+    {
+        ManagementEventWatcher? startWatcher;
+        ManagementEventWatcher? stopWatcher;
+        lock (_sync)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            (startWatcher, stopWatcher) = DetachWatchersUnderLock();
+        }
+
+        DisposeDetachedWatchers(startWatcher, stopWatcher);
+    }
+
+    internal static bool TryConvertProcessId(object? value, out int processId)
+    {
+        processId = 0;
+
+        switch (value)
+        {
+            case int intValue when intValue > 0:
+                processId = intValue;
+                return true;
+            case uint uintValue when uintValue > 0 && uintValue <= int.MaxValue:
+                processId = (int)uintValue;
+                return true;
+            case long longValue when longValue > 0 && longValue <= int.MaxValue:
+                processId = (int)longValue;
+                return true;
+            case ulong ulongValue when ulongValue > 0 && ulongValue <= int.MaxValue:
+                processId = (int)ulongValue;
+                return true;
+            case short shortValue when shortValue > 0:
+                processId = shortValue;
+                return true;
+            case ushort ushortValue when ushortValue > 0:
+                processId = ushortValue;
+                return true;
+            case string stringValue when int.TryParse(stringValue, out int parsedProcessId) && parsedProcessId > 0:
+                processId = parsedProcessId;
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static ManagementEventWatcher CreateWatcher(string queryText)
+    {
+        return new ManagementEventWatcher(CreateEventQuery(queryText));
+    }
+
+    internal static WqlEventQuery CreateEventQuery(string queryText)
+    {
+        return new WqlEventQuery(queryText);
+    }
+
+    private (ManagementEventWatcher? Start, ManagementEventWatcher? Stop) DetachWatchersUnderLock()
+    {
+        _running = false;
+        ManagementEventWatcher? start = _startWatcher;
+        ManagementEventWatcher? stop = _stopWatcher;
+        _startWatcher = null;
+        _stopWatcher = null;
+        if (start != null)
+        {
+            start.EventArrived -= OnStartEventArrived;
+            start.Stopped -= OnWatcherStopped;
+        }
+        if (stop != null)
+        {
+            stop.EventArrived -= OnStopEventArrived;
+            stop.Stopped -= OnWatcherStopped;
+        }
+        return (start, stop);
+    }
+
+    private static void DisposeDetachedWatchers(ManagementEventWatcher? startWatcher, ManagementEventWatcher? stopWatcher)
+    {
+        try
+        {
+            DisposeWatcher(startWatcher);
+        }
+        finally
+        {
+            DisposeWatcher(stopWatcher);
+        }
+    }
+
+    private static void DisposeWatcher(ManagementEventWatcher? detached)
+    {
+        if (detached == null)
+        {
+            return;
+        }
+
+        try
+        {
+            detached.Stop();
+        }
+        catch
+        {
+        }
+
+        detached.Dispose();
+    }
+
+    private void OnWatcherStopped(object sender, StoppedEventArgs e)
+    {
+        lock (_sync)
+        {
+            if (!_running || _disposed || (!ReferenceEquals(sender, _startWatcher) && !ReferenceEquals(sender, _stopWatcher))) return;
+            _running = false;
+        }
+        try { MonitoringFailed?.Invoke($"wmi-subscription-stopped-{e.Status}"); }
+        catch (Exception ex) { Logger.Instance.Warning("WmiProcessLifecycleEventSource", "process-monitor-failure-callback-failed", nameof(OnWatcherStopped), ex); }
+    }
+
+    private void OnStartEventArrived(object sender, EventArrivedEventArgs e)
+    {
+        using ManagementBaseObject? newEvent = e.NewEvent;
+        if (newEvent != null && TryConvertProcessId(newEvent.Properties[ProcessIdPropertyName]?.Value, out int processId))
+        {
+            PublishProcessStarted(processId);
+        }
+    }
+
+    private void OnStopEventArrived(object sender, EventArrivedEventArgs e)
+    {
+        using ManagementBaseObject? newEvent = e.NewEvent;
+        if (newEvent != null && TryConvertProcessId(newEvent.Properties[ProcessIdPropertyName]?.Value, out int processId))
+        {
+            PublishProcessStopped(processId);
+        }
+    }
+
+    private void PublishProcessStarted(int processId)
+    {
+        bool shouldRaise;
+        lock (_sync)
+        {
+            shouldRaise = _running && !_disposed && processId > 0;
+        }
+
+        if (shouldRaise)
+        {
+            ProcessStarted?.Invoke(processId);
+        }
+    }
+
+    private void PublishProcessStopped(int processId)
+    {
+        bool shouldRaise;
+        lock (_sync)
+        {
+            shouldRaise = _running && !_disposed && processId > 0;
+        }
+
+        if (shouldRaise)
+        {
+            ProcessStopped?.Invoke(processId);
+        }
+    }
+}
+
+/// <summary>
+/// Polls the local process table and emits started/stopped transitions for app-start routine coordination.
+/// </summary>
+/// <remarks>
+/// The monitor captures a baseline snapshot before starting its timer so already-running processes are treated as
+/// existing state rather than false-positive launches. Timer ticks are also single-flight to avoid overlapping scans
+/// when enumeration is slower than the polling interval.
+/// </remarks>
+internal sealed class PollingProcessLifecycleMonitor(Logger logger, TimeSpan? pollInterval = null,
+    Func<HashSet<int>>? captureRunningProcessIds = null) : IProcessLifecycleMonitor, IProcessLifecycleSnapshotProvider
+{
+    private readonly Logger _logger = logger;
+    private readonly Func<HashSet<int>> _captureRunningProcessIds = captureRunningProcessIds ?? CaptureRunningProcessIds;
+    private readonly Lock _sync = new();
+    private readonly TimeSpan? _pollIntervalOverride = pollInterval;
+    private TimeSpan _pollInterval;
+    private Timer? _timer;
+    private HashSet<int> _knownProcessIds = [];
+    private bool _started;
+    private volatile bool _disposed;
+    private int _scanInProgress;
+    private long _generation;
+
+    public event Action<int>? ProcessStarted;
+    public event Action<int>? ProcessStopped;
+
+    public HashSet<int> GetKnownProcessIds()
+    {
+        lock (_sync) return [.. _knownProcessIds];
+    }
+
+    public bool IsRunning
+    {
+        get
+        {
+            lock (_sync)
+            {
+                return _started;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Starts polling if the monitor is still active and returns a stable status result for callers.
+    /// </summary>
+    /// <remarks>
+    /// Starting is idempotent. A successful second call reports the existing active state, while startup failures tear
+    /// down any partially-created timer state before returning an inactive result with the failure type.
+    /// </remarks>
+    public ProcessLifecycleMonitorStartResult Start()
+    {
+        lock (_sync)
+        {
+            if (_disposed)
+            {
+                return new ProcessLifecycleMonitorStartResult(false, "inactive", "monitor-disposed");
+            }
+
+            if (_started)
+            {
+                return new ProcessLifecycleMonitorStartResult(true, "active");
+            }
+
+            try
+            {
+                _knownProcessIds = _captureRunningProcessIds();
+                if (_pollIntervalOverride == null)
+                    RuntimeTuningConfig.ProcessMonitorFallbackIntervalChanged += OnPollIntervalChanged;
+                _pollInterval = _pollIntervalOverride ?? TimeSpan.FromMilliseconds(RuntimeTuningConfig.ProcessMonitorFallbackIntervalMs);
+                _timer = new Timer(OnTimerTick, ++_generation, _pollInterval, _pollInterval);
+                _started = true;
+                if (_logger.IsEnabled(LogLevel.Debug))
+                {
+                    _logger.Debug(
+                        "PollingProcessLifecycleMonitor",
+                        () => $"{AppConstants.Audio.LogEvents.Diagnostics.ProcessLifecycleMonitorFallback} | mode=polling-start pollIntervalMs={_pollInterval.TotalMilliseconds:F0} baselineCount={_knownProcessIds.Count}");
+                }
+
+                return new ProcessLifecycleMonitorStartResult(true, "active");
+            }
+            catch (Exception ex)
+            {
+                _logger.Warning("PollingProcessLifecycleMonitor", "Failed to start process lifecycle monitor", nameof(Start), ex);
+                StopTimerUnderLock();
+                return new ProcessLifecycleMonitorStartResult(false, "inactive", ex.GetType().Name);
+            }
+        }
+    }
+
+    public void Stop()
+    {
+        lock (_sync)
+        {
+            StopTimerUnderLock();
+        }
+    }
+
+    public void Dispose()
+    {
+        lock (_sync)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            StopTimerUnderLock();
+        }
+    }
+
+    internal static ProcessLifecycleMonitorTransition CalculateTransition(
+        IReadOnlySet<int> previousProcessIds,
+        IReadOnlySet<int> currentProcessIds)
+    {
+        List<int> startedProcessIds = [];
+        foreach (int processId in currentProcessIds)
+        {
+            if (!previousProcessIds.Contains(processId))
+            {
+                startedProcessIds.Add(processId);
+            }
+        }
+
+        List<int> stoppedProcessIds = [];
+        foreach (int processId in previousProcessIds)
+        {
+            if (!currentProcessIds.Contains(processId))
+            {
+                stoppedProcessIds.Add(processId);
+            }
+        }
+
+        startedProcessIds.Sort();
+        stoppedProcessIds.Sort();
+        return new ProcessLifecycleMonitorTransition(startedProcessIds, stoppedProcessIds);
+    }
+
+    private void OnTimerTick(object? state)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        if (Interlocked.Exchange(ref _scanInProgress, 1) != 0)
+        {
+            return;
+        }
+
+        try
+        {
+            HashSet<int> previousProcessIds;
+            long generation;
+            lock (_sync)
+            {
+                generation = state is long callbackGeneration ? callbackGeneration : _generation;
+                if (!_started || _disposed || generation != _generation)
+                {
+                    return;
+                }
+
+                previousProcessIds = _knownProcessIds;
+            }
+
+            HashSet<int> currentProcessIds = _captureRunningProcessIds();
+            ProcessLifecycleMonitorTransition transition = CalculateTransition(previousProcessIds, currentProcessIds);
+
+            lock (_sync)
+            {
+                if (!_started || _disposed || generation != _generation)
+                {
+                    return;
+                }
+                _knownProcessIds = currentProcessIds;
+            }
+
+            PublishTransition(transition, generation);
+        }
+        catch (Exception ex)
+        {
+            _logger.Warning("PollingProcessLifecycleMonitor", "Failed to scan process lifecycle state", nameof(OnTimerTick), ex);
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _scanInProgress, 0);
+        }
+    }
+
+    private void OnPollIntervalChanged()
+    {
+        lock (_sync)
+        {
+            if (!_started || _disposed || _timer == null)
+                return;
+            TimeSpan interval = TimeSpan.FromMilliseconds(RuntimeTuningConfig.ProcessMonitorFallbackIntervalMs);
+            if (interval == _pollInterval)
+                return;
+            _timer.Change(interval, interval);
+            _pollInterval = interval;
+            _logger.Info("PollingProcessLifecycleMonitor",
+                () => $"{AppConstants.Audio.LogEvents.Diagnostics.ProcessLifecycleMonitorFallback} | mode=polling interval-updated pollIntervalMs={interval.TotalMilliseconds:F0}");
+        }
+    }
+
+    private void StopTimerUnderLock()
+    {
+        _generation++;
+        RuntimeTuningConfig.ProcessMonitorFallbackIntervalChanged -= OnPollIntervalChanged;
+        _timer?.Dispose();
+        _timer = null;
+        _knownProcessIds = [];
+        _started = false;
+    }
+
+    private void PublishTransition(ProcessLifecycleMonitorTransition transition, long generation)
+    {
+        foreach (int processId in transition.StartedProcessIds)
+        {
+            if (!CanPublishTickEvents(generation))
+            {
+                return;
+            }
+
+            ProcessStarted?.Invoke(processId);
+        }
+
+        foreach (int processId in transition.StoppedProcessIds)
+        {
+            if (!CanPublishTickEvents(generation))
+            {
+                return;
+            }
+
+            ProcessStopped?.Invoke(processId);
+        }
+    }
+
+    private bool CanPublishTickEvents(long generation)
+    {
+        lock (_sync)
+        {
+            return _started && !_disposed && generation == _generation;
+        }
+    }
+
+    internal static HashSet<int> CaptureRunningProcessIds() => ProcessEnumerationHelper.CaptureRunningProcessIds();
+}

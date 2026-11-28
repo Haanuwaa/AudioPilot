@@ -1,0 +1,342 @@
+<UserControl
+    x:Class="AudioPilot.Controls.RoutineTriggerEditorPanel"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:controls="clr-namespace:AudioPilot.Controls"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:loc="clr-namespace:AudioPilot.Localization"
+    Focusable="False"
+    IsTabStop="False">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/AudioPilot;component/Themes/RoutineEditorResources.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
+    <StackPanel>
+        <TextBlock
+            Margin="0,0,0,8"
+            FontSize="15"
+            FontWeight="SemiBold"
+            Text="{loc:LocBinding TriggerEditorHeading, Choice=True}" />
+
+        <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_TriggerType}" />
+        <ComboBox
+            x:Name="TriggerTypeBox"
+            Height="32"
+            Margin="0,0,0,10"
+            AutomationProperties.Name="{loc:Loc Ui_TriggerType}"
+            ItemsSource="{Binding AvailableTriggerModes}"
+            SelectedItem="{Binding SelectedTriggerMode, Mode=TwoWay}">
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{loc:LocBinding ., Choice=True}" />
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+
+        <StackPanel Margin="0,0,0,10" Visibility="{Binding IsApplicationTriggerSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_RunWhen}" />
+            <ComboBox
+                Height="32"
+                Margin="0,0,0,10"
+                AutomationProperties.Name="{loc:Loc Ui_ApplicationTriggerMode}"
+                ItemsSource="{Binding ApplicationTriggerModeOptions}"
+                SelectedItem="{Binding SelectedApplicationTriggerMode, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{loc:LocBinding ., Choice=True}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <TextBlock
+                Margin="0,0,0,4"
+                Text="{loc:Loc Ui_Application}"
+                Visibility="{Binding ShowApplicationTriggerPathInput, Converter={StaticResource BoolToVisibilityConverter}}" />
+            <controls:AppTargetPickerControl
+                x:Name="TriggerApplicationPicker"
+                BrowseAutomationName="{loc:Loc Ui_Browse}"
+                BrowseRequested="TriggerApp_BrowseRequested"
+                ButtonRowTopMargin="0,12,0,0"
+                HasResolvedApp="{Binding HasResolvedTriggerAppTarget, Mode=OneWay}"
+                InputAutomationName="{loc:Loc Ui_ApplicationTargetPathOrAUMID}"
+                InputHelpText="{loc:Loc Ui_PasteAFullExePathOrPackagedApp}"
+                PackagedAppRequested="TriggerApp_PackagedAppRequested"
+                PickAppAutomationName="{loc:Loc Ui_PickApp}"
+                PlaceholderText="{loc:Loc Ui_EGCAppsGameGameExe}"
+                ResolvedAppName="{Binding ResolvedTriggerAppTargetDisplayName, Mode=OneWay}"
+                RunningAppRequested="TriggerApp_RunningAppRequested"
+                RunningAppsAutomationName="{loc:Loc Ui_SelectRunningApp}"
+                TargetPath="{Binding TriggerAppPath, Mode=TwoWay}"
+                Visibility="{Binding ShowApplicationTriggerPathInput, Converter={StaticResource BoolToVisibilityConverter}}" />
+
+            <StackPanel Margin="0,10,0,0" Visibility="{Binding IsProcessFocusModeSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+                <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_WindowTitlePatternOptional}" />
+                <TextBox
+                    Height="32"
+                    Margin="0,0,0,10"
+                    VerticalContentAlignment="Center"
+                    b:TextBoxPlaceholderBehavior.Text="{loc:Loc Ui_EGTwitch}"
+                    AutomationProperties.Name="{loc:Loc Ui_WindowTitlePattern}"
+                    ContextMenu="{StaticResource EditableTextContextMenu}"
+                    Text="{Binding ApplicationTriggerTitlePattern, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    <i:Interaction.Behaviors>
+                        <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_MatchesWhenTheAppGainsFocusOrIts}" />
+                    </i:Interaction.Behaviors>
+                </TextBox>
+                <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_TitleMatchMode}" />
+                <ComboBox
+                    Height="32"
+                    Margin="0,0,0,8"
+                    AutomationProperties.Name="{loc:Loc Ui_TitleMatchMode}"
+                    ItemsSource="{Binding ApplicationTriggerTitleMatchModeOptions}"
+                    SelectedItem="{Binding SelectedApplicationTriggerTitleMatchMode, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{loc:LocBinding ., Choice=True}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </StackPanel>
+
+            <TextBlock
+                Margin="0,6,0,0"
+                Foreground="{DynamicResource MutedTextBrush}"
+                Text="{loc:LocBinding ApplicationTriggerLifetimeDescription, Choice=True}"
+                TextWrapping="Wrap" />
+        </StackPanel>
+
+        <StackPanel Margin="0,0,0,10" Visibility="{Binding IsDeviceAvailabilityTriggerSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock Margin="0,0,0,8" Foreground="{DynamicResource MutedTextBrush}" Text="{loc:Loc Ui_RunWhenThisDeviceConnectsOrDisconnects}" TextWrapping="Wrap">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_OpeningAudioPilotDoesNotCountAsConnectingA}" />
+                </i:Interaction.Behaviors>
+            </TextBlock>
+            <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_AudioDevice}" />
+            <ComboBox
+                Height="32"
+                Margin="0,0,0,8"
+                b:TextBoxPlaceholderBehavior.Text="{loc:Loc Ui_SelectAnAudioDevice}"
+                AutomationProperties.Name="{loc:Loc Ui_AudioDevice}"
+                ItemsSource="{Binding RoutineDeviceChoices}"
+                SelectedItem="{Binding SelectedAvailabilityDevice, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{loc:LocBinding DisplayLabel}" TextTrimming="CharacterEllipsis" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior ShowOnlyWhenClipped="True" Text="{loc:LocBinding SelectedAvailabilityDevice.DisplayLabel}" />
+                </i:Interaction.Behaviors>
+            </ComboBox>
+            <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_RunOn}" />
+            <ComboBox
+                Height="32"
+                Margin="0,0,0,8"
+                AutomationProperties.Name="{loc:Loc Ui_RunOn}"
+                ItemsSource="{Binding DeviceTransitions}"
+                SelectedItem="{Binding DeviceTransition, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{loc:LocBinding ., Choice=True}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </StackPanel>
+
+        <StackPanel Margin="0,0,0,10" Visibility="{Binding IsSystemEventTriggerSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock
+                Foreground="{DynamicResource MutedTextBrush}"
+                Text="{loc:LocBinding SystemEventTriggerDescription, Choice=True}"
+                TextWrapping="Wrap" />
+        </StackPanel>
+
+        <StackPanel Margin="0,0,0,10" Visibility="{Binding IsAudioPilotStartupTriggerSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock
+                Foreground="{DynamicResource MutedTextBrush}"
+                Text="{loc:Loc Ui_RunsThisRoutineOnceWhenTheAppFinishes}"
+                TextWrapping="Wrap" />
+        </StackPanel>
+
+        <StackPanel Margin="0,0,0,10" Visibility="{Binding IsDeviceChangeTriggerSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock
+                Foreground="{DynamicResource MutedTextBrush}"
+                Text="{loc:Loc Ui_RunsAfterDeviceRefreshFinishesForAHotplug}"
+                TextWrapping="Wrap" />
+        </StackPanel>
+
+        <StackPanel Margin="0,0,0,10" Visibility="{Binding IsSteamBigPictureTriggerSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock
+                Foreground="{DynamicResource MutedTextBrush}"
+                Text="{loc:Loc Ui_ActivatesWhenSteamBigPictureOpensRestoreOn}"
+                TextWrapping="Wrap" />
+        </StackPanel>
+
+        <StackPanel Margin="0,0,0,10" Visibility="{Binding IsScheduledTriggerSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock Margin="0,0,0,4" FontWeight="SemiBold" Text="{loc:Loc Ui_Schedule}" />
+            <TextBlock
+                Margin="0,0,0,10"
+                Foreground="{DynamicResource MutedTextBrush}"
+                Text="{loc:Loc Ui_RunAtThisTimeOnTheSelectedDays}"
+                TextWrapping="Wrap">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_TheRoutineKeepsTheDisplayedTimeZoneDuring}" />
+                </i:Interaction.Behaviors>
+            </TextBlock>
+            <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_Time}" />
+            <controls:TimeOfDayPicker
+                x:Name="ScheduleTimePicker"
+                Margin="0,0,0,10"
+                AmPmAutomationName="{loc:Loc Ui_ScheduledAMOrPM}"
+                AmPmIndex="{Binding ScheduleAmPmIndex, Mode=TwoWay}"
+                AmPmOptions="{Binding AmPmOptions}"
+                HourAutomationName="{loc:Loc Ui_ScheduledHour}"
+                HourIndex="{Binding ScheduleHourIndex, Mode=TwoWay}"
+                HourOptions="{Binding HourOptions}"
+                Is24HourFormat="{Binding Is24HourFormat}"
+                MinuteAutomationName="{loc:Loc Ui_ScheduledMinute}"
+                MinuteIndex="{Binding ScheduleMinuteIndex, Mode=TwoWay}"
+                MinuteOptions="{Binding MinuteOptions}" />
+            <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_DayOfWeekLeaveBlankForDaily}" />
+            <controls:DayOfWeekPicker
+                x:Name="ScheduleDayOfWeekPicker"
+                Friday="{Binding IsFridaySelected, Mode=TwoWay}"
+                Monday="{Binding IsMondaySelected, Mode=TwoWay}"
+                PresetSelected="ScheduleDayOfWeekPicker_PresetSelected"
+                Saturday="{Binding IsSaturdaySelected, Mode=TwoWay}"
+                Sunday="{Binding IsSundaySelected, Mode=TwoWay}"
+                Thursday="{Binding IsThursdaySelected, Mode=TwoWay}"
+                Tuesday="{Binding IsTuesdaySelected, Mode=TwoWay}"
+                Wednesday="{Binding IsWednesdaySelected, Mode=TwoWay}" />
+            <TextBlock
+                Margin="0,4,0,0"
+                AutomationProperties.Name="{loc:Loc Ui_ScheduledRoutineTimeZone}"
+                Foreground="{DynamicResource MutedTextBrush}"
+                Text="{loc:LocBinding ScheduleTimeZoneDisplayName, Format=Routine_TimeZone}"
+                TextWrapping="Wrap">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{Binding ScheduleTimeZoneDetails}" />
+                </i:Interaction.Behaviors>
+            </TextBlock>
+            <CheckBox
+                Margin="0,8,0,0"
+                AutomationProperties.HelpText="{loc:Loc Ui_ShowATrayReminderBeforeThisRoutineRuns}"
+                Content="{loc:Loc Ui_NotifyMe1MinuteBefore}"
+                IsChecked="{Binding NotifyBeforeScheduledRun, Mode=TwoWay}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_ShowATrayReminderBeforeThisRoutineRuns}" />
+                </i:Interaction.Behaviors>
+            </CheckBox>
+        </StackPanel>
+
+        <StackPanel Margin="0,0,0,10" Visibility="{Binding IsNetworkTriggerSelected, Converter={StaticResource BoolToVisibilityConverter}}">
+            <TextBlock Margin="0,0,0,4" FontWeight="SemiBold" Text="{loc:Loc Ui_Network}" />
+            <TextBlock
+                Margin="0,0,0,8"
+                Foreground="{DynamicResource MutedTextBrush}"
+                Text="{loc:Loc Ui_RunsWhenThisPCConnectsToOrDisconnects}"
+                TextWrapping="Wrap" />
+            <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_TriggerDirection}" />
+            <ComboBox
+                Height="32"
+                Margin="0,0,0,10"
+                AutomationProperties.Name="{loc:Loc Ui_TriggerDirection}"
+                ItemsSource="{Binding NetworkTriggerDirectionOptions}"
+                SelectedValue="{Binding NetworkTriggerDirection, Mode=TwoWay}"
+                SelectedValuePath="Key">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{loc:LocBinding Value, Choice=True}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <TextBlock Margin="0,0,0,4" Text="{loc:Loc Ui_NetworkNameOptionalForDisconnect}" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ComboBox
+                    x:Name="TriggerNetworkBox"
+                    Grid.Column="0"
+                    Height="32"
+                    b:TextBoxPlaceholderBehavior.Text="{loc:Loc Ui_SelectOrTypeANetworkName}"
+                    AutomationProperties.Name="{loc:Loc Ui_NetworkNameOptionalForDisconnect}"
+                    DropDownOpened="NetworkPicker_DropDownOpened"
+                    IsEditable="True"
+                    ItemsSource="{Binding AvailableNetworkNames}"
+                    SelectedItem="{Binding SelectedAvailableNetworkName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                    Text="{Binding TriggerNetworkName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                    <i:Interaction.Behaviors>
+                        <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_EnterANetworkNameOrSelectOneNames}" />
+                    </i:Interaction.Behaviors>
+                </ComboBox>
+                <Button
+                    x:Name="TriggerNetworkRefreshButton"
+                    Grid.Column="1"
+                    AutomationProperties.Name="{loc:Loc Ui_RefreshNetworks}"
+                    Style="{StaticResource NetworkRefreshButtonStyle}">
+                    <i:Interaction.Behaviors>
+                        <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_RefreshNetworks}" />
+                    </i:Interaction.Behaviors>
+                </Button>
+            </Grid>
+            <TextBlock
+                x:Name="NetworkDiscoveryWarningText"
+                Margin="0,6,0,0"
+                Foreground="{DynamicResource MutedTextBrush}"
+                Text="{loc:LocBinding NetworkDiscoveryWarning, Message=True}"
+                TextWrapping="Wrap">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding NetworkDiscoveryWarning}" Value="">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </StackPanel>
+
+        <TextBlock
+            x:Name="TriggerValidationMessage"
+            Margin="0,0,0,8"
+            AutomationProperties.LiveSetting="Assertive"
+            Foreground="{DynamicResource DialogWarningBrush}"
+            Text="{loc:LocBinding TriggerEditorErrorText}"
+            TextWrapping="Wrap">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding TriggerEditorError}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
+        <StackPanel
+            Margin="0,6,0,0"
+            HorizontalAlignment="Right"
+            Orientation="Horizontal"
+            Visibility="{Binding ShowActionButtons, RelativeSource={RelativeSource AncestorType=controls:RoutineTriggerEditorPanel}, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Button
+                x:Name="CancelTriggerButton"
+                MinWidth="80"
+                Margin="0,0,8,0"
+                Click="CancelTriggerButton_Click"
+                Content="{loc:Loc Ui_Cancel}" />
+            <Button
+                x:Name="ConfirmTriggerButton"
+                MinWidth="112"
+                Click="ConfirmTriggerButton_Click"
+                Content="{loc:LocBinding TriggerEditorConfirmText, Choice=True}"
+                Style="{StaticResource AppPrimaryButtonStyle}" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

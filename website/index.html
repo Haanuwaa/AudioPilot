@@ -1,0 +1,1177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="AudioPilot is a free, open-source Windows utility for device switching shortcuts, per-app volume mixing, microphone controls, and automatic audio routines."
+    />
+    <meta name="theme-color" content="#121315" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; base-uri 'none'; object-src 'none'; form-action 'none'"
+    />
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:title"
+      content="AudioPilot — Windows audio control, without the clutter"
+    />
+    <meta
+      property="og:description"
+      content="Device switching shortcuts, per-app volume mixers, microphone controls, and automatic audio routines in one focused Windows utility."
+    />
+    <meta property="og:url" content="https://haanuwaa.github.io/AudioPilot/" />
+    <meta
+      property="og:image"
+      content="https://haanuwaa.github.io/AudioPilot/assets/audiopilot.png"
+    />
+    <link rel="canonical" href="https://haanuwaa.github.io/AudioPilot/" />
+    <link rel="icon" href="assets/audiopilot.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="styles.css?v=@@STYLE_VERSION@@" />
+    <title>AudioPilot — Windows audio control, without the clutter</title>
+    <script id="release-data" type="application/json">
+      @@DOWNLOADS_JSON@@
+    </script>
+    <script src="site.js?v=@@SCRIPT_VERSION@@" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a class="brand" href="#" aria-label="AudioPilot home">
+          <img src="assets/audiopilot.svg" width="32" height="32" alt="" />
+          <span class="brand-name">AudioPilot</span>
+        </a>
+        <nav class="site-nav" aria-label="Main navigation">
+          <a href="#features">Features</a>
+          <a href="#cli">CLI</a>
+          <a href="#download">Download</a>
+          <a
+            href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md"
+            >User Guide</a
+          >
+          <a href="https://github.com/Haanuwaa/AudioPilot" class="nav-external">
+            GitHub
+            <svg
+              class="icon-xs"
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M5 11L11 5M11 5H6.5M11 5V9.5"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </a>
+        </nav>
+        <div class="header-actions">
+          <button
+            type="button"
+            class="theme-toggle"
+            id="site-theme-toggle"
+            aria-label="Light theme"
+            aria-pressed="false"
+            data-enhanced
+            hidden
+          >
+            <svg
+              class="icon-theme icon-sun"
+              viewBox="0 0 20 20"
+              fill="none"
+              aria-hidden="true"
+            >
+              <circle
+                cx="10"
+                cy="10"
+                r="3.5"
+                stroke="currentColor"
+                stroke-width="1.5"
+              />
+              <path
+                d="M10 2.5V4.2M10 15.8V17.5M2.5 10H4.2M15.8 10H17.5M4.7 4.7L5.9 5.9M14.1 14.1L15.3 15.3M15.3 4.7L14.1 5.9M5.9 14.1L4.7 15.3"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
+            </svg>
+            <svg
+              class="icon-theme icon-moon"
+              viewBox="0 0 20 20"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M16.5 11.9A6.75 6.75 0 0 1 8.1 3.5a6.75 6.75 0 1 0 8.4 8.4Z"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+          <a class="button primary button-sm" href="#download">Download</a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero wrap" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <div class="meta-pill">
+            <span class="meta-dot" aria-hidden="true"></span>
+            <span>v@@VERSION@@</span>
+            <span class="meta-sep" aria-hidden="true">·</span>
+            <span>Windows 10 &amp; 11</span>
+            <span class="meta-sep" aria-hidden="true">·</span>
+            <span>Open source (MIT)</span>
+          </div>
+          <h1 id="hero-title">Windows audio control, without the clutter.</h1>
+          <p class="hero-lead">
+            Switch playback and recording devices with a shortcut, adjust
+            per-app volume in one place, manage push-to-talk and mute states,
+            and automate your setup with routines.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="#download">
+              Download for Windows
+              <svg
+                class="icon-sm"
+                viewBox="0 0 16 16"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M8 3V11M8 11L4.75 7.75M8 11L11.25 7.75M3 13.5H13"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </a>
+            <a
+              class="button secondary"
+              href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md#start-here"
+              >Setup guide</a
+            >
+          </div>
+          <div class="shortcut-strip">
+            <div class="shortcut-keys" aria-label="Example shortcut Ctrl Alt O">
+              <kbd>Ctrl</kbd><span class="key-plus" aria-hidden="true">+</span
+              ><kbd>Alt</kbd><span class="key-plus" aria-hidden="true">+</span
+              ><kbd>O</kbd>
+            </div>
+            <p>
+              Cycle your saved devices from any app — every shortcut is
+              optional and configurable.
+            </p>
+          </div>
+        </div>
+
+        <div class="hero-stage">
+          <div class="window-shell">
+            <div class="window-bar">
+              <div class="window-identity">
+                <img src="assets/audiopilot.svg" width="16" height="16" alt="" />
+                <span id="hero-window-title">AudioPilot — Output</span>
+              </div>
+              <div
+                class="segmented"
+                role="group"
+                aria-label="Preview app theme"
+                data-enhanced
+                hidden
+              >
+                <button type="button" data-theme="dark" aria-pressed="true">
+                  Dark
+                </button>
+                <button type="button" data-theme="light" aria-pressed="false">
+                  Light
+                </button>
+              </div>
+            </div>
+            <div class="window-viewport">
+              <img
+                id="hero-screenshot"
+                class="app-screenshot"
+                src="assets/main_window_dark.png"
+                alt="AudioPilot Output tab with a device switch order and configurable shortcut"
+                width="968"
+                height="880"
+                fetchpriority="high"
+              />
+            </div>
+          </div>
+          <div class="stage-meta">
+            <span>Actual app screenshots with sample devices.</span>
+            <a
+              id="hero-fullsize"
+              class="inline-link"
+              href="assets/main_window_dark.png"
+              target="_blank"
+              rel="noopener"
+              aria-label="View full-size Output screenshot (opens in a new tab)"
+            >
+              Open full size
+              <svg
+                class="icon-xs"
+                viewBox="0 0 16 16"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M5 11L11 5M11 5H6.5M11 5V9.5"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="pillars wrap" aria-label="Core capabilities">
+        <article class="pillar">
+          <div class="pillar-icon" aria-hidden="true">
+            <svg viewBox="0 0 20 20" fill="none">
+              <path
+                d="M4 7H15M15 7L12 4M15 7L12 10M16 13H5M5 13L8 10M5 13L8 16"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <h2>Fast device switching</h2>
+          <p>
+            Build ordered lists for speakers, headsets, and microphones. Cycle
+            with a global shortcut, open the quick picker, or switch directly.
+          </p>
+        </article>
+        <article class="pillar">
+          <div class="pillar-icon" aria-hidden="true">
+            <svg viewBox="0 0 20 20" fill="none">
+              <path
+                d="M4 5.5H16M4 10H16M4 14.5H16"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+              />
+              <circle
+                cx="8"
+                cy="5.5"
+                r="2"
+                fill="var(--surface)"
+                stroke="currentColor"
+                stroke-width="1.5"
+              />
+              <circle
+                cx="13"
+                cy="10"
+                r="2"
+                fill="var(--surface)"
+                stroke="currentColor"
+                stroke-width="1.5"
+              />
+              <circle
+                cx="6.5"
+                cy="14.5"
+                r="2"
+                fill="var(--surface)"
+                stroke="currentColor"
+                stroke-width="1.5"
+              />
+            </svg>
+          </div>
+          <h2>Per-app volume &amp; routing</h2>
+          <p>
+            Lower a game without touching voice chat, adjust recording levels,
+            route individual apps to another output, or move several apps
+            together.
+          </p>
+        </article>
+        <article class="pillar">
+          <div class="pillar-icon" aria-hidden="true">
+            <svg viewBox="0 0 20 20" fill="none">
+              <path
+                d="M11 2.5L4.5 11H10L9 17.5L15.5 9H10L11 2.5Z"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <h2>Rule-based routines</h2>
+          <p>
+            Automatically apply device, volume, and mute changes when an app
+            starts or exits, a device connects, a network changes, or a schedule
+            fires.
+          </p>
+        </article>
+      </section>
+
+      <section
+        id="features"
+        class="section wrap"
+        aria-labelledby="features-title"
+      >
+        <div class="section-header">
+          <p class="section-kicker">Inside the app</p>
+          <h2 id="features-title">Built for everyday desktop audio</h2>
+          <p class="section-lead">
+            Everything stays in one quiet tray utility — open it when you want
+            to adjust something, or drive it from shortcuts and routines.
+          </p>
+        </div>
+
+        <div class="showcase">
+          <div class="showcase-copy">
+            <div
+              class="view-switch"
+              role="tablist"
+              aria-label="Explore AudioPilot views"
+              data-enhanced
+              hidden
+            >
+              <button
+                id="tab-mixer"
+                type="button"
+                role="tab"
+                data-view="mixer"
+                aria-selected="true"
+                aria-controls="panel-mixer"
+                tabindex="0"
+              >
+                Mixers
+              </button>
+              <button
+                id="tab-routines"
+                type="button"
+                role="tab"
+                data-view="routines"
+                aria-selected="false"
+                aria-controls="panel-routines"
+                tabindex="-1"
+              >
+                Routines
+              </button>
+              <button
+                id="tab-input"
+                type="button"
+                role="tab"
+                data-view="input"
+                aria-selected="false"
+                aria-controls="panel-input"
+                tabindex="-1"
+              >
+                Microphone
+              </button>
+              <button
+                id="tab-settings"
+                type="button"
+                role="tab"
+                data-view="settings"
+                aria-selected="false"
+                aria-controls="panel-settings"
+                tabindex="-1"
+              >
+                Settings
+              </button>
+            </div>
+
+            <div id="view-copy" class="view-copy-stack">
+              <div
+                id="panel-mixer"
+                class="view-panel is-active"
+                role="tabpanel"
+                aria-labelledby="tab-mixer"
+                data-view-panel="mixer"
+                tabindex="0"
+              >
+                <h3>Every active app in one clean mixer</h3>
+                <p>
+                  Balance master output, input, System Sounds, and individual
+                  applications side by side. Route an app to a specific playback
+                  device, mute with a click, or multi-select playback apps to
+                  adjust them together.
+                </p>
+                <div class="panel-links">
+                  <a
+                    class="inline-link"
+                    href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md#mixer-view"
+                  >
+                    Explore the mixers
+                    <svg
+                      class="icon-xs"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M5 11L11 5M11 5H6.5M11 5V9.5"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+
+              <div
+                id="panel-routines"
+                class="view-panel"
+                role="tabpanel"
+                aria-labelledby="tab-routines"
+                data-view-panel="routines"
+                tabindex="-1"
+                aria-hidden="true"
+                inert
+              >
+                <h3>Automatic setups that adapt to what you are doing</h3>
+                <p>
+                  Combine audio actions, triggers, and requirements in a single
+                  routine. Switch profiles when an app launches or closes, a
+                  headset connects, or a schedule triggers — and pause
+                  automation temporarily whenever you need manual control.
+                </p>
+                <div class="panel-links">
+                  <a
+                    class="inline-link"
+                    href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md#routines"
+                  >
+                    Build your first routine
+                    <svg
+                      class="icon-xs"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M5 11L11 5M11 5H6.5M11 5V9.5"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </a>
+                  <a
+                    class="inline-link"
+                    href="assets/routine_editor.png"
+                    target="_blank"
+                    rel="noopener"
+                    aria-label="View full-size routine editor screenshot (opens in a new tab)"
+                  >
+                    View routine editor screenshot
+                    <svg
+                      class="icon-xs"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M5 11L11 5M11 5H6.5M11 5V9.5"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+
+              <div
+                id="panel-input"
+                class="view-panel"
+                role="tabpanel"
+                aria-labelledby="tab-input"
+                data-view-panel="input"
+                tabindex="-1"
+                aria-hidden="true"
+                inert
+              >
+                <h3>Reliable microphone control from any window</h3>
+                <p>
+                  Monitor and adjust microphone and recording-app levels, test
+                  your input with live metering, or enable push-to-talk and
+                  hold-to-mute. Push-to-talk keeps your default microphones
+                  muted until you hold its assigned key.
+                </p>
+                <div class="panel-links">
+                  <a
+                    class="inline-link"
+                    href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md#set-up-push-to-talk-or-hold-to-mute"
+                  >
+                    Set up microphone controls
+                    <svg
+                      class="icon-xs"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M5 11L11 5M11 5H6.5M11 5V9.5"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+
+              <div
+                id="panel-settings"
+                class="view-panel"
+                role="tabpanel"
+                aria-labelledby="tab-settings"
+                data-view-panel="settings"
+                tabindex="-1"
+                aria-hidden="true"
+                inert
+              >
+                <h3>Configurable without getting in the way</h3>
+                <p>
+                  Switch between English and Spanish instantly, match Windows or
+                  pick Dark and Light themes, and tune overlays, sounds,
+                  auto-save, and global shortcut groups. Built-in search finds
+                  options even inside collapsed sections.
+                </p>
+                <div class="panel-links">
+                  <a
+                    class="inline-link"
+                    href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md#settings-tab"
+                  >
+                    Explore settings
+                    <svg
+                      class="icon-xs"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M5 11L11 5M11 5H6.5M11 5V9.5"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <ul class="control-list">
+              <li>
+                <span class="control-icon" aria-hidden="true">
+                  <svg viewBox="0 0 20 20" fill="none">
+                    <rect
+                      x="2.5"
+                      y="5"
+                      width="15"
+                      height="10"
+                      rx="2"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    />
+                    <path
+                      d="M6 8.5H7.5M10 8.5H11.5M14 8.5H14.5M6.5 11.5H13.5"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </span>
+                <div>
+                  <strong>Global shortcuts everywhere</strong>
+                  <p>
+                    Adjust foreground-app volume, control media playback, mute
+                    output or mic, and trigger push-to-talk without leaving your
+                    window.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <span class="control-icon" aria-hidden="true">
+                  <svg viewBox="0 0 20 20" fill="none">
+                    <rect
+                      x="3"
+                      y="4"
+                      width="14"
+                      height="12"
+                      rx="2"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                    />
+                    <path
+                      d="M3 12.5H17M13 14.25H14.5"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </span>
+                <div>
+                  <strong>Lives quietly in the system tray</strong>
+                  <p>
+                    Open the quick mixer or device picker on demand, then keep
+                    AudioPilot tucked out of sight while you work or play.
+                  </p>
+                </div>
+              </li>
+              <li>
+                <span class="control-icon" aria-hidden="true">
+                  <svg viewBox="0 0 20 20" fill="none">
+                    <path
+                      d="M10 3L16 5.5V10C16 13.7 13.4 16.4 10 17.5C6.6 16.4 4 13.7 4 10V5.5L10 3Z"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linejoin="round"
+                    />
+                    <path
+                      d="M7.5 10.2L9.2 11.9L12.8 8.3"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </span>
+                <div>
+                  <strong>Local-first &amp; transparent</strong>
+                  <p>
+                    No telemetry, no background accounts, and optional
+                    on-demand redacted support bundles when troubleshooting.
+                  </p>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <figure class="detail-stage">
+            <div class="window-shell">
+              <div class="window-bar">
+                <div class="window-identity">
+                  <img
+                    src="assets/audiopilot.svg"
+                    width="16"
+                    height="16"
+                    alt=""
+                  />
+                  <span id="detail-window-title"
+                    >AudioPilot — Volume Mixer</span
+                  >
+                </div>
+                <a
+                  id="detail-fullsize"
+                  class="bar-link"
+                  href="assets/volume_mixer.png"
+                  target="_blank"
+                  rel="noopener"
+                  aria-label="View full-size Volume Mixer screenshot (opens in a new tab)"
+                >
+                  Full size
+                  <svg
+                    class="icon-xs"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M5 11L11 5M11 5H6.5M11 5V9.5"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </a>
+              </div>
+              <div class="detail-viewport">
+                <img
+                  id="detail-screenshot"
+                  src="assets/volume_mixer.png"
+                  alt="AudioPilot Volume Mixer showing active devices, application levels and mute controls"
+                  width="968"
+                  height="880"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+            <figcaption class="detail-caption">
+              <span class="is-active" data-view-caption="mixer"
+                >Adjust master devices, System Sounds, and individual
+                applications in one view.</span
+              >
+              <span data-view-caption="routines" aria-hidden="true"
+                >Manage saved routines, inspect triggers and conditions, and run
+                or pause automation.</span
+              >
+              <span data-view-caption="input" aria-hidden="true"
+                >Control microphone levels, live recording apps, and
+                push-to-talk behavior.</span
+              >
+              <span data-view-caption="settings" aria-hidden="true"
+                >Search settings, switch languages and themes, and configure
+                shortcuts and overlays.</span
+              >
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="cli" class="section wrap" aria-labelledby="cli-title">
+        <div class="cli-card">
+          <div class="cli-copy">
+            <p class="section-kicker">Command-line interface</p>
+            <h2 id="cli-title">Scriptable with the same controls</h2>
+            <p>
+              Drive AudioPilot from PowerShell, Stream Deck scripts, or
+              scheduled tasks with structured <code>--json</code> output. Run
+              against the live tray app or headless on demand, and export
+              redacted diagnostics when you need a closer look.
+            </p>
+            <a
+              class="inline-link"
+              href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/CLI.md"
+            >
+              Read the CLI reference
+              <svg
+                class="icon-xs"
+                viewBox="0 0 16 16"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M5 11L11 5M11 5H6.5M11 5V9.5"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </a>
+          </div>
+
+          <div class="terminal">
+            <div class="terminal-bar">
+              <span class="terminal-title">PowerShell</span>
+              <div class="terminal-actions">
+                <span class="terminal-hint">From the AudioPilot folder</span>
+                <button
+                  type="button"
+                  class="copy-button"
+                  id="copy-cli-button"
+                  data-enhanced
+                  hidden
+                >
+                  Copy
+                </button>
+                <span
+                  id="copy-cli-status"
+                  class="sr-only"
+                  aria-live="polite"
+                ></span>
+              </div>
+            </div>
+            <pre tabindex="0"><code id="cli-snippet"><span class="code-comment"># Inspect AudioPilot status, device counts, and tuning as JSON</span>
+.\AudioPilot.Cli.exe status --json
+
+<span class="code-comment"># Lower a running app's volume by 5%</span>
+.\AudioPilot.Cli.exe app volume adjust -5 --process game
+
+<span class="code-comment"># Switch directly to a named playback device</span>
+.\AudioPilot.Cli.exe switch output --device "Headset"</code></pre>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="download"
+        class="section wrap"
+        aria-labelledby="download-title"
+      >
+        <div class="download-header">
+          <div>
+            <p class="section-kicker">Download</p>
+            <h2 id="download-title">Choose your package</h2>
+          </div>
+          <div class="download-controls">
+            <span class="version-tag">v@@VERSION@@ · Stable</span>
+            <div class="arch-control" data-arch-enhanced hidden>
+              <div
+                class="segmented arch-segmented"
+                role="group"
+                aria-label="Windows architecture"
+              >
+                <button type="button" data-arch="x64" aria-pressed="true">
+                  x64
+                </button>
+                <button type="button" data-arch="arm64" aria-pressed="false">
+                  ARM64
+                </button>
+                <button type="button" data-arch="x86" aria-pressed="false">
+                  x86
+                </button>
+              </div>
+              <select
+                id="architecture"
+                hidden
+                aria-hidden="true"
+                tabindex="-1"
+              >
+                <option value="x64">x64 · Most Windows PCs</option>
+                <option value="arm64">ARM64 · Windows on ARM</option>
+                <option value="x86">x86 · 32-bit Windows</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="packages">
+          <article class="package recommended">
+            <div class="package-top">
+              <span class="package-badge recommended-badge">Recommended</span>
+              <h3>Windows installer</h3>
+              <p>
+                Self-contained MSI installer for your Windows account with Start
+                Menu shortcuts, optional CLI PATH setup, and standard Windows
+                uninstall.
+              </p>
+            </div>
+            <div class="package-footer">
+              <a
+                class="button primary package-cta"
+                id="installer-download"
+                href="@@INSTALLER_URL@@"
+              >
+                Download x64 installer
+                <span aria-hidden="true">↓</span>
+              </a>
+              <span class="package-size" id="installer-size"
+                >x64 · @@INSTALLER_SIZE@@ · MSI</span
+              >
+            </div>
+          </article>
+
+          <article class="package">
+            <div class="package-top">
+              <span class="package-badge">Smaller download</span>
+              <h3>Portable (shared runtime)</h3>
+              <p>
+                Lightweight ZIP archive that uses your installed .NET 11 Desktop
+                Runtime instead of bundling another copy.
+              </p>
+            </div>
+            <div class="package-footer">
+              <a
+                class="button secondary package-cta"
+                id="framework-download"
+                href="@@FRAMEWORK_URL@@"
+              >
+                Download framework-dependent ZIP
+                <span aria-hidden="true">↓</span>
+              </a>
+              <span class="package-size" id="framework-size"
+                >x64 · @@FRAMEWORK_SIZE@@ · ZIP</span
+              >
+              <a
+                class="small-link"
+                href="https://dotnet.microsoft.com/en-us/download/dotnet/11.0"
+                >Get the .NET Desktop Runtime ↗</a
+              >
+            </div>
+          </article>
+
+          <article class="package">
+            <div class="package-top">
+              <span class="package-badge">Runtime included</span>
+              <h3>Portable (self-contained)</h3>
+              <p>
+                Extract anywhere and run directly without installing anything or
+                adding a shared .NET runtime to the machine.
+              </p>
+            </div>
+            <div class="package-footer">
+              <a
+                class="button secondary package-cta"
+                id="portable-download"
+                href="@@PORTABLE_URL@@"
+              >
+                Download self-contained ZIP
+                <span aria-hidden="true">↓</span>
+              </a>
+              <span class="package-size" id="portable-size"
+                >x64 · @@PORTABLE_SIZE@@ · ZIP</span
+              >
+            </div>
+          </article>
+        </div>
+
+        <p class="download-footnote">
+          Free under the MIT license. Releases and SHA-256 checksums are
+          published on GitHub.
+          <a href="https://github.com/Haanuwaa/AudioPilot/releases/latest"
+            >Release notes, checksums &amp; all assets ↗</a
+          >
+        </p>
+        <noscript>
+          <p class="download-footnote">
+            The direct links above are for x64. For ARM64 or x86 packages, visit
+            the
+            <a href="https://github.com/Haanuwaa/AudioPilot/releases/latest"
+              >GitHub release page</a
+            >.
+          </p>
+        </noscript>
+      </section>
+
+      <section id="faq" class="section wrap" aria-labelledby="questions-title">
+        <div class="questions">
+          <div class="questions-intro">
+            <p class="section-kicker">FAQ</p>
+            <h2 id="questions-title">Common questions</h2>
+            <p>
+              Quick answers on system requirements, Windows SmartScreen
+              warnings, updates, and troubleshooting.
+            </p>
+            <a
+              class="inline-link"
+              href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md"
+            >
+              Open the full user guide
+              <svg
+                class="icon-xs"
+                viewBox="0 0 16 16"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M5 11L11 5M11 5H6.5M11 5V9.5"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </a>
+          </div>
+
+          <div class="answers">
+            <details>
+              <summary>
+                <span>Which Windows versions are supported?</span>
+                <svg
+                  class="chevron"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 6L8 10L12 6"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </summary>
+              <p>
+                AudioPilot requires Windows 10 version 2004 (build 19041) or
+                later. Official support covers Windows 11 and supported Windows
+                10 Enterprise/LTSC editions that meet that minimum, subject to
+                the Microsoft and .NET 11 support lifecycles. A CPU supported by
+                .NET 11 is required; older x86/x64 CPUs such as Intel Core 2 are
+                not supported.
+              </p>
+            </details>
+            <details>
+              <summary>
+                <span>Why does Windows show a download warning?</span>
+                <svg
+                  class="chevron"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 6L8 10L12 6"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </summary>
+              <p>
+                AudioPilot does not yet have a publicly trusted code-signing
+                certificate. Windows may show an unknown-publisher or
+                SmartScreen warning. Read the
+                <a
+                  href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md#unsigned-downloads-and-windows-warnings"
+                  >download guidance</a
+                >
+                before opening it. Work-managed PCs may also apply their own
+                software policies.
+              </p>
+            </details>
+            <details>
+              <summary>
+                <span>Do I need to configure everything upfront?</span>
+                <svg
+                  class="chevron"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 6L8 10L12 6"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </summary>
+              <p>
+                No. Start with just the controls you want. You can use the
+                volume mixer, media controls, and microphone shortcuts without
+                setting up a device switch order or routines. The
+                <a
+                  href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md#start-here"
+                  >setup guide</a
+                >
+                walks through the first steps.
+              </p>
+            </details>
+            <details>
+              <summary>
+                <span>Does AudioPilot update itself automatically?</span>
+                <svg
+                  class="chevron"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 6L8 10L12 6"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </summary>
+              <p>
+                Only with your approval. Optional checks notify you when a newer
+                release is available without downloading packages in the
+                background. Official stable packages offer Update and restart,
+                which downloads, verifies, and installs after you approve while
+                keeping AudioPilot running until replacement is ready.
+              </p>
+            </details>
+            <details>
+              <summary>
+                <span>Which languages are supported?</span>
+                <svg
+                  class="chevron"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 6L8 10L12 6"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </summary>
+              <p>
+                English and Spanish. Change Language in Settings to switch the
+                interface immediately without losing unsaved edits or
+                interrupting active operations. CLI commands and output stay in
+                English for predictable scripts.
+              </p>
+            </details>
+            <details>
+              <summary>
+                <span>Where can I report a bug or suggest a feature?</span>
+                <svg
+                  class="chevron"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 6L8 10L12 6"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </summary>
+              <p>
+                Use
+                <a href="https://github.com/Haanuwaa/AudioPilot/discussions"
+                  >GitHub Discussions</a
+                >
+                for questions and ideas, or open an
+                <a href="https://github.com/Haanuwaa/AudioPilot/issues"
+                  >issue on GitHub</a
+                >. For troubleshooting, the app can save a redacted support
+                bundle on demand — review it before sharing.
+              </p>
+            </details>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap footer-inner">
+        <div class="footer-brand">
+          <a class="brand" href="#">
+            <img src="assets/audiopilot.svg" width="24" height="24" alt="" />
+            <span class="brand-name">AudioPilot</span>
+          </a>
+          <p>Open-source Windows audio utility. MIT licensed.</p>
+        </div>
+        <div class="footer-links">
+          <a href="https://github.com/Haanuwaa/AudioPilot">GitHub</a>
+          <a
+            href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/USER_GUIDE.md"
+            >User Guide</a
+          >
+          <a href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/CLI.md"
+            >CLI Reference</a
+          >
+          <a href="https://github.com/Haanuwaa/AudioPilot/blob/main/LICENSE"
+            >License</a
+          >
+          <a
+            href="https://github.com/Haanuwaa/AudioPilot/blob/main/docs/SECURITY.md"
+            >Security</a
+          >
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

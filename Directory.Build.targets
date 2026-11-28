@@ -1,0 +1,61 @@
+<Project>
+  <Target Name="BuildPortableProfileReferences" BeforeTargets="ResolveProjectReferences" DependsOnTargets="PrepareProjectReferences"
+          Condition="'$(MSBuildProjectName)' == 'AudioPilot' and '$(AudioPilotPortableProfile)' == 'true' and '$(BuildingInsideVisualStudio)' == 'true' and '$(DesignTimeBuild)' != 'true'">
+    <!-- Visual Studio's preceding solution build has no publish RID; build the matching references before WPF compilation. -->
+    <MSBuild Projects="@(_MSBuildProjectReferenceExistent)" Targets="Build"
+             BuildInParallel="$(BuildInParallel)"
+             Properties="%(_MSBuildProjectReferenceExistent.SetConfiguration);%(_MSBuildProjectReferenceExistent.SetPlatform);%(_MSBuildProjectReferenceExistent.SetTargetFramework);BuildingInsideVisualStudio=false;BuildProjectReferences=true"
+             RemoveProperties="%(_MSBuildProjectReferenceExistent.GlobalPropertiesToRemove)$(_GlobalPropertiesToRemoveFromProjectReferences)"
+             Condition="'%(_MSBuildProjectReferenceExistent.BuildReference)' == 'true'" />
+  </Target>
+  <Target Name="StagePortableProfile" BeforeTargets="PrepareForPublish"
+          Condition="'$(MSBuildProjectName)' == 'AudioPilot' and '$(AudioPilotPortableProfile)' == 'true' and '$(AudioPilotPayloadOnly)' != 'true'">
+    <PropertyGroup>
+      <!-- Visual Studio also evaluates this target in .NET Framework MSBuild. -->
+      <_AudioPilotPortableDestination>$([System.String]::Copy('$(PublishDir)').TrimEnd('\/'))</_AudioPilotPortableDestination>
+      <PublishDir>$(MSBuildThisFileDirectory)artifacts\profile-payloads\$(RuntimeIdentifier)-$(SelfContained)\</PublishDir>
+    </PropertyGroup>
+  </Target>
+  <Target Name="PackagePortableProfile" AfterTargets="Publish"
+          Condition="'$(MSBuildProjectName)' == 'AudioPilot' and '$(AudioPilotPortableProfile)' == 'true' and '$(AudioPilotPayloadOnly)' != 'true'">
+    <Exec WorkingDirectory="$(MSBuildThisFileDirectory)"
+          Command="pwsh -NoProfile -File &quot;$(MSBuildThisFileDirectory)scripts\publish-portable-profile.ps1&quot; -RuntimeIdentifier $(RuntimeIdentifier) -SelfContained $(SelfContained) -Destination &quot;$(_AudioPilotPortableDestination)&quot; -Version $(Version)" />
+  </Target>
+  <PropertyGroup Condition="'$(AppManifestTemplate)' != ''">
+    <GeneratedApplicationManifestRoot Condition="'$(IntermediateOutputPath)' != '' and $([System.IO.Path]::IsPathRooted('$(IntermediateOutputPath)'))">$(IntermediateOutputPath)</GeneratedApplicationManifestRoot>
+    <GeneratedApplicationManifestRoot Condition="'$(GeneratedApplicationManifestRoot)' == '' and '$(IntermediateOutputPath)' != ''">$(MSBuildProjectDirectory)\$(IntermediateOutputPath)</GeneratedApplicationManifestRoot>
+    <GeneratedApplicationManifestRoot Condition="'$(GeneratedApplicationManifestRoot)' == '' and '$(BaseIntermediateOutputPath)' != '' and $([System.IO.Path]::IsPathRooted('$(BaseIntermediateOutputPath)'))">$(BaseIntermediateOutputPath)</GeneratedApplicationManifestRoot>
+    <GeneratedApplicationManifestRoot Condition="'$(GeneratedApplicationManifestRoot)' == '' and '$(BaseIntermediateOutputPath)' != ''">$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)</GeneratedApplicationManifestRoot>
+    <GeneratedApplicationManifestRoot Condition="'$(GeneratedApplicationManifestRoot)' == ''">$(MSBuildProjectDirectory)\obj\</GeneratedApplicationManifestRoot>
+    <GeneratedApplicationManifest>$(GeneratedApplicationManifestRoot)$(AssemblyName).$(AssemblyVersion).generated.manifest</GeneratedApplicationManifest>
+    <ApplicationManifest Condition="'$(DesignTimeBuild)' != 'true'">$(GeneratedApplicationManifest)</ApplicationManifest>
+    <ApplicationManifest Condition="'$(DesignTimeBuild)' == 'true'">$(AppManifestTemplate)</ApplicationManifest>
+  </PropertyGroup>
+  <Target Name="PrepareVersionedAppManifest" BeforeTargets="BeforeBuild"
+          Condition="'$(AppManifestTemplate)' != '' and '$(DesignTimeBuild)' != 'true'"
+          Inputs="$(AppManifestTemplate);$(MSBuildProjectFullPath);$(MSBuildThisFileDirectory)Version.props"
+          Outputs="$(GeneratedApplicationManifest)">
+    <PropertyGroup>
+      <_AudioPilotTempManifest>$(GeneratedApplicationManifest).tmp</_AudioPilotTempManifest>
+    </PropertyGroup>
+    <MakeDir Directories="$(GeneratedApplicationManifestRoot)" />
+    <Copy SourceFiles="$(AppManifestTemplate)" DestinationFiles="$(_AudioPilotTempManifest)" OverwriteReadOnlyFiles="true" />
+    <XmlPoke
+      XmlInputPath="$(_AudioPilotTempManifest)"
+      Query="/asmv1:assembly/asmv1:assemblyIdentity/@version"
+      Namespaces="&lt;Namespace Prefix='asmv1' Uri='urn:schemas-microsoft-com:asm.v1' /&gt;"
+      Value="$(AssemblyVersion)" />
+    <Move SourceFiles="$(_AudioPilotTempManifest)" DestinationFiles="$(GeneratedApplicationManifest)" OverwriteReadOnlyFiles="true" />
+    <ItemGroup>
+      <FileWrites Include="$(GeneratedApplicationManifest)" />
+    </ItemGroup>
+  </Target>
+  <Target Name="LimitReadyToRunToApplicationAssemblies"
+          BeforeTargets="_PrepareForReadyToRunCompilation"
+          Condition="'$(PublishReadyToRun)' == 'true' and ('$(MSBuildProjectName)' == 'AudioPilot' or '$(MSBuildProjectName)' == 'AudioPilot.CliHost' or '$(MSBuildProjectName)' == 'AudioPilot.Updater.Ui')">
+    <ItemGroup>
+      <PublishReadyToRunExclude Include="@(ResolvedFileToPublish->'%(Filename)%(Extension)')"
+                                Exclude="AudioPilot.dll;AudioPilot.Core.dll;AudioPilot.Cli.dll" />
+    </ItemGroup>
+  </Target>
+</Project>

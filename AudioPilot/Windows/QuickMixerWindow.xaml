@@ -1,0 +1,150 @@
+<Window x:Class="AudioPilot.QuickMixerWindow" x:ClassModifier="internal"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:controls="clr-namespace:AudioPilot.Controls"
+    xmlns:loc="clr-namespace:AudioPilot.Localization"
+    Title="{loc:Loc QuickMixer_Title}" Width="460" Height="500" WindowStyle="None" ResizeMode="NoResize"
+    Topmost="True" WindowStartupLocation="Manual" AllowsTransparency="True"
+    Background="Transparent" Foreground="{DynamicResource TextBrush}" PreviewKeyDown="OnPreviewKeyDown" Deactivated="OnWindowDeactivated">
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Find" Executed="OnFindExecuted" />
+    </Window.CommandBindings>
+    <Window.InputBindings>
+        <KeyBinding Key="F" Modifiers="Control" Command="ApplicationCommands.Find" />
+    </Window.InputBindings>
+    <Window.Resources><BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter" /></Window.Resources>
+    <Grid>
+    <Border Background="{DynamicResource WindowBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}"
+            BorderThickness="1" CornerRadius="12">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Border Padding="20,16,20,12" Background="Transparent" MouseLeftButtonDown="OnHeaderDrag">
+                <DockPanel Background="Transparent">
+                    <Button x:Name="CloseButton" DockPanel.Dock="Right" Content="✕" Width="28" Padding="0" Click="OnCloseClick"
+                            AutomationProperties.Name="{loc:Loc QuickMixer_Close}" />
+                    <Button x:Name="WindowOptionsButton" DockPanel.Dock="Right" Content="⋯" Width="28" Padding="0" Margin="0,0,8,0" Click="OnWindowOptions"
+                            AutomationProperties.Name="{loc:Loc QuickMixer_Options}">
+                        <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{loc:Loc QuickMixer_Options}" /></i:Interaction.Behaviors>
+                        <Button.ContextMenu>
+                            <ContextMenu x:Name="MixerOptionsMenu" Style="{DynamicResource AppContextMenuStyle}">
+                                <MenuItem x:Name="SortAppsMenu" Style="{DynamicResource AppContextMenuItemStyle}">
+                                    <MenuItem x:Name="SortByNameItem" Header="{loc:Loc QuickMixer_SortByName}" IsCheckable="True" Click="OnSortApps"
+                                              Icon="{StaticResource AppMenuCheckIcon}" Style="{DynamicResource AppContextMenuItemStyle}" />
+                                    <MenuItem x:Name="SortPlayingFirstItem" Header="{loc:Loc QuickMixer_PlayingFirst}" IsCheckable="True" Click="OnSortApps"
+                                              Icon="{StaticResource AppMenuCheckIcon}" Style="{DynamicResource AppContextMenuItemStyle}" />
+                                </MenuItem>
+                                <Separator x:Name="SortOptionsSeparator" Style="{DynamicResource AppContextMenuSeparatorStyle}" />
+                                <MenuItem x:Name="AlwaysOnTopItem" AutomationProperties.Name="{loc:Loc Flyout_AlwaysOnTop}" IsCheckable="True" InputGestureText="Ctrl+T"
+                                          Icon="{StaticResource AppMenuCheckIcon}" Style="{DynamicResource AppContextMenuItemStyle}" />
+                                <Separator Style="{DynamicResource AppContextMenuSeparatorStyle}" />
+                                <MenuItem Header="{loc:Loc Flyout_Move}" Click="OnMoveWindow" Style="{DynamicResource AppContextMenuItemStyle}" />
+                                <MenuItem x:Name="ResizeWindowItem" Header="{loc:Loc Flyout_Resize}" Click="OnResizeWindow" Style="{DynamicResource AppContextMenuItemStyle}" />
+                                <MenuItem Header="{loc:Loc Ui_ResetWindowLayout}" Click="OnResetWindowLayout" Style="{DynamicResource AppContextMenuItemStyle}" />
+                                <MenuItem Header="{loc:Loc QuickMixer_ResetPreferences}" Click="OnResetMixerPreferences" Style="{DynamicResource AppContextMenuItemStyle}" />
+                            </ContextMenu>
+                        </Button.ContextMenu>
+                    </Button>
+                    <ToggleButton x:Name="KeepOpenToggle" DockPanel.Dock="Right" Margin="0,0,8,0" Style="{DynamicResource FlyoutPinButtonStyle}"
+                                  AutomationProperties.Name="{loc:Loc Flyout_KeepOpen}">
+                        <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{Binding (AutomationProperties.HelpText), ElementName=KeepOpenToggle}" /></i:Interaction.Behaviors>
+                    </ToggleButton>
+                    <Button DockPanel.Dock="Right" Content="{loc:Loc Ui_Refresh}" Margin="0,0,8,0" Click="OnRefreshClick"
+                            AutomationProperties.HelpText="{loc:Loc QuickMixer_RefreshHelp}">
+                        <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{loc:Loc QuickMixer_RefreshHelp}" /></i:Interaction.Behaviors>
+                    </Button>
+                    <TextBlock Text="{loc:Loc QuickMixer_Title}" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" />
+                </DockPanel>
+            </Border>
+            <StackPanel Grid.Row="1" Margin="20,0,20,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TabControl x:Name="MixerTabs" Grid.Column="0" SelectionChanged="OnTabChanged">
+                        <TabControl.Template><ControlTemplate TargetType="TabControl"><StackPanel Orientation="Horizontal" IsItemsHost="True" KeyboardNavigation.TabNavigation="Once" /></ControlTemplate></TabControl.Template>
+                        <TabItem Header="{loc:Loc Common_Output}" /><TabItem Header="{loc:Loc Common_Input}" />
+                    </TabControl>
+                    <Button x:Name="SelectAppsButton" Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="8,0,0,0"
+                            Content="{loc:LocBinding SelectionModeLabel}" AutomationProperties.Name="{loc:LocBinding SelectionModeLabel}"
+                            Padding="6,3" Click="OnSelectAppsClick" Style="{StaticResource MixerInlineButtonStyle}"
+                            Visibility="{Binding CanGroupApplications, Converter={StaticResource BoolToVisibilityConverter}}">
+                        <Button.ContentTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" TextTrimming="CharacterEllipsis" />
+                            </DataTemplate>
+                        </Button.ContentTemplate>
+                    </Button>
+                    <ToggleButton x:Name="DeafenToggle" Grid.Column="2" Width="30" Height="28" Margin="5,0,0,0" Padding="4"
+                                  AutomationProperties.Name="{loc:Loc Ui_DeafenText}"
+                                  AutomationProperties.HelpText="{loc:Loc Ui_ToggleDeafenToMuteBothTheMicrophoneAnd}">
+                        <ToggleButton.Style>
+                            <Style TargetType="ToggleButton" BasedOn="{StaticResource MixerGlobalMuteToggleStyle}">
+                                <Setter Property="Tag" Value="{x:Static controls:AppMenuGlyphs.Headphones}" />
+                                <Style.Triggers><Trigger Property="IsChecked" Value="True"><Setter Property="Tag" Value="{x:Static controls:AppMenuGlyphs.HeadphonesMuted}" /></Trigger></Style.Triggers>
+                            </Style>
+                        </ToggleButton.Style>
+                        <i:Interaction.Behaviors><b:HoverInfoPopupBehavior Text="{Binding (AutomationProperties.HelpText), ElementName=DeafenToggle}" /></i:Interaction.Behaviors>
+                    </ToggleButton>
+                </Grid>
+                <DockPanel x:Name="GroupSummary" LastChildFill="False" Margin="0,4,0,0"
+                           Visibility="{Binding HasSelectedApplications, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <Button x:Name="ClearSelectionButton" DockPanel.Dock="Right" Content="{loc:Loc Ui_Clear}" Padding="6,1"
+                            Click="OnClearSelectionClick" Style="{StaticResource MixerInlineButtonStyle}" />
+                    <TextBlock DockPanel.Dock="Right" Text="{loc:LocBinding SelectedApplicationCount, Format=QuickMixer_Selected}"
+                               Foreground="{DynamicResource AccentTextBrush}" VerticalAlignment="Center" Margin="0,0,5,0"
+                               AutomationProperties.LiveSetting="Polite" />
+                </DockPanel>
+                <StackPanel x:Name="SearchPanel" Visibility="Collapsed" Margin="0,4,0,0">
+                    <TextBox x:Name="SearchBox" Padding="6,3" TextChanged="OnSearchChanged"
+                             b:TextBoxPlaceholderBehavior.Text="{loc:Loc QuickMixer_FindApps}"
+                             AutomationProperties.Name="{loc:Loc QuickMixer_FindApps}"
+                             AutomationProperties.HelpText="{loc:Loc QuickMixer_FindHelp}" />
+                    <TextBlock x:Name="SearchEmpty" Visibility="Collapsed" Margin="0,3,0,0"
+                               Text="{loc:Loc QuickMixer_NoMatchingApps}" Foreground="{DynamicResource MutedTextBrush}"
+                               AutomationProperties.LiveSetting="Polite" TextWrapping="Wrap" />
+                </StackPanel>
+            </StackPanel>
+            <ListBox x:Name="SessionList" Grid.Row="2" Margin="20,0,20,0" BorderThickness="0" Background="Transparent" Padding="0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     ScrollViewer.CanContentScroll="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
+                     VirtualizingPanel.ScrollUnit="Pixel" VirtualizingPanel.CacheLength="0" FocusVisualStyle="{x:Null}"
+                     ItemContainerStyle="{StaticResource QuickMixerItemContainerStyle}" ItemTemplate="{StaticResource QuickMixerItemTemplate}"
+                     AutomationProperties.Name="{loc:Loc QuickMixer_List}" SelectionChanged="OnRowSelected"
+                     PreviewMouseLeftButtonDown="OnRowPreviewMouseLeftButtonDown"
+                     PreviewMouseDown="OnListPointerInput" PreviewMouseMove="OnListPointerInput" PreviewMouseWheel="OnListPointerInput"
+                     ContextMenuOpening="OnAppMenuOpening">
+                <ListBox.ItemsPanel><ItemsPanelTemplate><VirtualizingStackPanel /></ItemsPanelTemplate></ListBox.ItemsPanel>
+                <ListBox.ContextMenu>
+                    <ContextMenu x:Name="AppOptionsMenu" Style="{DynamicResource AppContextMenuStyle}" Closed="OnAppMenuClosed">
+                        <MenuItem x:Name="PinAppItem" StaysOpenOnClick="True" Click="OnPinApp"
+                                  Style="{DynamicResource AppContextMenuItemStyle}" />
+                    </ContextMenu>
+                </ListBox.ContextMenu>
+            </ListBox>
+            <Grid Grid.Row="3" MinHeight="32" Margin="20,7,20,16">
+                <TextBlock x:Name="StatusText" FontSize="12" TextWrapping="Wrap"
+                           Foreground="{DynamicResource MutedTextBrush}" AutomationProperties.LiveSetting="Polite" />
+                <TextBlock x:Name="HelpText" Text="{loc:Loc QuickMixer_Help}" TextWrapping="Wrap" FontSize="11" Foreground="{DynamicResource MutedTextBrush}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=StatusText}" Value="">
+                                    <Setter Property="Visibility" Value="Visible" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
+        </Grid>
+    </Border>
+    </Grid>
+</Window>

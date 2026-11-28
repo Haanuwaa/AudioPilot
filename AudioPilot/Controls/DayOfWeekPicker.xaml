@@ -1,0 +1,88 @@
+<UserControl
+    x:Class="AudioPilot.Controls.DayOfWeekPicker"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:b="clr-namespace:AudioPilot.Behaviors"
+    xmlns:controls="clr-namespace:AudioPilot.Controls"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:loc="clr-namespace:AudioPilot.Localization"
+    Focusable="False"
+    IsTabStop="False">
+    <StackPanel>
+        <WrapPanel
+            Margin="0,0,0,6"
+            Orientation="Horizontal"
+            Visibility="{Binding ShowPresets, RelativeSource={RelativeSource AncestorType=controls:DayOfWeekPicker}, Converter={StaticResource BoolToVisibilityConverter}}">
+            <Button
+                x:Name="EveryDayPresetButton"
+                Height="26"
+                Margin="0,0,6,4"
+                Padding="8,2"
+                Click="EveryDayPreset_Click"
+                Content="{loc:Loc Ui_EveryDay}"
+                FontSize="12" />
+            <Button
+                x:Name="WeekdaysPresetButton"
+                Height="26"
+                Margin="0,0,6,4"
+                Padding="8,2"
+                Click="WeekdaysPreset_Click"
+                Content="{loc:Loc Ui_Weekdays}"
+                FontSize="12" />
+            <Button
+                x:Name="WeekendsPresetButton"
+                Height="26"
+                Margin="0,0,0,4"
+                Padding="8,2"
+                Click="WeekendsPreset_Click"
+                Content="{loc:Loc Ui_Weekends}"
+                FontSize="12" />
+        </WrapPanel>
+        <WrapPanel Orientation="Horizontal">
+            <CheckBox
+                MinWidth="66"
+                Margin="0,0,10,4"
+                Content="{loc:Loc Ui_Sun}"
+                IsChecked="{Binding Sunday, RelativeSource={RelativeSource AncestorType=controls:DayOfWeekPicker}, Mode=TwoWay}" />
+            <CheckBox
+                MinWidth="66"
+                Margin="0,0,10,4"
+                Content="{loc:Loc Ui_Mon}"
+                IsChecked="{Binding Monday, RelativeSource={RelativeSource AncestorType=controls:DayOfWeekPicker}, Mode=TwoWay}" />
+            <CheckBox
+                MinWidth="66"
+                Margin="0,0,10,4"
+                Content="{loc:Loc Ui_Tue}"
+                IsChecked="{Binding Tuesday, RelativeSource={RelativeSource AncestorType=controls:DayOfWeekPicker}, Mode=TwoWay}" />
+            <CheckBox
+                MinWidth="66"
+                Margin="0,0,10,4"
+                Content="{loc:Loc Ui_Wed}"
+                IsChecked="{Binding Wednesday, RelativeSource={RelativeSource AncestorType=controls:DayOfWeekPicker}, Mode=TwoWay}" />
+            <CheckBox
+                MinWidth="66"
+                Margin="0,0,10,4"
+                Content="{loc:Loc Ui_Thu}"
+                IsChecked="{Binding Thursday, RelativeSource={RelativeSource AncestorType=controls:DayOfWeekPicker}, Mode=TwoWay}" />
+            <CheckBox
+                MinWidth="66"
+                Margin="0,0,10,4"
+                Content="{loc:Loc Ui_Fri}"
+                IsChecked="{Binding Friday, RelativeSource={RelativeSource AncestorType=controls:DayOfWeekPicker}, Mode=TwoWay}" />
+            <CheckBox
+                MinWidth="66"
+                Margin="0,0,10,4"
+                Content="{loc:Loc Ui_Sat}"
+                IsChecked="{Binding Saturday, RelativeSource={RelativeSource AncestorType=controls:DayOfWeekPicker}, Mode=TwoWay}" />
+            <CheckBox
+                Margin="0,0,0,4"
+                Content="{loc:Loc Ui_AllDay}"
+                IsChecked="{Binding AllDay, RelativeSource={RelativeSource AncestorType=controls:DayOfWeekPicker}, Mode=TwoWay}"
+                Visibility="{Binding ShowAllDay, RelativeSource={RelativeSource AncestorType=controls:DayOfWeekPicker}, Converter={StaticResource BoolToVisibilityConverter}}">
+                <i:Interaction.Behaviors>
+                    <b:HoverInfoPopupBehavior Text="{loc:Loc Ui_AllowAnyTimeOnTheSelectedDays}" />
+                </i:Interaction.Behaviors>
+            </CheckBox>
+        </WrapPanel>
+    </StackPanel>
+</UserControl>

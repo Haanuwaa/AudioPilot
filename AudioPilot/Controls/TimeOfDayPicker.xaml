@@ -1,0 +1,50 @@
+<UserControl
+    x:Class="AudioPilot.Controls.TimeOfDayPicker"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="clr-namespace:AudioPilot.Controls"
+    Focusable="False"
+    IsTabStop="False">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <ComboBox
+            x:Name="HourComboBox"
+            Grid.Column="0"
+            Height="32"
+            MaxDropDownHeight="224"
+            VerticalContentAlignment="Center"
+            AutomationProperties.Name="{Binding HourAutomationName, RelativeSource={RelativeSource AncestorType=controls:TimeOfDayPicker}}"
+            ItemsSource="{Binding HourOptions, RelativeSource={RelativeSource AncestorType=controls:TimeOfDayPicker}}"
+            SelectedIndex="{Binding HourIndex, RelativeSource={RelativeSource AncestorType=controls:TimeOfDayPicker}, Mode=TwoWay}" />
+        <TextBlock
+            Grid.Column="1"
+            Margin="8,0,8,0"
+            VerticalAlignment="Center"
+            Text=":" />
+        <ComboBox
+            x:Name="MinuteComboBox"
+            Grid.Column="2"
+            Height="32"
+            MaxDropDownHeight="224"
+            VerticalContentAlignment="Center"
+            AutomationProperties.Name="{Binding MinuteAutomationName, RelativeSource={RelativeSource AncestorType=controls:TimeOfDayPicker}}"
+            ItemsSource="{Binding MinuteOptions, RelativeSource={RelativeSource AncestorType=controls:TimeOfDayPicker}}"
+            SelectedIndex="{Binding MinuteIndex, RelativeSource={RelativeSource AncestorType=controls:TimeOfDayPicker}, Mode=TwoWay}" />
+        <ComboBox
+            x:Name="AmPmComboBox"
+            Grid.Column="3"
+            Width="88"
+            Height="32"
+            Margin="8,0,0,0"
+            VerticalContentAlignment="Center"
+            AutomationProperties.Name="{Binding AmPmAutomationName, RelativeSource={RelativeSource AncestorType=controls:TimeOfDayPicker}}"
+            ItemsSource="{Binding AmPmOptions, RelativeSource={RelativeSource AncestorType=controls:TimeOfDayPicker}}"
+            SelectedIndex="{Binding AmPmIndex, RelativeSource={RelativeSource AncestorType=controls:TimeOfDayPicker}, Mode=TwoWay}"
+            Visibility="{Binding Is24HourFormat, RelativeSource={RelativeSource AncestorType=controls:TimeOfDayPicker}, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+    </Grid>
+</UserControl>
